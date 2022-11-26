@@ -17,8 +17,12 @@ TODO
 ----
 
 
-Credit
+Credits and Related Projects
 ------
+
+_This is a list of project where I took some code, or which I found interesting to look up for development and learning purposes_
+
+* [UsmanJafri/PyconChat](https://github.com/UsmanJafri/PyconChat)
 
 
 
