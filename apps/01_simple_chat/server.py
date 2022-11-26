@@ -11,8 +11,8 @@ from core import create_tcp_socket, get_machine_host
 ENCODING = "ascii"
 HOST = get_machine_host()
 PORT = 7579
-MAX_CON = 5
 
+MAX_CON = 5
 lock = threading.Lock()
 
 def main():
