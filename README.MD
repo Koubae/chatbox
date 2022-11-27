@@ -38,5 +38,6 @@ _This is a list of project where I took some code, or which I found interesting 
 
 * [zhouchangxun/loadbalancer.py](https://gist.github.com/zhouchangxun/5750b4636cc070ac01385d89946e0a7b)
 * [kata198/PumpkinLB](https://github.com/kata198/PumpkinLB)
+* [DevDungeon/NanoPot](https://github.com/DevDungeon/NanoPot)
 
 
