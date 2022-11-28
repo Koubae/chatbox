@@ -31,6 +31,7 @@ def struct_package():
     #print(payload_size)
     print(struct.calcsize('>l'))
     print(struct.calcsize('>L'))
+    print(struct.calcsize('<L'))
     print(struct.calcsize('=L'))
 
     print(struct.calcsize('=f'))
