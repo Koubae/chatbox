@@ -1,7 +1,9 @@
-chatbox
+chatbox - Other Chat Implementations
 =======
 
-_chatbox a Python Chat Apps using socket/TCP_
+_chatbox  - **Other Chat Implementations**  is a Python Collection of multiple Chat Apps using socket/TCP that are meant to be an anterlnative to chatbox or just a collection of examples / recipes using sockets_
+
+
 
 
 Apps
@@ -12,7 +14,6 @@ Related and other documentations
 -------------------------------
 
 * **Koubae: ** [Programming-CookBook/Programming Languages/Python/Socket/chat/](https://github.com/Koubae/Programming-CookBook/tree/master/Programming%20Languages/Python/Socket/chat)
-
 
 
 Credits and Related Projects
@@ -37,8 +38,6 @@ _This is a list of project where I took some code, or which I found interesting 
 * [zhouchangxun/loadbalancer.py](https://gist.github.com/zhouchangxun/5750b4636cc070ac01385d89946e0a7b)
 * [kata198/PumpkinLB](https://github.com/kata198/PumpkinLB)
 * [DevDungeon/NanoPot](https://github.com/DevDungeon/NanoPot)
-
-
 
 
 TODO
