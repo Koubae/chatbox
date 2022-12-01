@@ -32,6 +32,9 @@ _This is a list of project where I took some code, or which I found interesting 
 
 
 
+* **[Terminal Text Credit: patorjk.com](https://patorjk.com/software/taag/#p=display&h=0&f=Alpha&t=Chatbox)**
+
+
 ### Related
 
 * [zhouchangxun/loadbalancer.py](https://gist.github.com/zhouchangxun/5750b4636cc070ac01385d89946e0a7b)
