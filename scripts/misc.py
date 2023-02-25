@@ -50,15 +50,15 @@ def struct_package():
 
     message = "Hello world".encode('utf-8')
     message = message[:struct.calcsize(">L")]
-
+    print("mesage ", message)
     message_unpacked = struct.unpack(">L", message)
-    print(message_unpacked)
+    print("message_unpacked ", message_unpacked)
 
     packed = struct.pack('i', 4)
-    print(packed)
+    print("packed i 4", packed)
     INT_MAX = 2147483647
     packed = struct.pack('i', INT_MAX)
-    print(packed)
+    print("packed i INTMAX ", packed)
 
     packed = struct.pack('i', INT_MAX)
     print(packed)

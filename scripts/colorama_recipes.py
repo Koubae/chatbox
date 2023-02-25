@@ -86,8 +86,8 @@ if __name__ == '__main__':
     print() #just a placeholder...
 
     #from_docs()
-    #recipe_colors_front()
-    #recipe_colors_back()
+    recipe_colors_front()
+    recipe_colors_back()
     recipe_styles()
-    #recipe_01()
-    #recipe_02()
+    recipe_01()
+    recipe_02()
