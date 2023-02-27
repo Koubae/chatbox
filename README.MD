@@ -41,7 +41,14 @@ _This is a list of project where I took some code, or which I found interesting 
 * [zhouchangxun/loadbalancer.py](https://gist.github.com/zhouchangxun/5750b4636cc070ac01385d89946e0a7b)
 * [kata198/PumpkinLB](https://github.com/kata198/PumpkinLB)
 * [DevDungeon/NanoPot](https://github.com/DevDungeon/NanoPot)
+* [Python 2.7 TCP/IP Client and Server](http://pymotw.com/2/socket/tcp.html)
 
+Learn
+-----
+
+* [RFC 2616 rfc2616 - section-4](https://www.rfc-editor.org/rfc/rfc2616#section-4)
+* [w3.cs.jmu.edu TCPSockets.html](https://w3.cs.jmu.edu/kirkpams/OpenCSF/Books/csf/html/TCPSockets.html)
+* [cs.uaf.edu | Network Protocols](https://www.cs.uaf.edu/2016/spring/cs441/lecture/03_24_network_protocol.html)
 
 StackOverflow
 ------------
@@ -61,3 +68,22 @@ Projects ideas / TODO
 * TCP chat 
 * Send Database stuff via TCP server - client architecture
 * CAN network
+
+Framework lib references
+------------------------
+
+### Standard Library
+
+* socketserver.py
+
+### urllib3
+
+* urllib3/util/connection.py
+* urllib3/connection.py
+* urllib3/contrib/socks.py
+
+Check `urllib3/connection.py in request_chunked between 261 - 278` to see how to send chunk data with lengh at its start
+
+### distlib
+
+* distlib/util.py <-- Good for certificates
