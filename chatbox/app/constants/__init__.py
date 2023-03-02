@@ -1,0 +1,2 @@
+SOCKET_HOST_DEFAULT: str = "localIpAddr"
+SOCKET_PORT_DEFAULT: int = 10_000

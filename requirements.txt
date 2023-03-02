@@ -1,2 +1,7 @@
+attrs==22.2.0
 colorama==0.4.6
+iniconfig==2.0.0
+packaging==23.0
+pluggy==1.0.0
+pytest==7.2.1
 python-dotenv==1.0.0

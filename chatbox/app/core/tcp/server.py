@@ -1,4 +1,4 @@
 from .network_socket import NetworkSocket
 
-class SocketServer(NetworkSocket):
-    pass
+class SocketTCPServer(NetworkSocket):
+    SOCKET_TYPE: str = "tcp_server"

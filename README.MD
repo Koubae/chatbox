@@ -12,7 +12,7 @@ Related and other documentations
 -------------------------------
 
 * **Koubae: ** [Programming-CookBook/Programming Languages/Python/Socket/chat/](https://github.com/Koubae/Programming-CookBook/tree/master/Programming%20Languages/Python/Socket/chat)
-
+* [Structuring Your Project](https://docs.python-guide.org/writing/structure/)
 
 
 Credits and Related Projects
@@ -55,7 +55,7 @@ StackOverflow
 
 * [Python Socket Receive/Send Multi-threading](https://stackoverflow.com/questions/51104534/python-socket-receive-send-multi-threading) <-- Really Really good!
 * Check this out: https://stackoverflow.com/questions/43355800/select-thread-multiclient-server-in-python-hangs-after-receiving-first-message
-
+* [PATH issue with pytest 'ImportError: No module named YadaYadaYada'](https://stackoverflow.com/questions/10253826/path-issue-with-pytest-importerror-no-module-named-yadayadayada)
 
 Projects ideas / TODO
 ----

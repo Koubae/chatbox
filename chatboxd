@@ -3,4 +3,4 @@
 from chatbox import __main__
 
 if __name__ == '__main__':
-    __main__.main(argv=("server", "localIpAddr", "20020"))
+    __main__.main(argv=("tcp_server", "localIpAddr", "20020"))

@@ -1,6 +1,8 @@
 import logging
 import logging.config
 import os
+import time
+import sys
 
 
 class Color:
@@ -88,9 +90,8 @@ class ColoredFormatter(logging.Formatter, Color):
         return formatter
 
     @staticmethod
-    def init(config_filename) -> None:
+    def init(config_filename: str, tcp_app_type: str) -> None:
         """Initialize Global logger"""
-
         def loggin_config_initialize():
             current_dir = os.path.dirname(os.path.abspath(__file__))
             config_dir = "../../../config"
@@ -104,5 +105,38 @@ class ColoredFormatter(logging.Formatter, Color):
             formatter = ColoredFormatter.func_formatter_message(formatter_from_config)
             _stream_handler.setFormatter(ColoredFormatter(formatter))
 
-        loggin_config_initialize()
-        add_color_formatter_to_stdout_handler()
+        try:
+            loggin_config_initialize()
+            add_color_formatter_to_stdout_handler()
+        except KeyError as error:
+            ColoredFormatter.init_backup_logger()  # Creating a logger on the fly.
+            _logger = logging.getLogger(__name__)
+            _logger.exception(
+                f"Encountered an error while loading the App {tcp_app_type} with env file {config_filename}, reason: %s, Logging Traceback:\n",
+                error, exc_info=error)
+            _logger.error(f"\n{'-' * 30}\nApp closing with errors!\n{'-' * 30}")
+            sys.exit(1)
+
+    @staticmethod
+    def init_backup_logger():
+        path_part = [
+            "chatbox", "app", "storage", "logs", "crashes"
+        ]
+        crash_log_path = os.path.join(*path_part)
+        if not os.path.exists(crash_log_path):
+            os.makedirs(crash_log_path)
+        time_now = time.strftime("%Y%m%d%H%M%S")
+        log_name = f"log_{time_now}.log"
+        log_path = os.path.join(crash_log_path, log_name)
+
+        formatter = logging.Formatter("%(asctime)s CRASHPAD::[%(levelname)s] proc=(%(processName)s %(process)d) t=(%(threadName)s, %(thread)d)  | ( %(name)s in %(filename)s::%(funcName)s@%(lineno)04d ) -->  %(message)s")
+
+        stdout_handler = logging.StreamHandler(sys.stdout)
+        stdout_handler.setLevel(logging.DEBUG)
+        stdout_handler.setFormatter(formatter)
+
+        file_handler = logging.FileHandler(log_path, mode="a")
+        file_handler.setLevel(logging.DEBUG)
+        file_handler.setFormatter(formatter)
+
+        logging.basicConfig(level=logging.DEBUG, handlers=[stdout_handler, file_handler])
