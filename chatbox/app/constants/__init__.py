@@ -6,8 +6,12 @@ import os
 # --------------------
 APP_NAME: str = "ChatBox-Master"
 
+# ...... SOCKET ......
 SOCKET_HOST_DEFAULT: str = "localIpAddr"
 SOCKET_PORT_DEFAULT: int = 10_000
+SOCKET_MAX_CONNECTIONS: int = 5
+SOCKET_MAX_TCP_KEEPCNT: int = 127
+
 
 # --------------------
 # Configurations

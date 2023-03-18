@@ -7,9 +7,7 @@ import time
 from chatbox.app import constants
 from .objects import Address
 
-# TODO: Move in constants
-MAX_TCP_KEEPCNT = 127
-SOCKET_MAX_CONNECTIONS: int = 5
+
 _logger = logging.getLogger(__name__)
 
 
@@ -29,7 +27,7 @@ class NetworkSocket:
     ]
 
     socket_options_keep_alive: list[tuple[int, int, int]]  = [
-        (socket.SOL_TCP, socket.TCP_KEEPCNT, MAX_TCP_KEEPCNT),
+        (socket.SOL_TCP, socket.TCP_KEEPCNT, constants.SOCKET_MAX_TCP_KEEPCNT),
         (socket.SOL_TCP, socket.TCP_KEEPIDLE, 1),
         (socket.SOL_TCP, socket.TCP_KEEPINTVL, 1),
         (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
@@ -50,7 +48,10 @@ class NetworkSocket:
         return f"{self.__class__.__name__}(socket_type={self.SOCKET_TYPE}, address={self.address})"
 
     def __call__(self, *args, **kwargs):
-        self.socket_connect()
+        connected: bool = self.socket_connect()
+        if not connected:
+            # TODO Implement Errror ????
+            raise Exception(f"Something went wrong while connecting to {self.address}")
         self._start()
 
     # --------------------------------------------------
@@ -64,17 +65,23 @@ class NetworkSocket:
         self.socket_on_after(_socket)
         return _socket
 
-    def socket_connect(self):
-        if self.SOCKET_TYPE == "tcp_server":
-            self.socket.bind(tuple(self.address))
-            self.socket.listen(SOCKET_MAX_CONNECTIONS)
-        elif self.SOCKET_TYPE == "tcp_client":
-            self.socket.connect(tuple(self.address))
+    def socket_connect(self) -> bool:
+        try:
+            if self.SOCKET_TYPE == "tcp_server":
+                self.socket.bind(tuple(self.address))
+                self.socket.listen(constants.SOCKET_MAX_CONNECTIONS)
+            elif self.SOCKET_TYPE == "tcp_client":
+                self.socket.connect(tuple(self.address))
+            else:
+                _logger.warning(f"{self.name} is an abstract TCP Socket and does not implement a connection method, use a implemented one!")
+                return False
+        except (ConnectionRefusedError, ConnectionRefusedError, ConnectionAbortedError, ConnectionResetError, ConnectionError) as error:
+            _logger.exception("Error while establishing connection to %s, reason : %s", self.address, error, exc_info=error)
+            return False
         else:
-            _logger.warning(f"{self.name} is an abstract TCP Socket and does not implement a connection method, use a implemented one!")
-            return
-
-        self.socket_connected = True
+            self.socket_connected = True
+            _logger.error("%s Connected to %s", self, self.address)
+            return True
 
     def _start(self):
         self.start_before()
@@ -164,9 +171,6 @@ class NetworkSocket:
                 self.terminate()
             except BaseException as error:
                 _logger.exception(f"Error While closing the main socket, reason: {error}", exc_info=error)
-            finally:
-                sys.exit(exit_code)
-
 
     def start_before(self): ...  #: @override Hook
     def start_after(self): ...   #: @override Hook
@@ -218,6 +222,10 @@ class NetworkSocket:
             time.sleep(1)
         else:
             self._close()
+
+    # ······························
+    # Socket BroadCasting
+    # ······························
 
     # ······························
     # NotImplemented Methods
