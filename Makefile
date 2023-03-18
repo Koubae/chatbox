@@ -1,3 +1,5 @@
+#.ONESHELL:
+
 # Constants
 PACKAGE = chatbox
 HOST = localIpAddr
@@ -5,6 +7,7 @@ PORT = 20020
 SERVER = tcp_server
 CLIENT = tcp_client
 ENVIRONMENT = venv
+ENVIRONMENT_SOURCE = venv/bin/activate
 PYTHON_DIS = venv/bin/python
 
 up.server:
@@ -24,7 +27,7 @@ init:
 # -s   -s is equivalent to --capture=no.
 # -rx  shows the captured output of passed tests.
 .test:
-	pytest
+	pytest -rP
 
 
 .PHONY: init test

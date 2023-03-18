@@ -7,15 +7,13 @@ import time
 from chatbox.app import constants
 from .objects import Address
 
-
+# TODO: Move in constants
 MAX_TCP_KEEPCNT = 127
+SOCKET_MAX_CONNECTIONS: int = 5
 _logger = logging.getLogger(__name__)
 
 
 class NetworkSocket:
-
-
-
     SOCKET_TYPES: tuple[str, ...] = ("tcp_server", "tcp_client")
     SOCKET_TYPE: str = "tcp_socket_abstract"
     socket_options: list[tuple[int, int, int]] = [
@@ -41,6 +39,10 @@ class NetworkSocket:
         self.address: Address = Address(host, port)
         self.socket: socket.socket = self.socket_on()
 
+        self.name: str = f"{socket.gethostname()}@<{self.address}>"
+        self.socket_connected: bool = False     # TODO: Semaphore or signal?
+        self.socket_closed: bool = False        # TODO: Semaphore or signal?
+        self.socket_ready: bool = False         # TODO: Semaphore or signal?
 
     def __str__(self):
         return f"{self.__class__.__name__}::{self.SOCKET_TYPE} <{self.address}>"
@@ -48,7 +50,7 @@ class NetworkSocket:
         return f"{self.__class__.__name__}(socket_type={self.SOCKET_TYPE}, address={self.address})"
 
     def __call__(self, *args, **kwargs):
-
+        self.socket_connect()
         self._start()
 
     # --------------------------------------------------
@@ -58,9 +60,21 @@ class NetworkSocket:
     def socket_on_after(self, _socket: socket.socket): ...  #: @override Hook
     def socket_on(self):
         self.socket_on_before()
-        _socket: socket.socket = NetworkSocket.create_tcp_socket(self.address, self.SOCKET_TYPE, self.socket_options)
+        _socket: socket.socket = NetworkSocket.create_tcp_socket(self.socket_options)
         self.socket_on_after(_socket)
         return _socket
+
+    def socket_connect(self):
+        if self.SOCKET_TYPE == "tcp_server":
+            self.socket.bind(tuple(self.address))
+            self.socket.listen(SOCKET_MAX_CONNECTIONS)
+        elif self.SOCKET_TYPE == "tcp_client":
+            self.socket.connect(tuple(self.address))
+        else:
+            _logger.warning(f"{self.name} is an abstract TCP Socket and does not implement a connection method, use a implemented one!")
+            return
+
+        self.socket_connected = True
 
     def _start(self):
         self.start_before()
@@ -82,7 +96,7 @@ class NetworkSocket:
             out_message = f"[EXIT_SYSTEM] - Interrupted by System"
             log_level = logging.WARNING
             exit_code = 130
-        except (RuntimeError, SyntaxError, TypeError, ValueError, LookupError, RuntimeError) as programming_error:
+        except (RuntimeError, SyntaxError, TypeError, ValueError, LookupError) as programming_error:
             out_message = f"[PROG_ERROR] - App Error"
             exception = programming_error
             log_level = logging.ERROR
@@ -147,7 +161,7 @@ class NetworkSocket:
                 _logger.log(log_level, out_message)
 
             try:
-                self._close()
+                self.terminate()
             except BaseException as error:
                 _logger.exception(f"Error While closing the main socket, reason: {error}", exc_info=error)
             finally:
@@ -159,6 +173,9 @@ class NetworkSocket:
     def start(self): ...         #: @override Hook
 
 
+    def terminate(self):
+        self._close()
+
     def _close(self):
         self.close_before()
         self.close()
@@ -166,12 +183,38 @@ class NetworkSocket:
 
     def close_before(self): ... #: @override Hook
     def close_after(self): ...  #: @override Hook
-    def close(self): ...  #: @override Hook
 
+    def close(self):
+        if not self.socket or not isinstance(self.socket, socket.socket):
+            _logger.debug(f"Try to close on Socket {self.name} but is not an object of type socket.socket, type: {type(self.socket)}")
+            return
+
+        _logger.info(f"{self.name} - Closing Socket")
+        # self.socket_connected = True
+        if self.socket_connected:
+            try:
+                self.socket.shutdown(socket.SHUT_RDWR)
+                _logger.info(f"{self.name} - Socket Shutdown for READ and WRITE  with no errors.")
+            except OSError as error: # Is it errors out probably it's already shutdown. No need further actions
+                _logger.warning(f"Socket {self.name} encountered an error while Shutting Down, error : %s", error)
+            finally:
+                self.socket_connected = False
+
+        if self.socket_closed:
+            _logger.debug(f"Socket {self.name} is already closed!")
+            return
+
+        try:
+            self.socket.close()
+            _logger.info(f"{self.name} - Socket Closed without errors.")
+        except OSError as error:
+            _logger.warning(f"Socket {self.name} encountered an error while closing socket, error : %s", error)
+        finally:
+            self.socket_closed = True
 
     def wait_or_die(self):
         """Let a tcp socket wait indefinitely, useful especially for client connections"""
-        while self.socket_on:  # TODO: use other way to do this, for instance some Semaphore, Signals or stuff like this
+        while not self.socket_closed:  # TODO: use other way to do this, for instance some Semaphore, Signals or stuff like this
             time.sleep(1)
         else:
             self._close()
@@ -186,7 +229,6 @@ class NetworkSocket:
     # --------------------------------------------------
     # Utils
     # --------------------------------------------------
-
     @staticmethod
     def get_app_host(host: str) -> str:
         if host == constants.SOCKET_HOST_DEFAULT:
@@ -207,15 +249,9 @@ class NetworkSocket:
         return socket.gethostbyname(socket.gethostname())
 
     @staticmethod
-    def create_tcp_socket(address: Address, server_type: str = "tcp_server", socket_options:  list[tuple[int, int, int]] = None) -> socket.socket:
+    def create_tcp_socket(socket_options:  list[tuple[int, int, int]] = None) -> socket.socket:
         """Creates a simple TCP Socket"""
         socket_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        if server_type == "tcp_client":
-            socket_connection.connect(tuple(address))
-        else:
-            socket_connection.bind(tuple(address))
-
         socket_options = socket_options or []
         for opt in socket_options:
             socket_connection.setsockopt(*opt)

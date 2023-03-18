@@ -60,6 +60,7 @@ StackOverflow
 Projects ideas / TODO
 ----
 
+* fix log: add log error color 
 * echo server
 * ping server
 * heart beat server

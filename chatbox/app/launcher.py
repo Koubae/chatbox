@@ -35,7 +35,7 @@ def run(argv: tuple[str, ...] = tuple(), cli: bool = True) -> None:
 
     host: str = NetworkSocket.get_app_host(_host)
     port: int = NetworkSocket.get_app_port(_port)
-    _logger.info("Launching %s app, this may take few minutes ....", tcp_app_type)
+    _logger.info("Launching %s app, this may take few milliseconds ....", tcp_app_type)
 
     if tcp_app_type == app_supported[0]: # TODO: improve this
         app = SocketTCPServer(host, port)
