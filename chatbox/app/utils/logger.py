@@ -4,6 +4,8 @@ import os
 import time
 import sys
 
+from .. import constants
+
 
 class Color:
     DEFAULT: str = '\033[0m'
@@ -61,6 +63,23 @@ class ColoredFormatter(logging.Formatter, Color):
         'ERROR': Color.HIGHLIGHTED_RED_LIGHT,
         'CRITICAL': Color.HIGHLIGHTED_RED,
     }
+    _LOGGER_COLOR_LIGHT: dict[str, str] = {
+        'DEBUG': Color.GRAY,
+        'INFO': Color.GREEN,
+        'WARN': Color.YELLOW,
+        'WARNING': Color.YELLOW,
+        'ERROR': Color.RED,
+        'CRITICAL': Color.RED_DARK,
+    }
+    _LOGGER_LEVEL: dict[int, str] = {
+        logging.DEBUG: "DEBUG",
+        logging.INFO: "INFO",
+        logging.WARN: "WARNING",
+        logging.WARNING: "WARNING",
+        logging.ERROR: "ERROR",
+        logging.CRITICAL: "CRITICAL",
+    }
+
     def __init__(self, msg):
         logging.Formatter.__init__(self, msg)
 
@@ -69,6 +88,18 @@ class ColoredFormatter(logging.Formatter, Color):
         if levelname in self._LOGGER_COLOR:
             record.levelname = f"{self._LOGGER_COLOR[levelname]}{levelname}{self.DEFAULT}"
         return logging.Formatter.format(self, record)
+
+    def formatMessage(self, record):
+        res = super().formatMessage(record)
+        if record.levelno in (logging.WARNING, logging.WARN, logging.ERROR, logging.CRITICAL):
+            log_splitted = res.split("LOG-->") # the formatter must have this 'moreformatting.... LOG--> $DEFAULT $CYAN%(message)s$DEFAULT' in order for this to work
+            log_metadata = log_splitted[0]
+            log_message = log_splitted[1].replace(self.DEFAULT, '').replace(self.CYAN, "") # remove DEFAULT and cyan (if default formatter is $DEFAULT $CYAN%(message)s$DEFAULT
+            log_color_level = self._LOGGER_COLOR_LIGHT[self._LOGGER_LEVEL[record.levelno]]
+            log_message = f"{log_color_level}{log_message}" # Dont add the default for any other possible errors logs or strack trace
+            res = "".join([log_metadata, log_message])
+
+        return res
 
     @classmethod
     def _props(cls) -> list:
@@ -92,11 +123,13 @@ class ColoredFormatter(logging.Formatter, Color):
     @staticmethod
     def init(config_filename: str, tcp_app_type: str) -> None:
         """Initialize Global logger"""
-        def loggin_config_initialize():
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            config_dir = "../../../config"
-            config_path = os.path.join(current_dir, config_dir, config_filename)
-            logging.config.fileConfig(config_path) # TODO. add proper try/Cath
+        def loggin_config_initialize() -> FileNotFoundError|None:
+            config_path = os.path.join(constants.DIR_CONFIG, config_filename)
+            try:
+                logging.config.fileConfig(config_path)
+            except FileNotFoundError as _error:
+                return _error
+
 
         def add_color_formatter_to_stdout_handler():
             _stream_handler = logging.root.handlers[1]
@@ -105,25 +138,30 @@ class ColoredFormatter(logging.Formatter, Color):
             formatter = ColoredFormatter.func_formatter_message(formatter_from_config)
             _stream_handler.setFormatter(ColoredFormatter(formatter))
 
+        exception: FileNotFoundError | KeyError | None = None
         try:
-            loggin_config_initialize()
-            add_color_formatter_to_stdout_handler()
+            exception = loggin_config_initialize()
+            if not exception:
+                add_color_formatter_to_stdout_handler()
         except KeyError as error:
-            ColoredFormatter.init_backup_logger()  # Creating a logger on the fly.
-            _logger = logging.getLogger(__name__)
-            _logger.exception(
-                f"Encountered an error while loading the App {tcp_app_type} with env file {config_filename}, reason: %s, Logging Traceback:\n",
-                error, exc_info=error)
-            _logger.error(f"\n{'-' * 30}\nApp closing with errors!\n{'-' * 30}")
-            sys.exit(1)
+            exception = error
+        if not exception:
+            return
+
+        # Create A crashpad logger
+        ColoredFormatter.init_backup_logger()  # Creating a logger on the fly.
+        _logger = logging.getLogger(__name__)
+        _logger.exception(
+            f"Encountered an error while loading the App {tcp_app_type} with env file {config_filename}, reason: %s, Logging Traceback:\n",
+            exception, exc_info=exception)
+        _logger.error(f"\n{'-' * 30}\nApp closing with errors!\n{'-' * 30}")
+        sys.exit(1)
 
     @staticmethod
     def init_backup_logger():
-        path_part = [
-            "chatbox", "app", "storage", "logs", "crashes"
-        ]
-        crash_log_path = os.path.join(*path_part)
-        if not os.path.exists(crash_log_path):
+
+        crash_log_path = constants.DIR_CRASHES
+        if not os.path.exists(constants.DIR_CRASHES):
             os.makedirs(crash_log_path)
         time_now = time.strftime("%Y%m%d%H%M%S")
         log_name = f"log_{time_now}.log"

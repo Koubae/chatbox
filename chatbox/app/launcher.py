@@ -2,6 +2,7 @@ import sys
 import logging
 from types import MappingProxyType
 
+from . import constants
 from . import usage
 from . import settings
 from . import logger
@@ -25,7 +26,7 @@ def run(argv: tuple[str, ...] = tuple(), cli: bool = True) -> None:
     env_file =  f".{tcp_app_type}.env"
     conf: MappingProxyType = settings.configure(env_file)
 
-    logger.ColoredFormatter.init(conf["BACKEND_LOG_CONF_NAME"], tcp_app_type)
+    logger.ColoredFormatter.init(conf.get("BACKEND_LOG_CONF_NAME", constants.LOG_CONF_NAME_DEFAULT), tcp_app_type)
     _logger = logging.getLogger(__name__) # Must Create logger here, as it needs to be initialized
 
     app_supported =  NetworkSocket.SOCKET_TYPES
@@ -40,7 +41,7 @@ def run(argv: tuple[str, ...] = tuple(), cli: bool = True) -> None:
     if tcp_app_type == app_supported[0]: # TODO: improve this
         app = SocketTCPServer(host, port)
     elif tcp_app_type == app_supported[1]:
-        app = SocketTCPClient()
+        app = SocketTCPClient(host, port)
     else:
         _logger.error(f"Supported TCP app {app_supported}, got instead: {tcp_app_type}") # we check this above, but double check for user errors
         sys.exit(1)

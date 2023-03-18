@@ -1,6 +1,14 @@
 #!venv/bin/python
-
+import sys
 from chatbox import __main__
 
 if __name__ == '__main__':
-    __main__.main(argv=("tcp_server", "localIpAddr", "20020"))
+    argv_default: tuple[str, ...] = ("tcp_server", "localIpAddr", "20020")
+    try:
+        argv = tuple(sys.argv[1:])
+    except IndexError as _ :
+        argv = argv_default
+    if not argv:
+        argv = argv_default
+
+    __main__.main(argv=argv)
