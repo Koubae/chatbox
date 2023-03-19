@@ -88,3 +88,10 @@ Check `urllib3/connection.py in request_chunked between 261 - 278` to see how to
 ### distlib
 
 * distlib/util.py <-- Good for certificates
+
+```` 
+# run targeted script
+pytest -rP -k 'test_to_run'
+
+
+````

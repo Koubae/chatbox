@@ -10,8 +10,6 @@ from . import settings
 from . import logger
 
 
-
-
 def run(argv: tuple[str, ...] = tuple(), cli: bool = True) -> None:
     # TODO: use better cli lib
     # TODO: make a default / fallback logger in case we fail to load the app logger!

@@ -39,8 +39,12 @@ class NetworkSocket:
 
         self.name: str = f"{socket.gethostname()}@<{self.address}>"
         self.socket_connected: bool = False     # TODO: Semaphore or signal?
+        self.socket_wait_forever: bool = False  # TODO: Semaphore or signal?
         self.socket_closed: bool = False        # TODO: Semaphore or signal?
         self.socket_ready: bool = False         # TODO: Semaphore or signal?
+
+    def __del__(self):
+        self.terminate()
 
     def __str__(self):
         return f"{self.__class__.__name__}::{self.SOCKET_TYPE} <{self.address}>"
@@ -57,8 +61,12 @@ class NetworkSocket:
     # --------------------------------------------------
     # Socket API
     # --------------------------------------------------
-    def socket_on_before(self): ...  #: @override Hook
-    def socket_on_after(self, _socket: socket.socket): ...  #: @override Hook
+    def socket_on_before(self):  #: @override Hook
+        return NotImplemented
+
+    def socket_on_after(self, _socket: socket.socket): #: @override Hook
+        return NotImplemented
+
     def socket_on(self):
         self.socket_on_before()
         _socket: socket.socket = NetworkSocket.create_tcp_socket(self.socket_options)
@@ -80,7 +88,7 @@ class NetworkSocket:
             return False
         else:
             self.socket_connected = True
-            _logger.error("%s Connected to %s", self, self.address)
+            _logger.info("%s Connected to %s", self, self.address)
             return True
 
     def _start(self):
@@ -172,10 +180,14 @@ class NetworkSocket:
             except BaseException as error:
                 _logger.exception(f"Error While closing the main socket, reason: {error}", exc_info=error)
 
-    def start_before(self): ...  #: @override Hook
-    def start_after(self): ...   #: @override Hook
-    def start(self): ...         #: @override Hook
+    def start_before(self): #: @override Hook
+        return NotImplemented
 
+    def start_after(self):   #: @override Hook
+        return NotImplemented
+
+    def start(self):          #: @override Hook
+        return NotImplemented
 
     def terminate(self):
         self._close()
@@ -185,8 +197,11 @@ class NetworkSocket:
         self.close()
         self.close_after()
 
-    def close_before(self): ... #: @override Hook
-    def close_after(self): ...  #: @override Hook
+    def close_before(self): #: @override Hook
+        return NotImplemented
+
+    def close_after(self):  #: @override Hook
+        return NotImplemented
 
     def close(self):
         if not self.socket or not isinstance(self.socket, socket.socket):
@@ -194,7 +209,6 @@ class NetworkSocket:
             return
 
         _logger.info(f"{self.name} - Closing Socket")
-        # self.socket_connected = True
         if self.socket_connected:
             try:
                 self.socket.shutdown(socket.SHUT_RDWR)
@@ -216,9 +230,16 @@ class NetworkSocket:
         finally:
             self.socket_closed = True
 
+    def stop_wait_forever(self):
+        self.socket_wait_forever = False
+
+    def start_wait_forever(self):
+        self.socket_wait_forever = True
+        self.wait_or_die()
+
     def wait_or_die(self):
         """Let a tcp socket wait indefinitely, useful especially for client connections"""
-        while not self.socket_closed:  # TODO: use other way to do this, for instance some Semaphore, Signals or stuff like this
+        while self.socket_wait_forever:  # TODO: use other way to do this, for instance some Semaphore, Signals or stuff like this
             time.sleep(1)
         else:
             self._close()
