@@ -92,6 +92,11 @@ Check `urllib3/connection.py in request_chunked between 261 - 278` to see how to
 ```` 
 # run targeted script
 pytest -rP -k 'test_to_run'
-
-
+# Run specific Class 
+pytest -rP  tests/tcp/test_socket_tcp_server.py::TestSocketTCPServer
+# Run Specific method
+pytest -rP  tests/tcp/test_socket_tcp_server.py::TestSocketTCPServer::test_hello
+# Run with marker 
+pytest -rP -m tcp_core
+ 
 ````
