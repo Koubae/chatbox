@@ -7,9 +7,11 @@ import queue
 import uuid
 from typing import Type
 
-from .network_socket import NetworkSocket
 from chatbox.app import constants
 from chatbox.app.constants import chat_internal_codes as codes
+from .network_socket import NetworkSocket
+from . import objects
+
 
 _logger = logging.getLogger(__name__)
 
@@ -20,59 +22,28 @@ class SocketTCPServer(NetworkSocket):
     def __init__(self, host: str, port: int):
         super().__init__(host, port)
 
+        self.server_session: uuid.UUID = uuid.uuid4() # TODO. 1. send to client. create session expiration . save sesison to db. session data should be a pickled object using shelfe?
         self._server_listening: bool = False # server is currenly listenning for new client connection # TODO: Make setter for these flags value! (USe bitwise as well?)TODO: Semaphore or signal?
 
-        # TODO : 1 thred-safe | 2. make queue
-        self.client_messages : queue.Queue[dict[str, str]] = queue.Queue(maxsize=constants.SOCKET_MAX_MESSAGE_QUEUE_PER_WORKER)
-        self.clients_undentified: dict = {}
-        self.clients_identified: dict = {}
+        # TODO queue message object make
+        self.client_messages : queue.Queue[dict[int, str]] = queue.Queue(maxsize=constants.SOCKET_MAX_MESSAGE_QUEUE_PER_WORKER)
+        self.clients_undentified: dict[int, objects.Client] = {}
+        self.clients_identified: dict[int, objects.Client] = {}
 
-    @property
-    def server_listening(self) -> bool:
-        return self._server_listening
+        # metadata
+        self.total_client_connected: int = 0
 
-    @server_listening.getter
-    def server_listening(self) -> bool:
-        return self._server_listening
-
-    @server_listening.setter
-    def server_listening(self, value: bool) -> None:
-        if not isinstance(value, (bool, int)):
-            raise TypeError(f"Value for server_listening must be of type (bool, int), {type(value)} passed")
-        self._server_listening = value
 
     def start(self):
-        total_client_connected = 0
         exception_to_raise: tuple[Type[BaseException], ...] = (KeyboardInterrupt, KeyboardInterrupt)
         exception: BaseException|None = None
 
         self.start_listening()
         while self.server_listening:
+            threading.Thread(target=self.thread_broadcaster, daemon=True).start()
             try:
                 client, address = self.socket.accept()   # blocking - main thread
-                total_client_connected += 1
-
-                client_memory_id = id(client)
-                client_identifier = hash((address, client_memory_id))
-                self.clients_undentified[client_identifier] = { # TODO . make class client (and Connection and Server)
-                    'client': client,
-                    'client_identifier': client_identifier,
-                    'client_memory_id': client_memory_id,
-                    'address': address,
-                    'user_id': str(uuid.uuid4()),
-                    'cliefnt_fd': client.fileno(),
-                    'state': 'unknown'
-                }
-
-                client_name_unknown = f'New connection {address} | client_identifier={client_identifier}, waiting for identity'
-                _logger.info(client_name_unknown)
-
-                t_receiver = threading.Thread(target=self.thread_receiver, args=(client_identifier, self.clients_undentified[client_identifier]), daemon=True)
-                t_broadcaster = threading.Thread(target=self.thread_broadcaster, daemon=True)
-
-                t_receiver.start()
-                t_broadcaster.start()
-
+                self.accept_new_connection(client, address)
             except KeyboardInterrupt as error:
                 _logger.warning(f"Interrupted by User while accepting new client connections, reason: {error}")
                 exception = error
@@ -88,40 +59,27 @@ class SocketTCPServer(NetworkSocket):
                     raise exception from None
 
         else:
-            _logger.warning(f"Exit naturally, total_client_connected={total_client_connected}")
+            _logger.warning(f"Exit naturally, total_client_connected={self.total_client_connected}")
 
-    def thread_receiver(self, client_identifier: str, client_data: dict): # TODO add as NotImplemented in class mother
-        client = client_data.get('client', None)
-        if not client:
-            raise Exception("EXCEPTION TODO!!!!!") # TODO Here !
-        client_address = client_data.get("address", "Unknown")
-        user_id = client_data.get("user_id", None)
-        name = f"{client_identifier} @ {client_address} -- "
-        _logger.info(f'{name} start receiving ....')
-        logged_in: bool = False
+    def thread_receiver(self, client_conn: objects.Client): # TODO add as NotImplemented in class mother
+        _logger.info(f'{client_conn} receiving ....')
+
         exception: BaseException | None = None
         try:
-            with client:
+            with client_conn.connection:
                 try:
                     while True:
-                        message = self.receive(client)  # blocking - t_receiver
+                        message = self.receive(client_conn.connection)  # blocking - t_receiver
                         if not message:
                             break
-                        _logger.info(f"[RECEIVED]::({name}) >>> {message}")
-                        if logged_in:
-                            message = f'-- {client_data["user_name"]} :: {message}'
-                            self.client_messages.put({client_identifier: message})
-                            # t_broadcast = threading.Thread(target=self.thread_broadcast, args=(message, client_identifier), daemon=True)
-                            # t_broadcast.start()
+
+                        if not client_conn.is_logged(): # TODO: create separeate thread to send only to client . then it will use a 'queue' only for that client???n
+                            self.login_request(client_conn, message)
                             continue
 
-                        logging_code_type = codes.code_in(codes.LOGIN, message) or codes.code_in(codes.IDENTIFICATION, message)
-                        logged_in = self.login(logging_code_type, message, user_id, client_data, client_identifier, name)
-                        if not logged_in:
-                            _logger.info(f"Client {name} not identified, sending identification token") # todo what to send??
-                            self.send(client, codes.make_message(codes.IDENTIFICATION_REQUIRED, user_id))
+                        self.add_message_to_broadcast(client_conn, message)
 
-                    _logger.warning(f"{name} receive a close network socket message, closing socket... ")
+                    _logger.warning(f"{client_conn} receive a close network socket message, closing socket... ")
                 except (BrokenPipeError, ConnectionResetError, ConnectionRefusedError, ConnectionAbortedError, ConnectionError) as error:
                     _logger.error(f"Connection in receiver thread, reason: {error}")
                     out_message = "[I/O_ERROR_CONNECTION] - Connection error"
@@ -131,20 +89,20 @@ class SocketTCPServer(NetworkSocket):
                     out_message = f"{error.__class__.__name__} - Something went wrong"
                     exception = error
                 else:
-                    _logger.debug(f"{name} closing connection ...")
+                    _logger.debug(f"{client_conn} closing connection ...")
                 finally:
                     if exception:
-                        _logger.error(f"{name} closing connection ... {out_message} in receiver thread, reason: {exception}")
+                        _logger.error(f"{client_conn} closing connection ... {out_message} in receiver thread, reason: {exception}")
                         raise exception
         except BaseException as base_error:
             _logger.debug(f'while handling client encountered a BaseException, reason {base_error}')
         finally:
-            if client_identifier in self.clients_undentified:
-                del self.clients_undentified[client_identifier]
-                _logger.debug(f"Delete {client_identifier} from clients_undentified")
-            if client_identifier in self.clients_identified:
-                del self.clients_identified[client_identifier]
-                _logger.debug(f"Delete {client_identifier} from clients_identified")
+            if client_conn.identifier in self.clients_undentified:
+                del self.clients_undentified[client_conn.identifier]
+                _logger.debug(f"Delete {client_conn.identifier} from clients_undentified")
+            if client_conn.identifier in self.clients_identified:
+                del self.clients_identified[client_conn.identifier]
+                _logger.debug(f"Delete {client_conn.identifier} from clients_identified")
         # TODO:
         # 1 identify client
         # 2 when identified remove from identify and add to known client
@@ -163,12 +121,13 @@ class SocketTCPServer(NetworkSocket):
                 self.broadcast(client_identifier, message)
             self.client_messages.task_done()
 
-    def broadcast(self, client_identifier: str, message: str) -> None:
+    def broadcast(self, client_identifier: int, message: str) -> None:
         for identifier in self.clients_identified:
             if identifier == client_identifier:
                 continue
-            client_info = self.clients_identified[identifier]
-            self.send(client_info['client'], message)
+            client_conn: objects.Client = self.clients_identified[identifier]
+            client_socket: socket.socket = client_conn.connection
+            self.send(client_socket, message)
 
     def start_listening(self):
         self.server_listening = True
@@ -176,11 +135,35 @@ class SocketTCPServer(NetworkSocket):
     def stop_listening(self):
         self.server_listening = False
 
+    def accept_new_connection(self, client: socket.socket, address: tuple[str, int]) -> None:
+        self.total_client_connected += 1
+
+        client_memory_id = id(client)
+        client_identifier = hash((address, client_memory_id))
+        new_connection = objects.Client(
+            client,
+            client_identifier,
+            client_memory_id,
+            objects.Address(address[0], address[1]),
+            uuid.uuid4()
+        )
+        self.clients_undentified[client_identifier] = new_connection
+
+        _logger.info(f'New connection {new_connection} accepted, creating receiving client thread')
+        t_receiver = threading.Thread(target=self.thread_receiver, args=(new_connection,), daemon=True)
+        t_receiver.start()
 
     # ------------------------------------
     # Business Logic
     # ------------------------------------
-    def login(self, logging_code_type: int, payload: str, user_id: str, client_data: dict, client_identifier: str, name: str) -> bool:
+    def login_request(self, client_conn: objects.Client, payload: str):
+        logging_code_type = codes.code_in(codes.LOGIN, payload) or codes.code_in(codes.IDENTIFICATION, payload)
+        logged_in = self.login(logging_code_type, client_conn, payload)
+        if not logged_in:
+            _logger.info(f"Client {client_conn} not identified, requesting identification and sending user_id")
+            self.send(client_conn.connection, codes.make_message(codes.IDENTIFICATION_REQUIRED, client_conn.user_id))
+
+    def login(self, logging_code_type: int, client_conn: objects.Client, payload: str) -> bool:
         if not logging_code_type:
             return False
         login_info = self.parse_json(codes.get_message(logging_code_type, payload))
@@ -189,19 +172,49 @@ class SocketTCPServer(NetworkSocket):
 
         input_user_id = login_info.get('user_id', None)
         input_user_name = login_info.get('user_name', None)
-        _logger.info(f"{input_user_name} - with user_id {input_user_id} request LOGIN")
 
-        if input_user_id != user_id:  # TODO: check password!!!!
+        _logger.info(f"{client_conn.user_name} - with user_id {client_conn.user_id} request {codes.CODES[logging_code_type]}")
+        # TODOs:
+        # 1. db : select user from db if exist
+        # 2. db: create user from db if not exist
+        # 3. db. update user loggins status
+        # 3. check password
+        # 4. save encrypt saved password
+        # 5. Send 'session' to client (which the client can save) if session is the same! with expiration!!!
+        if input_user_id != client_conn.user_id:  # TODO: check password!!!!
             return False
 
         if not input_user_name:
             return False
 
-        client_data['user_name'] = input_user_name
-        client_data['login_info'] = login_info
-        client_data['state'] = 'logged'
-        self.clients_identified[client_identifier] = client_data  # add client to identify
-        del self.clients_undentified[client_identifier] # remove client from un-identify one
+        client_conn.user_name = input_user_name
+        client_conn.login_info = login_info
+        client_conn.set_logged_in()
 
-        _logger.info(f"Client {name} identified with credentials {login_info}")
+        self.clients_identified[client_conn.identifier] = client_conn  # add client to identify
+        del self.clients_undentified[client_conn.identifier] # remove client from un-identify one
+
+        _logger.info(f"Client {client_conn} identified with credentials {login_info}")
         return True
+
+    def add_message_to_broadcast(self, client_conn: objects.Client, message: str) -> None:
+        _logger.info(f"[RECEIVED]::({client_conn}) to broadcast >>> {message}")
+        message = f'-- {client_conn.user_name} :: {message}'
+        self.client_messages.put({client_conn.identifier: message})
+
+    # ------------------------------------
+    # Getter and setters
+    # ------------------------------------
+    @property
+    def server_listening(self) -> bool:
+        return self._server_listening
+
+    @server_listening.getter
+    def server_listening(self) -> bool:
+        return self._server_listening
+
+    @server_listening.setter
+    def server_listening(self, value: bool) -> None:
+        if not isinstance(value, (bool, int)):
+            raise TypeError(f"Value for server_listening must be of type (bool, int), {type(value)} passed")
+        self._server_listening = value

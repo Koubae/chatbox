@@ -6,7 +6,7 @@ import os
 # --------------------
 APP_NAME: str = "ChatBox-Master"
 
-CLI_NEXT_INPUT: str = "\n>>> "
+CLI_NEXT_INPUT: str = ">>> "
 
 KILL_APP_AT_SOCKET_TERMINATE: bool = False  # if the socket app (client or server) is terminated, run sys.exit else skip
 ENCODING: str = "UTF-8"

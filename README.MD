@@ -70,8 +70,8 @@ Projects ideas / TODO
 * Send Database stuff via TCP server - client architecture
 * CAN network
 * Add colorama print (especially for cli usage)
-* fix print when chat usage in cli, when writting and receiving a message
-* 
+* fix print when chat usage in cli, when writting and receiving a message and receive after wards. the receivin one is in the same line :/
+* Create BroadCaster : should be a separeate socket - class ? 
 * create bots test
 
 Framework lib references

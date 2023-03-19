@@ -37,20 +37,6 @@ class SocketTCPClient(NetworkSocket):
         super().__call__(*args, **kwargs)
 
 
-    @property
-    def connected_to_server(self) -> bool:
-        return self._connected_to_server
-
-    @connected_to_server.getter
-    def connected_to_server(self) -> bool:
-        return self._connected_to_server
-
-    @connected_to_server.setter
-    def connected_to_server(self, value: bool) -> None:
-        if not isinstance(value, (bool, int)):
-            raise TypeError(f"Value for connected_to_server must be of type (bool, int), {type(value)} passed")
-        self._connected_to_server = value
-
     def start(self):
         exception_to_raise: list[Type[BaseException], ...] = [KeyboardInterrupt, KeyboardInterrupt, ConnectionResetError, ConnectionRefusedError, ConnectionAbortedError, ConnectionError]
         exception: BaseException | None = None
@@ -114,8 +100,8 @@ class SocketTCPClient(NetworkSocket):
                 if not message:
                     break
                 _logger.debug(message)
-                print("\n" + message, end='')
-                print(constants.CLI_NEXT_INPUT, end='')
+                print(message)
+
             except KeyboardInterrupt as error:
                 _logger.warning(f"(t_receiver) Interrupted by User, reason: {error}")
                 exception = error
@@ -136,7 +122,7 @@ class SocketTCPClient(NetworkSocket):
         exception: BaseException | None = None
         while self.connected_to_server:
             try:
-                message: str = input(constants.CLI_NEXT_INPUT)
+                message: str = input()
                 self.send(message)
             except KeyboardInterrupt as error:
                 _logger.warning(f"(t_sender) Interrupted by User, reason: {error}")
@@ -163,3 +149,22 @@ class SocketTCPClient(NetworkSocket):
 
     def send(self, message: str) -> int: # noqa
         return super().send(self.socket, message)
+
+
+    # ------------------------------------
+    # Getter and setters
+    # ------------------------------------
+
+    @property
+    def connected_to_server(self) -> bool:
+        return self._connected_to_server
+
+    @connected_to_server.getter
+    def connected_to_server(self) -> bool:
+        return self._connected_to_server
+
+    @connected_to_server.setter
+    def connected_to_server(self, value: bool) -> None:
+        if not isinstance(value, (bool, int)):
+            raise TypeError(f"Value for connected_to_server must be of type (bool, int), {type(value)} passed")
+        self._connected_to_server = value
