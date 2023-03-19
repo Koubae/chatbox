@@ -19,10 +19,11 @@ def run(argv: tuple[str, ...] = tuple(), cli: bool = True) -> None:
         if len(argv) < 3:
             # print(usage) TODO Add usage
             sys.exit(0)
-        tcp_app_type, _host, _port = argv
+        tcp_app_type, _host, _port = argv[:3]
 
     env_file =  f".{tcp_app_type}.env"
     conf: MappingProxyType = settings.configure(env_file)
+
 
     logger.ColoredFormatter.init(conf.get("BACKEND_LOG_CONF_NAME", constants.LOG_CONF_NAME_DEFAULT), tcp_app_type)
     _logger = logging.getLogger(__name__) # Must Create logger here, as it needs to be initialized
@@ -45,7 +46,15 @@ def run(argv: tuple[str, ...] = tuple(), cli: bool = True) -> None:
     if tcp_app_type == app_supported[0]: # TODO: improve this
         app = SocketTCPServer(host, port)
     elif tcp_app_type == app_supported[1]:
-        app = SocketTCPClient(host, port)
+
+        user = None
+        password = None
+        for a in argv:
+            if a.startswith('--user'):
+                user = a.replace('--user=', '')
+            elif a.startswith('--password'):
+                password = a.replace('--password=', '')
+        app = SocketTCPClient(host, port, user, password)
     else:
         _logger.error(f"Supported TCP app {app_supported}, got instead: {tcp_app_type}") # we check this above, but double check for user errors
         sys.exit(1)

@@ -13,8 +13,9 @@ PYTHON_DIS = venv/bin/python
 up.server:
 	$(PYTHON_DIS) -m $(PACKAGE) $(SERVER) $(HOST) $(PORT)
 
+# instance: make up.client user=--user=fede2 password=--password=123
 up.client:
-	$(PYTHON_DIS) -m $(PACKAGE) $(CLIENT) $(HOST) $(PORT)
+	$(PYTHON_DIS) -m $(PACKAGE) $(CLIENT) $(HOST) $(PORT) $(user) $(password)
 
 
 # Project set up

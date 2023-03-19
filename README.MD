@@ -100,3 +100,14 @@ pytest -rP  tests/tcp/test_socket_tcp_server.py::TestSocketTCPServer::test_hello
 pytest -rP -m tcp_core
  
 ````
+
+
+### run client recipes
+```bash 
+
+make up.client user=--user=bot_1 password=--password=1234
+make up.client user=--user=bot_2 password=--password=1234
+make up.client user=--user=bot_3 password=--password=1234
+make up.client user=--user=bot_4 password=--password=1234
+
+```

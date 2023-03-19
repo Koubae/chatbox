@@ -21,6 +21,18 @@ pytestmark = commons.pytestmark
 
 class TestSocketTCPServer:
 
-	def test_tcp_server(self):
+	def test_tcp_server_thread_receiver_receive_msg(self):
 		for _ in range(10):
 			print("Hello World")
+
+	def test_tcp_server_thread_receiver_sent_message_are_in_queue(self):
+		for _ in range(10):
+			print("Hello World")
+
+	def test_tcp_server_thread_receiver_stops_and_keyboard_interrupt(self):
+		for _ in range(10):
+			print("Hello World")
+
+	def test_tcp_server_broadcast_1_client(self): ...
+	def test_tcp_server_broadcast_19_client(self): ...
+	def test_tcp_server_broadcast_message_in_queue_consumed(self): ...
