@@ -38,10 +38,10 @@ class NetworkSocket:
         self.socket: socket.socket = self.socket_on()
 
         self.name: str = f"{socket.gethostname()}@<{self.address}>"
-        self.socket_connected: bool = False     # TODO: Semaphore or signal?
-        self.socket_wait_forever: bool = False  # TODO: Semaphore or signal?
-        self.socket_closed: bool = False        # TODO: Semaphore or signal?
-        self.socket_ready: bool = False         # TODO: Semaphore or signal?
+        self.socket_ready: bool = False        # socket is ready to operate  # TODO: Make setter for these flags value! (USe bitwise as well?)TODO: Semaphore or signal?
+        self.socket_connected: bool = False    # socket is connected (bind to address when server or connected to address when client) # TODO: Semaphore or signal?
+        self.socket_closed: bool = False       # socket is closed # TODO: Semaphore or signal?
+        self.socket_wait_forever: bool = False # socket is waiting forever.  # TODO: Semaphore or signal?
 
     def __del__(self):
         self.terminate()
@@ -88,6 +88,7 @@ class NetworkSocket:
             return False
         else:
             self.socket_connected = True
+            self.socket_ready = True
             _logger.info("%s Connected to %s", self, self.address)
             return True
 
@@ -101,7 +102,7 @@ class NetworkSocket:
 
         try:
             self.start()
-            self.start_after()
+            self.start_after()  # TODO: not sure if is 'after it finishih running' or 'after is started and is running' , if second option then this should run in a separate thread or be just a coroutine
 
         except KeyboardInterrupt as _:
             out_message = f"[EXIT_K_INTERRUPT] - Interrupted by signal 2: SIGINT"
@@ -179,6 +180,9 @@ class NetworkSocket:
                 self.terminate()
             except BaseException as error:
                 _logger.exception(f"Error While closing the main socket, reason: {error}", exc_info=error)
+            finally:
+                if constants.KILL_APP_AT_SOCKET_TERMINATE:
+                    sys.exit(exit_code)
 
     def start_before(self): #: @override Hook
         return NotImplemented
@@ -247,10 +251,31 @@ class NetworkSocket:
     # ······························
     # Socket BroadCasting
     # ······························
+    def receive(self, connection: socket.socket, buffer_size: int = constants.SOCKET_STREAM_LENGTH) -> str|None:
+        try:
+            message: bytes = connection.recv(buffer_size)
+        except socket.error as error:
+            _logger.exception(f"Error receiving socket error, reason: {error}", exc_info=error)
+        except Exception as error:
+            _logger.exception(f"Error receiving Exception error, reason: {error}", exc_info=error)
+        else:
+            if not message:
+                return None
+            return self.decode_message(message)
 
-    # ······························
-    # NotImplemented Methods
-    # ······························
+    def send(self, connection: socket.socket, message: str) -> int:
+        try:
+            total_sent = connection.send(self.encode_message(message))
+        except socket.error as error:
+            _logger.exception(f"Error sending socket error, reason: {error}", exc_info=error)
+            total_sent = -1
+        except Exception as error:
+            _logger.exception(f"Error sending Exception error, reason: {error}", exc_info=error)
+            total_sent = -1
+
+        return total_sent
+
+    # ^^^^^^^^^ NotImplemented Methods ^^^^^^^^^
     def broadcast(self, message: str) -> None:
         raise NotImplementedError("Method not implemented!")
 
@@ -286,3 +311,11 @@ class NetworkSocket:
             socket_connection.setsockopt(*opt)
 
         return socket_connection
+
+    @staticmethod
+    def encode_message(message: str) -> bytes:
+        return message.encode(constants.ENCODING)
+
+    @staticmethod
+    def decode_message(message: bytes) -> str:
+        return message.decode(constants.ENCODING)
