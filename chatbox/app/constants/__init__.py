@@ -6,6 +6,8 @@ import os
 # --------------------
 APP_NAME: str = "ChatBox-Master"
 
+CLI_NEXT_INPUT: str = "\n>>> "
+
 KILL_APP_AT_SOCKET_TERMINATE: bool = False  # if the socket app (client or server) is terminated, run sys.exit else skip
 ENCODING: str = "UTF-8"
 
@@ -13,6 +15,7 @@ ENCODING: str = "UTF-8"
 SOCKET_HOST_DEFAULT: str = "localIpAddr"
 SOCKET_PORT_DEFAULT: int = 10_000
 SOCKET_MAX_CONNECTIONS: int = 5
+SOCKET_MAX_MESSAGE_QUEUE_PER_WORKER: int = 1000
 SOCKET_MAX_TCP_KEEPCNT: int = 127
 SOCKET_STREAM_LENGTH: int = 1024
 

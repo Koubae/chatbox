@@ -69,6 +69,10 @@ Projects ideas / TODO
 * TCP chat 
 * Send Database stuff via TCP server - client architecture
 * CAN network
+* Add colorama print (especially for cli usage)
+* fix print when chat usage in cli, when writting and receiving a message
+* 
+* create bots test
 
 Framework lib references
 ------------------------

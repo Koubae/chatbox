@@ -4,6 +4,8 @@ import threading
 from typing import Type
 
 from .network_socket import NetworkSocket
+
+from chatbox.app import constants
 from chatbox.app.constants import chat_internal_codes as codes
 
 _logger = logging.getLogger(__name__)
@@ -112,7 +114,8 @@ class SocketTCPClient(NetworkSocket):
                 if not message:
                     break
                 _logger.debug(message)
-                print(message)
+                print("\n" + message, end='')
+                print(constants.CLI_NEXT_INPUT, end='')
             except KeyboardInterrupt as error:
                 _logger.warning(f"(t_receiver) Interrupted by User, reason: {error}")
                 exception = error
@@ -133,7 +136,7 @@ class SocketTCPClient(NetworkSocket):
         exception: BaseException | None = None
         while self.connected_to_server:
             try:
-                message: str = input(">>> ")
+                message: str = input(constants.CLI_NEXT_INPUT)
                 self.send(message)
             except KeyboardInterrupt as error:
                 _logger.warning(f"(t_sender) Interrupted by User, reason: {error}")

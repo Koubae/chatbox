@@ -1,3 +1,4 @@
+import json
 import sys
 import socket
 import threading
@@ -276,7 +277,7 @@ class NetworkSocket:
         return total_sent
 
     # ^^^^^^^^^ NotImplemented Methods ^^^^^^^^^
-    def broadcast(self, message: str) -> None:
+    def broadcast(self, client_identifier: str, message: str) -> None:
         raise NotImplementedError("Method not implemented!")
 
 
@@ -319,3 +320,13 @@ class NetworkSocket:
     @staticmethod
     def decode_message(message: bytes) -> str:
         return message.decode(constants.ENCODING)
+
+    @staticmethod
+    def parse_json(message: str) -> dict|None:
+        try:
+            loaded = json.loads(message)
+        except json.JSONDecodeError as error:
+            _logger.exception(f'Error while parsing json, reason {error}', exc_info=error)
+            return None
+        else:
+            return loaded

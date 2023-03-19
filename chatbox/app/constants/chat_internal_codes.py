@@ -18,12 +18,13 @@ class ChatInternalCodeException(Exception):
 
 full_code = lambda _code: f"{CODE_IDENTIFIER_LEFT}{_code}{CODE_IDENTIFIER_RIGHT}"
 
-def code_in(code: int, message: str) -> bool:
+def code_in(code: int, message: str) -> int:
 	_code = CODES.get(code, None)
 	if not _code:
-		return False
-
-	return f"{full_code(_code)}" in message
+		return 0
+	if f"{full_code(_code)}" in message:
+		return code
+	return 0
 
 def get_message(code: int, message: str) -> str|None:
 	_code = CODES.get(code, None)
