@@ -1,5 +1,6 @@
 from types import MappingProxyType
 
+# TODO: make enums!
 LOGIN = 1
 IDENTIFICATION = 2
 IDENTIFICATION_REQUIRED = 3

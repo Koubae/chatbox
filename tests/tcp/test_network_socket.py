@@ -25,9 +25,9 @@ class TestNetworkSocket:
 
     @pytest.mark.tcp_core
     @pytest.mark.tcp
-    @pytest.mark.parametrize('create_socket', [{'host': 'localhost', 'port': 10_000}], indirect=True)   # NOTE: kept parametrize for reference
-    def test_net_socket_instance_constructor(self, create_socket):
-        assert type(create_socket.socket) is socket.socket
+    @pytest.mark.parametrize('network_socket', [{'host': 'localhost', 'port': 10_000}], indirect=True)   # NOTE: kept parametrize for reference
+    def test_net_socket_instance_constructor(self, network_socket):
+        assert type(network_socket.socket) is socket.socket
 
     @pytest.mark.tcp_core
     @pytest.mark.tcp
@@ -50,36 +50,32 @@ class TestNetworkSocket:
 
     @pytest.mark.tcp_core
     @pytest.mark.tcp
-    def test_net_socket_create_tcp_socket(self):
-        socket_options = [(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)]
-
-        _socket = NetworkSocket.create_tcp_socket(socket_options)
-
+    def test_net_socket_create_tcp_socket(self, _socket):
         assert type(_socket) is socket.socket
         assert isinstance(_socket, socket.socket)
         assert isinstance(_socket, socket.socket)
 
     @pytest.mark.tcp_core
     @pytest.mark.tcp
-    def test_net_socket_socket_connect_returns_false_because_is_abstract(self, create_socket):
-        network_socket: NetworkSocket = create_socket
+    def test_net_socket_socket_connect_returns_false_because_is_abstract(self, network_socket):
+        network_socket: NetworkSocket = network_socket
         connected: bool = network_socket.socket_connect()
         assert connected is False
 
     @pytest.mark.tcp_core
     @pytest.mark.tcp
-    def test_net_socket_run_network_socket_raise_because_is_abstract(self, create_socket):
-        network_socket: NetworkSocket = create_socket
+    def test_net_socket_run_network_socket_raise_because_is_abstract(self, network_socket):
+        network_socket: NetworkSocket = network_socket
         with pytest.raises(Exception) as _:
             network_socket()
 
     @pytest.mark.tcp_core
     @pytest.mark.tcp
-    def test_net_socket_wait_or_die(self, create_socket):
+    def test_net_socket_wait_or_die(self, network_socket):
         seconds_to_wait = 3
         seconds_to_trigger_close = 2  # manually 'close' the NetworkSocket so that wait_or_die must stop and call close to self
 
-        network_socket: NetworkSocket = create_socket
+        network_socket: NetworkSocket = network_socket
         network_socket.socket_connected = True  # mock that the server is connected
 
         waiting_thread = threading.Thread(target=network_socket.start_wait_forever, daemon=True)  # let's put it in a thread in order to monitor it
@@ -95,8 +91,8 @@ class TestNetworkSocket:
 
     @pytest.mark.tcp_core
     @pytest.mark.tcp
-    def test_net_socket_overridable_functions_must_return_notImplemented(self, create_socket):
-        network_socket: NetworkSocket = create_socket
+    def test_net_socket_overridable_functions_must_return_notImplemented(self, network_socket):
+        network_socket: NetworkSocket = network_socket
 
         assert network_socket.socket_on_before() is NotImplemented
         assert network_socket.socket_on_after(network_socket.socket) is NotImplemented
@@ -108,8 +104,8 @@ class TestNetworkSocket:
 
     @pytest.mark.tcp_core
     @pytest.mark.tcp
-    def test_net_socket_overridable_functions_raise_notImplementedError(self, create_socket):
-        network_socket: NetworkSocket = create_socket
+    def test_net_socket_overridable_functions_raise_notImplementedError(self, network_socket):
+        network_socket: NetworkSocket = network_socket
         client_identifier = hash((network_socket.socket.getsockname(), id(network_socket)))
         with pytest.raises(NotImplementedError) as _:
             network_socket.broadcast(client_identifier, "my-message")
@@ -150,22 +146,19 @@ class TestNetworkSocket:
 
     @pytest.mark.tcp_core
     @pytest.mark.tcp
-    def test_net_socket_receive(self, create_socket):
+    def test_net_socket_receive(self, network_socket, _socket):
         address: tuple[str, int] = ("localhost", 10_000)
 
-        server: NetworkSocket = create_socket   # noqa
-
-        socket_options = [(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)]
-        client_socket = NetworkSocket.create_tcp_socket(socket_options)
+        server: NetworkSocket = network_socket   # noqa
 
         TCPSocketMock.manual_connect(server.socket, address, "tcp_server")   # noqa
-        TCPSocketMock.manual_connect(client_socket, address, "tcp_client")
+        TCPSocketMock.manual_connect(_socket, address, "tcp_client")
 
         data_dummy = "hello world"
         data_received: dict = {"data": None}
 
         server_t = threading.Thread(target=TCPSocketMock.mock_server_listen_once, args=(server.socket, server.receive, data_received), daemon=True)
-        client_t = threading.Thread(target=TCPSocketMock.mock_socket_send, args=(client_socket, data_dummy), daemon=True)
+        client_t = threading.Thread(target=TCPSocketMock.socket_send, args=(_socket, data_dummy), daemon=True)
 
         server_t.start()
         client_t.start()
@@ -177,22 +170,19 @@ class TestNetworkSocket:
 
     @pytest.mark.tcp_core
     @pytest.mark.tcp
-    def test_net_socket_send(self, create_socket):
+    def test_net_socket_send(self, network_socket, _socket):
         address: tuple[str, int] = ("localhost", 10_001)
 
-        server: NetworkSocket = create_socket   # noqa
-
-        socket_options = [(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)]
-        client_socket = NetworkSocket.create_tcp_socket(socket_options)
+        server: NetworkSocket = network_socket   # noqa
 
         TCPSocketMock.manual_connect(server.socket, address, "tcp_server")   # noqa
-        TCPSocketMock.manual_connect(client_socket, address, "tcp_client")
+        TCPSocketMock.manual_connect(_socket, address, "tcp_client")
 
         data_dummy = "hello world"
         data_received: dict = {"data": None}
 
         server_listen_t = threading.Thread(target=TCPSocketMock.mock_server_send_once, args=(server.socket, server.send, data_dummy), daemon=True)
-        client_t = threading.Thread(target=TCPSocketMock.mock_receiver, args=(client_socket, data_received), daemon=True)
+        client_t = threading.Thread(target=TCPSocketMock.mock_receiver, args=(_socket, data_received), daemon=True)
 
         server_listen_t.start()
         client_t.start()

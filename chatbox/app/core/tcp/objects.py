@@ -9,7 +9,7 @@ class Address(NamedTuple):
     port: int
 
 
-Message = t.TypedDict('Message', {'identifier': int, 'message': str})
+Message = t.TypedDict('Message', {'identifier': int, 'message': str, 'send_all': bool})
 
 
 @dataclasses.dataclass

@@ -40,7 +40,7 @@ class SocketTCPServer(NetworkSocket):
             threading.Thread(target=self.thread_broadcaster, daemon=True).start()
             try:
                 client, address = self.socket.accept()   # blocking - main thread
-                self.accept_new_connection(client, address)
+                self.accept_new_connection(client, objects.Address(*address))
             except KeyboardInterrupt as error:
                 _logger.warning(f"Interrupted by User while accepting new client connections, reason: {error}")
                 exception = error
@@ -114,15 +114,20 @@ class SocketTCPServer(NetworkSocket):
             message_to_broadcast: objects.Message = self.client_messages.get()   # blocking - t_broadcaster
             client_identifier = message_to_broadcast['identifier']
             message = message_to_broadcast['message']
+            send_all = message_to_broadcast['send_all']
             if client_identifier and message:
-                self.broadcast(client_identifier, message)
+                self.broadcast(client_identifier, message, send_all=send_all)
             self.client_messages.task_done()
 
-    def broadcast(self, client_identifier: int, message: str) -> None:
-        for identifier in self.clients_identified:
+    def broadcast(self, client_identifier: int, message: str, send_all: bool = False) -> None:
+        clients_to_send = self.clients_identified
+        if send_all:
+            clients_to_send = {**clients_to_send, **self.clients_undentified}
+
+        for identifier in clients_to_send:
             if identifier == client_identifier:
                 continue
-            client_conn: objects.Client = self.clients_identified[identifier]
+            client_conn: objects.Client = clients_to_send[identifier]
             client_socket: socket.socket = client_conn.connection
             self.send(client_socket, message)
 
@@ -132,19 +137,18 @@ class SocketTCPServer(NetworkSocket):
     def stop_listening(self):
         self.server_listening = False
 
-    def accept_new_connection(self, client: socket.socket, address: tuple[str, int]) -> None:
+    def accept_new_connection(self, client: socket.socket, address: objects.Address) -> None:
         self.total_client_connected += 1
 
-        client_memory_id = id(client)
-        client_identifier = hash((address, client_memory_id))
+        client_identifier = self.create_client_identifier(client, address)
         new_connection = objects.Client(
             client,
-            client_identifier,
-            client_memory_id,
-            objects.Address(address[0], address[1]),
+            client_identifier['identifier'],
+            client_identifier['id'],
+            address,
             uuid.uuid4()
         )
-        self.clients_undentified[client_identifier] = new_connection
+        self.clients_undentified[client_identifier['identifier']] = new_connection
 
         _logger.info(f'New connection {new_connection} accepted, creating receiving client thread')
         t_receiver = threading.Thread(target=self.thread_client_receiver, args=(new_connection,), daemon=True)
@@ -194,10 +198,10 @@ class SocketTCPServer(NetworkSocket):
         _logger.info(f"Client {client_conn} identified with credentials {login_info}")
         return True
 
-    def add_message_to_broadcast(self, client_conn: objects.Client, message: str) -> None:
+    def add_message_to_broadcast(self, client_conn: objects.Client, message: str, send_all: bool = False) -> None:
         _logger.info(f"[RECEIVED]::({client_conn}) to broadcast >>> {message}")
         message = f'-- {client_conn.user_name} :: {message}'
-        self.client_messages.put({'identifier': client_conn.identifier, 'message': message})
+        self.client_messages.put({'identifier': client_conn.identifier, 'message': message, 'send_all': send_all})
 
     # ------------------------------------
     # Getter and setters
@@ -215,3 +219,12 @@ class SocketTCPServer(NetworkSocket):
         if not isinstance(value, (bool, int)):
             raise TypeError(f"Value for server_listening must be of type (bool, int), {type(value)} passed")
         self._server_listening = value
+
+    # --------------------------------------------------
+    # Utils
+    # --------------------------------------------------
+    @staticmethod
+    def create_client_identifier(client: socket.socket, address: objects.Address) -> dict[str, int]:
+        client_memory_id = id(client)
+        client_identifier = hash((address, client_memory_id))
+        return {'id': client_memory_id, 'identifier': client_identifier}
