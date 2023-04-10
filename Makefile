@@ -1,7 +1,7 @@
 #.ONESHELL:
 
 # Constants
-PACKAGE = chatbox
+APP_DIR = chatbox
 HOST = localIpAddr
 PORT = 20020
 SERVER = tcp_server
@@ -11,18 +11,18 @@ ENVIRONMENT_SOURCE = venv/bin/activate
 PYTHON_DIS = venv/bin/python
 
 up.server:
-	$(PYTHON_DIS) -m $(PACKAGE) $(SERVER) $(HOST) $(PORT)
+	$(PYTHON_DIS) -m $(APP_DIR) $(SERVER) $(HOST) $(PORT)
 
 # instance: make up.client user=--user=fede2 password=--password=123
 up.client:
-	$(PYTHON_DIS) -m $(PACKAGE) $(CLIENT) $(HOST) $(PORT) $(user) $(password)
+	$(PYTHON_DIS) -m $(APP_DIR) $(CLIENT) $(HOST) $(PORT) $(user) $(password)
 
 
 up.server.reloader:
-	. $(BIN)/activate; python scripts/restarter.py $(PACKAGE) $(PYTHON_DIS) -m $(PACKAGE) $(SERVER) $(HOST) $(PORT)
+	. $(BIN)/activate; python scripts/restarter.py $(APP_DIR) $(PYTHON_DIS) -m $(APP_DIR) $(SERVER) $(HOST) $(PORT)
 
 up.client.reloader:
-	. $(BIN)/activate; python scripts/restarter.py $(PACKAGE) $(PYTHON_DIS) -m $(PACKAGE) $(CLIENT) $(HOST) $(PORT) $(user) $(password)
+	. $(BIN)/activate; python scripts/restarter.py $(APP_DIR) $(PYTHON_DIS) -m $(APP_DIR) $(CLIENT) $(HOST) $(PORT) $(user) $(password)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ < LOCAL HOST > ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # Python environment Management
@@ -43,13 +43,38 @@ clean:
 	rm -rf venv
 	find -iname "*.pyc" -delete
 
+# ------------------
+# Tests
+# ------------------
+
 # pytest Flags:
 # -rP  Extra summary info
 # -s   -s is equivalent to --capture=no.
 # -rx  shows the captured output of passed tests.
 .test:
 	pytest -rP
+.test:
+	. $(BIN)/activate; pytest -rP -W ignore::DeprecationWarning --disable-warnings
+.test_coverage:
+	. $(BIN)/activate; pytest -rP -W ignore::DeprecationWarning --disable-warnings --cov=$(APP_DIR)
+.test_coverage_html:
+	. $(BIN)/activate; pytest -rP -W ignore::DeprecationWarning --disable-warnings --cov=$(APP_DIR) --cov-report=html
 
+# ------------------
+# Code Inspections
+# ------------------
+inspect_code:
+	flake8 $(APP_DIR)
+
+inspect_code_benchmark:
+	flake8 $(APP_DIR) --benchmark
+
+# ------------------
+# Tools
+# ------------------
+
+.kill_tcp_port:
+	fuser -k $(PORT)/tcp
 
 .PHONY: init .test clean .venv .install
 
