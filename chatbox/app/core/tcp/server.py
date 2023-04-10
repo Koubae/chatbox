@@ -36,8 +36,8 @@ class SocketTCPServer(NetworkSocket):
         exception: BaseException|None = None
 
         self.start_listening()
+        threading.Thread(target=self.thread_broadcaster, daemon=True).start()
         while self.server_listening:
-            threading.Thread(target=self.thread_broadcaster, daemon=True).start()
             try:
                 client, address = self.socket.accept()   # blocking - main thread
                 self.accept_new_connection(client, objects.Address(*address))
@@ -125,8 +125,6 @@ class SocketTCPServer(NetworkSocket):
             clients_to_send = {**clients_to_send, **self.clients_undentified}
 
         for identifier in clients_to_send:
-            if identifier == client_identifier:
-                continue
             client_conn: objects.Client = clients_to_send[identifier]
             client_socket: socket.socket = client_conn.connection
             self.send(client_socket, message)
