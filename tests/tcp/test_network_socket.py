@@ -9,7 +9,7 @@ pytest -rP -m tcp_core
 pytest -rP -m tcp
 
 """
-
+import uuid
 import socket
 import pytest
 import threading
@@ -94,8 +94,9 @@ class TestNetworkSocket:
 
     def test_net_socket_overridable_functions_raise_notImplementedError(self):
         network_socket: NetworkSocket = commons.create_socket("localhost", 10_000)
+        client_identifier = hash((network_socket.socket.getsockname(), id(network_socket)))
         with pytest.raises(NotImplementedError) as _:
-            network_socket.broadcast("my-message")
+            network_socket.broadcast(client_identifier, "my-message")
 
     def test_net_socket_encode_message(self):
         message: str = "hello world"

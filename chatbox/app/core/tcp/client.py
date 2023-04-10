@@ -147,7 +147,7 @@ class SocketTCPClient(NetworkSocket):
     def stop_connecting_to_server(self):
         self.connected_to_server = False
 
-    def send(self, message: str) -> int: # noqa
+    def send(self, message: str) -> int:  # noqa
         return super().send(self.socket, message)
 
 

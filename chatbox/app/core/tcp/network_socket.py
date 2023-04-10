@@ -277,7 +277,7 @@ class NetworkSocket:
         return total_sent
 
     # ^^^^^^^^^ NotImplemented Methods ^^^^^^^^^
-    def broadcast(self, client_identifier: str, message: str) -> None:
+    def broadcast(self, client_identifier: int, message: str) -> None:
         raise NotImplementedError("Method not implemented!")
 
 

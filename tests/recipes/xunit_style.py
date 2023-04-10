@@ -1,5 +1,3 @@
-import pytest
-
 counter = 0
 
 def add_counter():
