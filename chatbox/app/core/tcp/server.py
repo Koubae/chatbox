@@ -140,15 +140,8 @@ class SocketTCPServer(NetworkSocket):
     def accept_new_connection(self, client: socket.socket, address: objects.Address) -> None:
         self.total_client_connected += 1
 
-        client_identifier = self.create_client_identifier(client, address)
-        new_connection = objects.Client(
-            client,
-            client_identifier['identifier'],
-            client_identifier['id'],
-            address,
-            uuid.uuid4()
-        )
-        self.clients_undentified[client_identifier['identifier']] = new_connection
+        new_connection = self.create_client_object(client, address)
+        self.clients_undentified[new_connection.identifier] = new_connection
 
         _logger.info(f'New connection {new_connection} accepted, creating receiving client thread')
         t_receiver = threading.Thread(target=self.thread_client_receiver, args=(new_connection,), daemon=True)
@@ -165,7 +158,9 @@ class SocketTCPServer(NetworkSocket):
             self.send(client_conn.connection, codes.make_message(codes.IDENTIFICATION_REQUIRED, client_conn.user_id))
 
     def login(self, logging_code_type: int, client_conn: objects.Client, payload: str) -> bool:
-        if not logging_code_type:
+        if not logging_code_type or not client_conn or not payload:
+            return False
+        if client_conn.identifier not in self.clients_undentified:
             return False
         login_info = self.parse_json(codes.get_message(logging_code_type, payload))
         if not login_info:
@@ -193,7 +188,7 @@ class SocketTCPServer(NetworkSocket):
         client_conn.set_logged_in()
 
         self.clients_identified[client_conn.identifier] = client_conn  # add client to identify
-        del self.clients_undentified[client_conn.identifier] # remove client from un-identify one
+        del self.clients_undentified[client_conn.identifier]           # remove client from un-identify one
 
         _logger.info(f"Client {client_conn} identified with credentials {login_info}")
         return True
@@ -208,7 +203,7 @@ class SocketTCPServer(NetworkSocket):
     # ------------------------------------
     @property
     def server_listening(self) -> bool:
-        return self._server_listening
+        return self._server_listening  # pragma: no cover
 
     @server_listening.getter
     def server_listening(self) -> bool:
@@ -223,6 +218,16 @@ class SocketTCPServer(NetworkSocket):
     # --------------------------------------------------
     # Utils
     # --------------------------------------------------
+    def create_client_object(self, client: socket.socket, address: objects.Address) -> objects.Client:
+        client_identifier = self.create_client_identifier(client, address)
+        return objects.Client(
+            client,
+            client_identifier['identifier'],
+            client_identifier['id'],
+            address,
+            uuid.uuid4()
+        )
+
     @staticmethod
     def create_client_identifier(client: socket.socket, address: objects.Address) -> dict[str, int]:
         client_memory_id = id(client)

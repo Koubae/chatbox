@@ -10,7 +10,7 @@ class Address(NamedTuple):
 
 
 Message = t.TypedDict('Message', {'identifier': int, 'message': str, 'send_all': bool})
-
+LoginInfo = t.TypedDict('LoginInfo', {'user_name': t.Optional[str], 'password': t.Optional[str], 'user_id': t.Optional[str]})
 
 @dataclasses.dataclass
 class Connection:

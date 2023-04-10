@@ -5,8 +5,8 @@ from typing import Type
 
 from .network_socket import NetworkSocket
 
-from chatbox.app import constants
 from chatbox.app.constants import chat_internal_codes as codes
+from . import objects
 
 _logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class SocketTCPClient(NetworkSocket):
         if not self.password:
             self.password = input(">>> Enter Password: ")
         self.credential = (self.user_name, self.password)
-        self.login_info: dict = {
+        self.login_info: objects.LoginInfo = {
             'user_name': self.user_name,
             'password': self.password,
             'user_id': self.user_id
@@ -38,7 +38,14 @@ class SocketTCPClient(NetworkSocket):
 
 
     def start(self):
-        exception_to_raise: list[Type[BaseException], ...] = [KeyboardInterrupt, KeyboardInterrupt, ConnectionResetError, ConnectionRefusedError, ConnectionAbortedError, ConnectionError]
+        exception_to_raise: list[Type[BaseException], ...] = [
+            KeyboardInterrupt,
+            KeyboardInterrupt,
+            ConnectionResetError,
+            ConnectionRefusedError,
+            ConnectionAbortedError,
+            ConnectionError
+        ]
         exception: BaseException | None = None
         self.start_connecting_to_server()
 
