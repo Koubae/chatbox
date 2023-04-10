@@ -11,7 +11,7 @@ from . import objects
 _logger = logging.getLogger(__name__)
 
 
-class SocketTCPClient(NetworkSocket):
+class SocketTCPClient(NetworkSocket):   # noqa
     SOCKET_TYPE: str = "tcp_client"
 
     def __init__(self, host: str, port: int, user_name: str|None = None, password: str|None = None):
@@ -21,7 +21,7 @@ class SocketTCPClient(NetworkSocket):
         self.password: str|None = password
         self.credential: tuple[str, str]|None = None
         self.user_id: str|None = None
-        self._connected_to_server: bool = False # currently connected to the server # TODO: Make setter for these flags value! (USe bitwise as well?)TODO: Semaphore or signal?
+        self._connected_to_server: bool = False # currently connected to the server
 
     def __call__(self, *args, **kwargs):
         if not self.user_name:

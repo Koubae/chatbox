@@ -76,7 +76,7 @@ class TestNetworkSocket:
         seconds_to_trigger_close = 2  # manually 'close' the NetworkSocket so that wait_or_die must stop and call close to self
 
         network_socket: NetworkSocket = network_socket
-        network_socket.socket_connected = True  # mock that the server is connected
+        network_socket.socket_connected.set()  # mock that the server is connected
 
         waiting_thread = threading.Thread(target=network_socket.start_wait_forever, daemon=True)  # let's put it in a thread in order to monitor it
         waiting_thread.start()
@@ -87,7 +87,7 @@ class TestNetworkSocket:
             if seconds_to_trigger_close == seconds_to_wait:
                 network_socket.stop_wait_forever()
 
-        assert network_socket.socket_connected is False
+        assert network_socket.socket_connected.is_set() is False
 
     @pytest.mark.tcp_core
     @pytest.mark.tcp

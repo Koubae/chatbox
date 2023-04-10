@@ -23,7 +23,7 @@ class NetworkSocket:
         #: Disable Nagle's algorithm by default.
         #: ``[(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)]``
         (socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),
-        (socket.IPPROTO_TCP, socket.TCP_CORK, 1), # TCP_CORK  Only available in linux. TODO: check for other OS
+        (socket.IPPROTO_TCP, socket.TCP_CORK, 1), # TCP_CORK  Only available in linux.
 
     ]
 
@@ -39,10 +39,10 @@ class NetworkSocket:
         self.socket: socket.socket = self.socket_on()
 
         self.name: str = f"{socket.gethostname()}@<{self.address}>"
-        self.socket_ready: bool = False        # socket is ready to operate  # TODO: (USe bitwise as well?)TODO: Semaphore or signal?
-        self.socket_connected: bool = False    # socket is connected (bind to address when server or connected to address when client) # TODO
-        self.socket_closed: bool = False       # socket is closed # TODO: Semaphore or signal?
-        self.socket_wait_forever: bool = False # socket is waiting forever.  # TODO: Semaphore or signal?
+        self.socket_ready: threading.Event = threading.Event()         # socket is ready to operate
+        self.socket_connected: threading.Event = threading.Event()     # socket is connected (sock.bind or sock.connect)
+        self.socket_closed: threading.Event = threading.Event()        # socket is closed
+        self.socket_wait_forever: threading.Event = threading.Event()  # socket is waiting forever.
 
     def __del__(self):
         self.terminate()
@@ -90,8 +90,8 @@ class NetworkSocket:
             _logger.exception("Error while establishing connection to %s, reason : %s", self.address, error, exc_info=error)
             return False
         else:
-            self.socket_connected = True
-            self.socket_ready = True
+            self.socket_connected.set()
+            self.socket_ready.set()
             _logger.info("%s Connected to %s", self, self.address)
             return True
 
@@ -226,16 +226,16 @@ class NetworkSocket:
             return
 
         _logger.info(f"{self.name} - Shutting down and then closing Socket")
-        if self.socket_connected:
+        if self.socket_connected.is_set():
             try:
                 self.socket.shutdown(socket.SHUT_RDWR)
                 _logger.info(f"{self.name} - Socket Shutdown for READ and WRITE  with no errors.")
             except OSError as error: # Is it errors out probably it's already shutdown. No need further actions
                 _logger.warning(f"Socket {self.name} encountered an error while Shutting Down, error : %s", error)
             finally:
-                self.socket_connected = False
+                self.socket_connected.clear()
 
-        if self.socket_closed:
+        if self.socket_closed.is_set():
             _logger.info(f"Socket {self.name} is already closed!")
             return
 
@@ -245,21 +245,20 @@ class NetworkSocket:
         except OSError as error:
             _logger.warning(f"Socket {self.name} encountered an error while closing socket, error : %s", error)
         finally:
-            self.socket_closed = True
+            self.socket_closed.set()
+            self.socket_ready.clear()
 
     def stop_wait_forever(self):
-        self.socket_wait_forever = False
+        self.socket_wait_forever.set()
 
     def start_wait_forever(self):
-        self.socket_wait_forever = True
+        self.socket_wait_forever.clear()
         self.wait_or_die()
 
     def wait_or_die(self):
         """Let a tcp socket wait indefinitely, useful especially for client connections"""
-        while self.socket_wait_forever:  # TODO: use other way to do this, for instance some Semaphore, Signals or stuff like this
-            time.sleep(1)
-        else:
-            self._close()
+        self.socket_wait_forever.wait()  # blocking. waits till threading.Event is triggered
+        self._close()
 
     # ······························
     # Socket BroadCasting

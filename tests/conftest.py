@@ -12,7 +12,7 @@ UNITTEST_HOST: str = "127.2.9.123"
 UNITTEST_PORT: int = 17219
 for _logger_name_to_disable in [
 	'chatbox.app.core.tcp.network_socket',
-	# 'chatbox.app.core.tcp.server',
+	'chatbox.app.core.tcp.server',
 ]:
 	_logger = logging.getLogger(_logger_name_to_disable)
 	_logger.propagate = False

@@ -22,7 +22,7 @@ class SocketTCPServer(NetworkSocket):
         super().__init__(host, port)
 
         self.server_session: uuid.UUID = uuid.uuid4() # TODO. 1. send to client. create session expiration . save sesison to db. session data should be a pickled object using shelfe?
-        self._server_listening: bool = False # server is currenly listenning for new client connection # TODO: Make setter for these flags value! (USe bitwise as well?)TODO: Semaphore or signal?
+        self._server_listening: bool = False
 
         self.client_messages : queue.Queue[objects.Message] = queue.Queue(maxsize=constants.SOCKET_MAX_MESSAGE_QUEUE_PER_WORKER)
         self.clients_undentified: dict[int, objects.Client] = {}
@@ -70,7 +70,7 @@ class SocketTCPServer(NetworkSocket):
                         if not message:
                             break
 
-                        if not client_conn.is_logged(): # TODO: create separeate thread to send only to client . then it will use a 'queue' only for that client???n
+                        if not client_conn.is_logged():
                             self.login_request(client_conn, message)
                             continue
 
@@ -110,7 +110,7 @@ class SocketTCPServer(NetworkSocket):
         # Implement queue for message to broadcast
 
     def thread_broadcaster(self) -> None:
-        while self.server_listening: # TODO: check if is better add anotehr flag instead of server_listening
+        while self.server_listening:
             message_to_broadcast: objects.Message = self.client_messages.get()   # blocking - t_broadcaster
             client_identifier = message_to_broadcast['identifier']
             message = message_to_broadcast['message']
