@@ -12,28 +12,42 @@ pytest -rP -m tcp
 
 import pytest
 
-from . import commons
-
-
-teardown_module = commons.teardown_module
-pytestmark = commons.pytestmark
-
 
 class TestSocketTCPServer:
 
+	@pytest.mark.tcp_server
+	@pytest.mark.tcp_core
+	@pytest.mark.tcp
 	def test_tcp_server_thread_receiver_receive_msg(self):
 		for _ in range(10):
 			pass
 
+	@pytest.mark.tcp_server
+	@pytest.mark.tcp_core
+	@pytest.mark.tcp
 	def test_tcp_server_thread_receiver_sent_message_are_in_queue(self):
 		for _ in range(10):
 			pass
 
+	@pytest.mark.tcp_server
+	@pytest.mark.tcp_core
+	@pytest.mark.tcp
 	def test_tcp_server_thread_receiver_stops_and_keyboard_interrupt(self):
 		for _ in range(10):
 			pass
 			# print("Hello World")
 
+	@pytest.mark.tcp_server
+	@pytest.mark.tcp_core
+	@pytest.mark.tcp
 	def test_tcp_server_broadcast_1_client(self): ...
+
+	@pytest.mark.tcp_server
+	@pytest.mark.tcp_core
+	@pytest.mark.tcp
 	def test_tcp_server_broadcast_19_client(self): ...
+
+	@pytest.mark.tcp_server
+	@pytest.mark.tcp_core
+	@pytest.mark.tcp
 	def test_tcp_server_broadcast_message_in_queue_consumed(self): ...
