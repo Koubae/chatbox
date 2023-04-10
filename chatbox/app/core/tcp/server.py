@@ -1,11 +1,10 @@
-import json
 import logging
 import socket
-import time
 import threading
 import queue
 import uuid
 from typing import Type
+
 
 from chatbox.app import constants
 from chatbox.app.constants import chat_internal_codes as codes
@@ -25,14 +24,12 @@ class SocketTCPServer(NetworkSocket):
         self.server_session: uuid.UUID = uuid.uuid4() # TODO. 1. send to client. create session expiration . save sesison to db. session data should be a pickled object using shelfe?
         self._server_listening: bool = False # server is currenly listenning for new client connection # TODO: Make setter for these flags value! (USe bitwise as well?)TODO: Semaphore or signal?
 
-        # TODO queue message object make
-        self.client_messages : queue.Queue[dict[int, str]] = queue.Queue(maxsize=constants.SOCKET_MAX_MESSAGE_QUEUE_PER_WORKER)
+        self.client_messages : queue.Queue[objects.Message] = queue.Queue(maxsize=constants.SOCKET_MAX_MESSAGE_QUEUE_PER_WORKER)
         self.clients_undentified: dict[int, objects.Client] = {}
         self.clients_identified: dict[int, objects.Client] = {}
 
         # metadata
         self.total_client_connected: int = 0
-
 
     def start(self):
         exception_to_raise: tuple[Type[BaseException], ...] = (KeyboardInterrupt, KeyboardInterrupt)
@@ -61,7 +58,7 @@ class SocketTCPServer(NetworkSocket):
         else:
             _logger.warning(f"Exit naturally, total_client_connected={self.total_client_connected}")
 
-    def thread_receiver(self, client_conn: objects.Client): # TODO add as NotImplemented in class mother
+    def thread_client_receiver(self, client_conn: objects.Client): # TODO add as NotImplemented in class mother
         _logger.info(f'{client_conn} receiving ....')
 
         exception: BaseException | None = None
@@ -103,6 +100,7 @@ class SocketTCPServer(NetworkSocket):
             if client_conn.identifier in self.clients_identified:
                 del self.clients_identified[client_conn.identifier]
                 _logger.debug(f"Delete {client_conn.identifier} from clients_identified")
+
         # TODO:
         # 1 identify client
         # 2 when identified remove from identify and add to known client
@@ -113,11 +111,10 @@ class SocketTCPServer(NetworkSocket):
 
     def thread_broadcaster(self) -> None:
         while self.server_listening: # TODO: check if is better add anotehr flag instead of server_listening
-            message_to_broadcast = self.client_messages.get()   # blocking - t_broadcaster
-            client_identifier = list(message_to_broadcast.keys())
-            if client_identifier:
-                client_identifier = client_identifier[0]
-                message = message_to_broadcast[client_identifier]
+            message_to_broadcast: objects.Message = self.client_messages.get()   # blocking - t_broadcaster
+            client_identifier = message_to_broadcast['identifier']
+            message = message_to_broadcast['message']
+            if client_identifier and message:
                 self.broadcast(client_identifier, message)
             self.client_messages.task_done()
 
@@ -150,7 +147,7 @@ class SocketTCPServer(NetworkSocket):
         self.clients_undentified[client_identifier] = new_connection
 
         _logger.info(f'New connection {new_connection} accepted, creating receiving client thread')
-        t_receiver = threading.Thread(target=self.thread_receiver, args=(new_connection,), daemon=True)
+        t_receiver = threading.Thread(target=self.thread_client_receiver, args=(new_connection,), daemon=True)
         t_receiver.start()
 
     # ------------------------------------
@@ -200,7 +197,7 @@ class SocketTCPServer(NetworkSocket):
     def add_message_to_broadcast(self, client_conn: objects.Client, message: str) -> None:
         _logger.info(f"[RECEIVED]::({client_conn}) to broadcast >>> {message}")
         message = f'-- {client_conn.user_name} :: {message}'
-        self.client_messages.put({client_conn.identifier: message})
+        self.client_messages.put({'identifier': client_conn.identifier, 'message': message})
 
     # ------------------------------------
     # Getter and setters

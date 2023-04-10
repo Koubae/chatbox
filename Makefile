@@ -10,19 +10,38 @@ ENVIRONMENT = venv
 ENVIRONMENT_SOURCE = venv/bin/activate
 PYTHON_DIS = venv/bin/python
 
+CLIENT_PASS=1234
+
 up.server:
 	$(PYTHON_DIS) -m $(APP_DIR) $(SERVER) $(HOST) $(PORT)
 
 # instance: make up.client user=--user=fede2 password=--password=123
 up.client:
-	$(PYTHON_DIS) -m $(APP_DIR) $(CLIENT) $(HOST) $(PORT) $(user) $(password)
+	$(PYTHON_DIS) -m $(APP_DIR) $(CLIENT) $(HOST) $(PORT)
 
+up.client.1:
+	$(PYTHON_DIS) -m $(APP_DIR) $(CLIENT) $(HOST) $(PORT) --user=user001 --password=$(CLIENT_PASS)
+up.client.2:
+	$(PYTHON_DIS) -m $(APP_DIR) $(CLIENT) $(HOST) $(PORT) --user=user002 --password=$(CLIENT_PASS)
+up.client.3:
+	$(PYTHON_DIS) -m $(APP_DIR) $(CLIENT) $(HOST) $(PORT) --user=user003 --password=$(CLIENT_PASS)
+up.client.4:
+	$(PYTHON_DIS) -m $(APP_DIR) $(CLIENT) $(HOST) $(PORT) --user=user004 --password=$(CLIENT_PASS)
 
 up.server.reloader:
 	. $(BIN)/activate; python scripts/restarter.py $(APP_DIR) $(PYTHON_DIS) -m $(APP_DIR) $(SERVER) $(HOST) $(PORT)
 
 up.client.reloader:
-	. $(BIN)/activate; python scripts/restarter.py $(APP_DIR) $(PYTHON_DIS) -m $(APP_DIR) $(CLIENT) $(HOST) $(PORT) $(user) $(password)
+	. $(BIN)/activate; python scripts/restarter.py $(APP_DIR) $(PYTHON_DIS) -m $(APP_DIR) $(CLIENT) $(HOST) $(PORT)
+
+up.client.1.reloader:
+	. $(BIN)/activate; python scripts/restarter.py $(APP_DIR) $(PYTHON_DIS) -m $(APP_DIR) $(CLIENT) $(HOST) $(PORT) --user=user001 --password=$(CLIENT_PASS)
+up.client.2.reloader:
+	. $(BIN)/activate; python scripts/restarter.py $(APP_DIR) $(PYTHON_DIS) -m $(APP_DIR) $(CLIENT) $(HOST) $(PORT) --user=user002 --password=$(CLIENT_PASS)
+up.client.3.reloader:
+	. $(BIN)/activate; python scripts/restarter.py $(APP_DIR) $(PYTHON_DIS) -m $(APP_DIR) $(CLIENT) $(HOST) $(PORT) --user=user003 --password=$(CLIENT_PASS)
+up.client.4.reloader:
+	. $(BIN)/activate; python scripts/restarter.py $(APP_DIR) $(PYTHON_DIS) -m $(APP_DIR) $(CLIENT) $(HOST) $(PORT) --user=user004 --password=$(CLIENT_PASS)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ < LOCAL HOST > ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # Python environment Management

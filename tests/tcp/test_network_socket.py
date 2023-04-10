@@ -9,7 +9,6 @@ pytest -rP -m tcp_core
 pytest -rP -m tcp
 
 """
-import uuid
 import socket
 import pytest
 import threading

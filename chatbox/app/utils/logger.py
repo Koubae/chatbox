@@ -135,17 +135,16 @@ class ColoredFormatter(logging.Formatter, Color):
         def add_color_formatter_to_stdout_handler():
             _stream_handler = logging.root.handlers[1]
 
-            formatter_from_config = _stream_handler.formatter._fmt
+            formatter_from_config = _stream_handler.formatter._fmt   # noqa
             formatter = ColoredFormatter.func_formatter_message(formatter_from_config)
             _stream_handler.setFormatter(ColoredFormatter(formatter))
 
-        exception: FileNotFoundError | KeyError | None = None
         try:
-            exception = loggin_config_initialize()
+            exception: FileNotFoundError = loggin_config_initialize()
             if not exception:
                 add_color_formatter_to_stdout_handler()
         except KeyError as error:
-            exception = error
+            exception: KeyError = error
         if not exception:
             return
 
