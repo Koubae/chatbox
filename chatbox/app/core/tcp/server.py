@@ -50,6 +50,9 @@ class SocketTCPServer(NetworkSocket):
             except (ConnectionResetError, ConnectionRefusedError, ConnectionAbortedError, ConnectionError) as error:
                 _logger.warning(f"Connection error while accepting new client connections, reason: {error}")
                 exception = error
+            except OSError as error:
+                _logger.warning(f"OSError error while accepting new client connections, reason: {error}")
+                exception = error
             finally:
                 if exception and exception.__class__ in exception_to_raise:
                     self.stop_listening()
@@ -58,7 +61,10 @@ class SocketTCPServer(NetworkSocket):
         else:
             _logger.warning(f"Exit naturally, total_client_connected={self.total_client_connected}")
 
-    def thread_client_receiver(self, client_conn: objects.Client): # TODO add as NotImplemented in class mother
+    def close_before(self):
+        self.stop_listening()
+
+    def thread_client_receiver(self, client_conn: objects.Client):
         _logger.info(f'{client_conn} receiving ....')
 
         exception: BaseException | None = None

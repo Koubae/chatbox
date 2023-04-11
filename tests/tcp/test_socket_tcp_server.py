@@ -47,13 +47,6 @@ class TestSocketTCPServer(BaseRunner):
 	@pytest.mark.tcp_core
 	@pytest.mark.tcp
 	def test_accept_new_connection(self, socket_create):
-		to_delete = set()
-		for identifier, client in self.tcp_server.clients_undentified.items():
-			client.connection.close()
-			to_delete.add(identifier)
-		for _identifier in to_delete:
-			del self.tcp_server.clients_undentified[_identifier]
-
 		sockets: list[socket.socket] = TCPSocketMock.connect_multiple_clients(socket_create, self.tcp_server.address)
 		for _sock in sockets:
 			TCPSocketMock.socket_send(_sock, "ping")

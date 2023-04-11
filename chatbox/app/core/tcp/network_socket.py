@@ -3,13 +3,15 @@ import sys
 import socket
 import threading
 import logging
-import time
 
 from chatbox.app import constants
 from .objects import Address
 
 
 _logger = logging.getLogger(__name__)
+
+class NetworkSocketException(Exception):
+    pass
 
 
 class NetworkSocket:
@@ -48,15 +50,14 @@ class NetworkSocket:
         self.terminate()
 
     def __str__(self):
-        return f"{self.__class__.__name__}::{self.SOCKET_TYPE} <{self.address}>"
+        return f"{self.__class__.__name__}::{self.SOCKET_TYPE} {self.name or f'@<{self.address}>'}"
     def __repr__(self):
         return f"{self.__class__.__name__}(socket_type={self.SOCKET_TYPE}, address={self.address})"
 
     def __call__(self, *args, **kwargs):
         connected: bool = self.socket_connect()
         if not connected:
-            # TODO Implement Error ????
-            raise Exception(f"Something went wrong while connecting to {self.address}")
+            raise NetworkSocketException(f"Something went wrong while connecting to {self.address}")
         self._start()
 
     # --------------------------------------------------
@@ -84,10 +85,10 @@ class NetworkSocket:
             elif self.SOCKET_TYPE == "tcp_client":
                 self.socket.connect(tuple(self.address))
             else:
-                _logger.warning(f"{self.name} is an abstract TCP Socket and does not implement a connection method, use a implemented one!")
+                _logger.warning(f"{self} - is an abstract TCP Socket and does not implement a connection method, use a implemented one!")
                 return False
         except (ConnectionRefusedError, ConnectionRefusedError, ConnectionAbortedError, ConnectionResetError, ConnectionError) as error:
-            _logger.exception("Error while establishing connection to %s, reason : %s", self.address, error, exc_info=error)
+            _logger.exception("%s - Error while establishing connection to %s, reason : %s", self, self.address, error, exc_info=error)
             return False
         else:
             self.socket_connected.set()
@@ -105,25 +106,23 @@ class NetworkSocket:
 
         try:
             self.start()
-            # TODO: not sure if is 'after it finishing running' or 'after is started and is running' ,
-            #  if second option then this should run in a separate thread or be just a coroutine
             self.start_after()
 
         except KeyboardInterrupt as _:
-            out_message = f"[EXIT_K_INTERRUPT] - Interrupted by signal 2: SIGINT"
+            out_message = "[EXIT_K_INTERRUPT] - Interrupted by signal 2: SIGINT"
             log_level = logging.WARNING
             exit_code = 130
         except SystemExit as _:
-            out_message = f"[EXIT_SYSTEM] - Interrupted by System"
+            out_message = "[EXIT_SYSTEM] - Interrupted by System"
             log_level = logging.WARNING
             exit_code = 130
         except (RuntimeError, SyntaxError, TypeError, ValueError, LookupError) as programming_error:
-            out_message = f"[PROG_ERROR] - App Error"
+            out_message = "[PROG_ERROR] - App Error"
             exception = programming_error
             log_level = logging.ERROR
             exit_code = 1
         except socket.timeout as socket_timeout:
-            out_message = f"[SOCKET_TIMEOUT] - Socket Timed out"
+            out_message = "[SOCKET_TIMEOUT] - Socket Timed out"
             exception = socket_timeout
             log_level = logging.ERROR
             exit_code = 1
@@ -173,18 +172,18 @@ class NetworkSocket:
             exit_code = 0
 
         finally:
-            out_message += "; Closing ..."
+            out_message = f"{self} - {out_message}; Closing ..."
             if exception:
                 out_message = f"{out_message}; Error: {exception.__class__.__name__} error stack trace will log shortly, reason => {exception}\n"
                 _logger.log(log_level, out_message)
-                _logger.exception(f"Stack Trace of {exception}:\n\n", exc_info=exception)
+                _logger.exception(f"{self} - Stack Trace of {exception}:\n\n", exc_info=exception)
             else:
                 _logger.log(log_level, out_message)
 
             try:
                 self.terminate()
             except BaseException as error:
-                _logger.exception(f"Error While closing the main socket, reason: {error}", exc_info=error)
+                _logger.exception(f"{self} - Error While closing the main socket, reason: {error}", exc_info=error)
             finally:
                 if constants.KILL_APP_AT_SOCKET_TERMINATE:
                     sys.exit(exit_code)
@@ -219,31 +218,31 @@ class NetworkSocket:
 
     def close(self):
         if not self.socket or not isinstance(self.socket, socket.socket):
-            _logger.debug(f"Try to close on Socket {self.name} but instance doesn't have a socket!")
+            _logger.debug(f"{self} - Try to close on Socket but instance doesn't have a socket!")
             return
         elif not isinstance(self.socket, socket.socket):
-            _logger.warning(f"Try to close on Socket {self.name} but is not an object of type socket.socket, type: {type(self.socket)}")
+            _logger.warning(f"{self} - Try to close on Socket but is not an object of type socket.socket, type: {type(self.socket)}")
             return
 
-        _logger.info(f"{self.name} - Shutting down and then closing Socket")
+        _logger.info(f"{self} - Shutting down and then closing Socket")
         if self.socket_connected.is_set():
             try:
                 self.socket.shutdown(socket.SHUT_RDWR)
-                _logger.info(f"{self.name} - Socket Shutdown for READ and WRITE  with no errors.")
+                _logger.info(f"{self} - Socket Shutdown for READ and WRITE  with no errors.")
             except OSError as error: # Is it errors out probably it's already shutdown. No need further actions
-                _logger.warning(f"Socket {self.name} encountered an error while Shutting Down, error : %s", error)
+                _logger.warning(f"{self} - Encountered an error while Shutting Down, error : %s", error)
             finally:
                 self.socket_connected.clear()
 
         if self.socket_closed.is_set():
-            _logger.info(f"Socket {self.name} is already closed!")
+            _logger.info(f"{self} - Socket is already closed!")
             return
 
         try:
             self.socket.close()
-            _logger.info(f"Socket {self.name} - Socket Closed successfully.")
+            _logger.info(f"{self} - Socket Closed successfully.")
         except OSError as error:
-            _logger.warning(f"Socket {self.name} encountered an error while closing socket, error : %s", error)
+            _logger.warning(f"{self} - Encountered an error while closing socket, error : %s", error)
         finally:
             self.socket_closed.set()
             self.socket_ready.clear()
@@ -267,9 +266,9 @@ class NetworkSocket:
         try:
             message: bytes = connection.recv(buffer_size)
         except socket.error as error:
-            _logger.exception(f"Socket error on receive handler, reason: {error}", exc_info=error)
+            _logger.exception(f"{self} - Socket error on receive handler, reason: {error}", exc_info=error)
         except Exception as error:
-            _logger.exception(f"Exception error on receive handler, reason: {error}", exc_info=error)
+            _logger.exception(f"{self} - Exception error on receive handler, reason: {error}", exc_info=error)
         else:
             if not message:
                 return None
@@ -279,16 +278,16 @@ class NetworkSocket:
         try:
             total_sent = connection.send(self.encode_message(message))
         except socket.error as error:
-            _logger.exception(f"Socket error on send handler, reason: {error}", exc_info=error)
+            _logger.exception(f"{self} - Socket error on send handler, reason: {error}", exc_info=error)
             total_sent = -1
         except Exception as error:
-            _logger.exception(f"Exception error on send handler, reason: {error}", exc_info=error)
+            _logger.exception(f"{self} - Exception error on send handler, reason: {error}", exc_info=error)
             total_sent = -1
 
         return total_sent
 
     # ^^^^^^^^^ NotImplemented Methods ^^^^^^^^^
-    def broadcast(self, client_identifier: int, message: str) -> None:
+    def broadcast(self, client_identifier: int, message: str, send_all: bool = False) -> None:
         raise NotImplementedError("Method not implemented!")
 
 
@@ -337,7 +336,7 @@ class NetworkSocket:
         try:
             loaded = json.loads(message)
         except json.JSONDecodeError as error:
-            _logger.exception(f'Error while parsing json, reason {error}', exc_info=error)
+            _logger.exception(f'Error while parsing json ({message[:255]}), reason {error}', exc_info=error)
             return None
         else:
             return loaded
