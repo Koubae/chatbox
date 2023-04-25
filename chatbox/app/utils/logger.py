@@ -97,7 +97,7 @@ class ColoredFormatter(logging.Formatter, Color):
             log_metadata = log_splitted[0]
             log_message = log_splitted[1].replace(self.DEFAULT, '').replace(self.CYAN, "") # remove DEFAULT and cyan (if default formatter is $DEFAULT $CYAN%(message)s$DEFAULT
             log_color_level = self._LOGGER_COLOR_LIGHT[self._LOGGER_LEVEL[record.levelno]]
-            log_message = f"{self.GREEN}{LOG_SEPARATOR}{self.DEFAULT}{log_color_level}{log_message}" # Dont add the default for any other possible errors logs or strack trace
+            log_message = f"{self.GREEN}{LOG_SEPARATOR}{self.DEFAULT}{log_color_level}{log_message}{self.DEFAULT}" # Dont add the default for any other possible errors logs or strack trace
             res = "".join([log_metadata, log_message])
 
         return res
