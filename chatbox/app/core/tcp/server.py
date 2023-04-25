@@ -32,7 +32,6 @@ class SocketTCPServer(NetworkSocket):
         self.total_client_connected: int = 0
 
     def start(self):
-        exception_to_raise: tuple[Type[BaseException], ...] = (KeyboardInterrupt, KeyboardInterrupt)
         exception: BaseException|None = None
 
         self.start_listening()
@@ -43,19 +42,19 @@ class SocketTCPServer(NetworkSocket):
                 self.accept_new_connection(client, objects.Address(*address))
             except KeyboardInterrupt as error:
                 _logger.warning(f"Interrupted by User while accepting new client connections, reason: {error}")
-                exception = error
+                self.stop_listening()
             except SystemExit as error:
                 _logger.warning(f"Interrupted by System while accepting new client connections, reason: {error}")
-                exception = error
+                self.stop_listening()
             except (ConnectionResetError, ConnectionRefusedError, ConnectionAbortedError, ConnectionError) as error:
                 _logger.warning(f"Connection error while accepting new client connections, reason: {error}")
-                exception = error
+                self.stop_listening()
             except OSError as error:
                 _logger.warning(f"OSError error while accepting new client connections, reason: {error}")
                 exception = error
+                self.stop_listening()
             finally:
-                if exception and exception.__class__ in exception_to_raise:
-                    self.stop_listening()
+                if exception:
                     raise exception from None
 
         else:

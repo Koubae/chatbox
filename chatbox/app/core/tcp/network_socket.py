@@ -107,15 +107,6 @@ class NetworkSocket:
         try:
             self.start()
             self.start_after()
-
-        except KeyboardInterrupt as _:
-            out_message = "[EXIT_K_INTERRUPT] - Interrupted by signal 2: SIGINT"
-            log_level = logging.WARNING
-            exit_code = 130
-        except SystemExit as _:
-            out_message = "[EXIT_SYSTEM] - Interrupted by System"
-            log_level = logging.WARNING
-            exit_code = 130
         except (RuntimeError, SyntaxError, TypeError, ValueError, LookupError) as programming_error:
             out_message = "[PROG_ERROR] - App Error"
             exception = programming_error
@@ -174,9 +165,12 @@ class NetworkSocket:
         finally:
             out_message = f"{self} - {out_message}; Closing ..."
             if exception:
-                out_message = f"{out_message}; Error: {exception.__class__.__name__} error stack trace will log shortly, reason => {exception}\n"
-                _logger.log(log_level, out_message)
-                _logger.exception(f"{self} - Stack Trace of {exception}:\n\n", exc_info=exception)
+                out_message = f"""{self} - {out_message};
+- Error: {exception.__class__.__name__} reason => {exception}
+Stack Trace:
+
+                """.lstrip()
+                _logger.exception(out_message, exc_info=exception)
             else:
                 _logger.log(log_level, out_message)
 
@@ -256,8 +250,16 @@ class NetworkSocket:
 
     def wait_or_die(self):
         """Let a tcp socket wait indefinitely, useful especially for client connections"""
-        self.socket_wait_forever.wait()  # blocking. waits till threading.Event is triggered
-        self._close()
+        exception: Exception | None = None
+        try:
+            self.socket_wait_forever.wait()  # blocking. waits till threading.Event is triggered
+        except (KeyboardInterrupt, SystemExit, ConnectionError):
+            pass
+        except Exception as error:
+            exception = error
+        finally:
+            if exception:
+                raise exception from None
 
     # ······························
     # Socket BroadCasting

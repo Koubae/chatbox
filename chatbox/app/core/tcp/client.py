@@ -1,6 +1,5 @@
 import json
 import logging
-import sys
 import threading
 from typing import Type
 
@@ -42,15 +41,6 @@ class SocketTCPClient(NetworkSocket):   # noqa
 
 
     def start(self):
-        exception_to_raise: list[Type[BaseException], ...] = [
-            KeyboardInterrupt,
-            KeyboardInterrupt,
-            ConnectionResetError,
-            ConnectionRefusedError,
-            ConnectionAbortedError,
-            ConnectionError
-        ]
-        exception: BaseException | None = None
         self.start_connecting_to_server()
 
         self.send(codes.make_message(codes.LOGIN, json.dumps(self.login_info)))
@@ -85,32 +75,7 @@ class SocketTCPClient(NetworkSocket):   # noqa
         t_receiver.start()
         t_sender.start()
 
-        t_receiver.join()
-        t_sender.join()
-
-        try:
-            self.wait_or_die()  # keep main thread alive -
-        except KeyboardInterrupt as error:
-            _logger.warning(f"Interrupted by User, reason: {error}")
-            exception = error
-        except SystemExit as error:
-            _logger.warning(f"Interrupted by System, reason: {error}")
-            exception = error
-        except (ConnectionResetError, ConnectionRefusedError, ConnectionAbortedError, ConnectionError) as error:
-            _logger.warning(f"Network Connection error to the server, reason: {error}")
-            exception = error
-            if error.__class__ not in exception_to_raise:
-                _logger.warning(
-                    f"Exception of type {error.__class__} no inside exception_to_raise, adding it programmatically")
-                exception_to_raise.append(error.__class__)
-        finally:
-            if exception and exception.__class__ in exception_to_raise:
-                self.stop_connecting_to_server()
-                self.stop_wait_forever()
-                raise exception from None
-
-        self.stop_connecting_to_server()
-        self.stop_wait_forever()
+        self.wait_or_die()  # keep main thread alive -
 
     def close_before(self):
         self.stop_connecting_to_server()

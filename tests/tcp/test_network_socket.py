@@ -87,7 +87,7 @@ class TestNetworkSocket:
             if seconds_to_trigger_close == seconds_to_wait:
                 network_socket.stop_wait_forever()
 
-        assert network_socket.socket_connected.is_set() is False
+        assert network_socket.socket_connected.is_set() is True
 
     @pytest.mark.tcp_core
     @pytest.mark.tcp
