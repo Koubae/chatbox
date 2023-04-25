@@ -61,6 +61,7 @@ Projects ideas / TODO
 ----
 
 * fix log: add log error color 
+* Make client input ">>>" as so, but will disapper and won't be printed in the terminal history
 * echo server
 * ping server
 * heart beat server

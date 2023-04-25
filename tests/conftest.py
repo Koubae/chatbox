@@ -10,9 +10,12 @@ from chatbox.app import constants
 
 UNITTEST_HOST: str = "127.2.9.123"
 UNITTEST_PORT: int = 17219
+
+logging.getLogger().setLevel(logging.INFO)
 for _logger_name_to_disable in [
 	'chatbox.app.core.tcp.network_socket',
 	'chatbox.app.core.tcp.server',
+	'chatbox.app.core.tcp.client',
 ]:
 	_logger = logging.getLogger(_logger_name_to_disable)
 	_logger.propagate = False
@@ -91,7 +94,7 @@ class TCPSocketMock:
 # ------------------------------------------
 # FIXTURES -
 # ------------------------------------------
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="class")
 def create_tcp_server_mock():
 	def set_up():
 		print("FIXTURE: create_tcp_server_mock -> set_up")
@@ -110,6 +113,22 @@ def create_tcp_server_mock():
 	yield server
 
 	tear_down(server)
+
+@pytest.fixture(scope="function")
+def tcp_client_mock() -> t.Callable[[], core.SocketTCPClient]:
+	clients: list[core.SocketTCPClient] = []
+	def set_up(host = UNITTEST_HOST, port = UNITTEST_PORT, user_name = 'user001', password = '1234'):
+		tcp_client: core.SocketTCPClient = core.SocketTCPClient(host=host, port=port, user_name=user_name, password=password)
+		tcp_client_thread = threading.Thread(target=tcp_client, daemon=True)
+		tcp_client_thread.start()
+
+		clients.append(tcp_client)
+		return tcp_client
+
+	yield set_up
+
+	for client in clients:
+		client.terminate()
 
 @pytest.fixture(scope='function')
 def network_socket(request) -> core.NetworkSocket:
@@ -148,6 +167,18 @@ class BaseRunner:
 	"""Base Runner where all unit-tests should inherit from"""
 
 	@pytest.fixture(autouse=True)
-	def _app(self, create_tcp_server_mock):
+	def _app(self, create_tcp_server_mock, monkeypatch):
 		self.tcp_server: core.SocketTCPServer = create_tcp_server_mock
 
+		monkeypatch.setattr(core.SocketTCPClient, "_request_message", lambda _self: self._request_message_mock())
+		monkeypatch.setattr(core.SocketTCPClient, "_request_user_name", lambda _self: self._request_user_name_mock())
+		monkeypatch.setattr(core.SocketTCPClient, "_request_password", lambda _self: self._request_password_mock())
+
+	def _request_message_mock(self) -> str:
+		return input()
+
+	def _request_user_name_mock(self) -> str:
+		return "user001"
+
+	def _request_password_mock(self) -> str:
+		return "1234"

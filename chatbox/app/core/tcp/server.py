@@ -154,12 +154,16 @@ class SocketTCPServer(NetworkSocket):
     # ------------------------------------
     # Business Logic
     # ------------------------------------
-    def login_request(self, client_conn: objects.Client, payload: str):
+    def login_request(self, client_conn: objects.Client, payload: str) -> bool:
         logging_code_type = codes.code_in(codes.LOGIN, payload) or codes.code_in(codes.IDENTIFICATION, payload)
         logged_in = self.login(logging_code_type, client_conn, payload)
         if not logged_in:
             _logger.info(f"Client {client_conn} not identified, requesting identification and sending user_id")
             self.send(client_conn.connection, codes.make_message(codes.IDENTIFICATION_REQUIRED, client_conn.user_id))
+            return False
+
+        self.send(client_conn.connection, codes.make_message(codes.LOGIN_SUCCESS, str(self.server_session)))
+        return True
 
     def login(self, logging_code_type: int, client_conn: objects.Client, payload: str) -> bool:
         if not logging_code_type or not client_conn or not payload:
@@ -172,6 +176,9 @@ class SocketTCPServer(NetworkSocket):
 
         input_user_id = login_info.get('user_id', None)
         input_user_name = login_info.get('user_name', None)
+        input_user_password = login_info.get('password', None)
+        if not input_user_id or not input_user_name or not input_user_password:
+            return False
 
         _logger.info(f"{client_conn.user_name} - with user_id {client_conn.user_id} request {codes.CODES[logging_code_type]}")
         # TODOs:
@@ -181,11 +188,13 @@ class SocketTCPServer(NetworkSocket):
         # 3. check password
         # 4. save encrypt saved password
         # 5. Send 'session' to client (which the client can save) if session is the same! with expiration!!!
-        if input_user_id != client_conn.user_id:  # TODO: check password!!!!
+        if input_user_id != client_conn.user_id:
             return False
 
-        if not input_user_name:
+        # TODO: check password!!!!
+        if input_user_password != input_user_password:
             return False
+
 
         client_conn.user_name = input_user_name
         client_conn.login_info = login_info

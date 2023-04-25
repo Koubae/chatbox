@@ -227,18 +227,8 @@ class TestSocketTCPServer(BaseRunner):
 		}
 		login_request = codes.make_message(codes.LOGIN, json.dumps(user_info))
 
-		self.tcp_server.login_request(client_conn=client_conn, payload=login_request)
+		assert self.tcp_server.login_request(client_conn=client_conn, payload=login_request) is True
 
-		messages = []
-		def receive_thread(_socket_to_listen):
-			msg = TCPSocketMock.socket_receive(_socket_to_listen)
-			messages.append(msg)
-
-		t = threading.Thread(target=receive_thread, args=(_sock,), daemon=True)
-		t.start()
-		t.join(timeout=.5)
-
-		assert not messages
 
 	@pytest.mark.auth_server
 	@pytest.mark.auth
