@@ -1,6 +1,7 @@
 import logging
 import socket
 import threading
+import time
 import typing as t
 
 import pytest
@@ -115,7 +116,7 @@ def create_tcp_server_mock():
 	tear_down(server)
 
 @pytest.fixture(scope="function")
-def tcp_client_mock() -> t.Callable[[], core.SocketTCPClient]:
+def tcp_client_mock() -> t.Callable[..., core.SocketTCPClient]:
 	clients: list[core.SocketTCPClient] = []
 	def set_up(host = UNITTEST_HOST, port = UNITTEST_PORT, user_name = 'user001', password = '1234'):
 		tcp_client: core.SocketTCPClient = core.SocketTCPClient(host=host, port=port, user_name=user_name, password=password)
@@ -166,19 +167,31 @@ def socket_create() -> t.Callable[[], socket.socket]:
 class BaseRunner:
 	"""Base Runner where all unit-tests should inherit from"""
 
+	event_input = threading.Event()
+
 	@pytest.fixture(autouse=True)
 	def _app(self, create_tcp_server_mock, monkeypatch):
 		self.tcp_server: core.SocketTCPServer = create_tcp_server_mock
 
+		monkeypatch.setattr(core.SocketTCPClient, "_print_message", lambda _self, message: self._print_message_mock(message))
 		monkeypatch.setattr(core.SocketTCPClient, "_request_message", lambda _self: self._request_message_mock())
 		monkeypatch.setattr(core.SocketTCPClient, "_request_user_name", lambda _self: self._request_user_name_mock())
 		monkeypatch.setattr(core.SocketTCPClient, "_request_password", lambda _self: self._request_password_mock())
 
+	def _print_message_mock(self, message: str) -> None:
+		pass
+
 	def _request_message_mock(self) -> str:
-		return input()
+		self.event_input.wait()
+		return "some input"
 
 	def _request_user_name_mock(self) -> str:
 		return "user001"
 
 	def _request_password_mock(self) -> str:
 		return "1234"
+
+	def mock_user_input(self, user_input: str = "some input"):
+		self.event_input.set()
+		time.sleep(.3)
+		self.event_input.clear()

@@ -89,7 +89,7 @@ class SocketTCPClient(NetworkSocket):   # noqa
                 if not message:
                     break
                 _logger.debug(message)
-                print(message)
+                self._print_message(message)
             except KeyboardInterrupt as error:
                 _logger.warning(f"(t_receiver) Interrupted by User, reason: {error}")
                 exception = error
@@ -139,14 +139,17 @@ class SocketTCPClient(NetworkSocket):   # noqa
     def send(self, message: str) -> int:  # noqa
         return super().send(self.socket, message)
 
-    def _request_message(self) -> str:     # pragma: no cover
+    def _print_message(self, message: str) -> None:  # pragma: no cover
+        print(message)
+
+    def _request_message(self) -> str:               # pragma: no cover
         return input()
 
-    def _request_user_name(self) -> str:   # pragma: no cover
+    def _request_user_name(self) -> str:             # pragma: no cover
         user_name = input(">>> Enter user name: ")
         return user_name
 
-    def _request_password(self) -> str:    # pragma: no cover
+    def _request_password(self) -> str:              # pragma: no cover
         password = input(">>> Enter Password: ")
         return password
 

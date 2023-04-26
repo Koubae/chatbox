@@ -9,27 +9,31 @@ pytest -rP -m tcp_core
 pytest -rP -m tcp
 
 """
-import socket
-import json
 import threading
 import time
 
 import pytest
 
 from chatbox.app import core
-from chatbox.app.constants import chat_internal_codes as codes
 
-from tests.conftest import BaseRunner, TCPSocketMock, UNITTEST_HOST, UNITTEST_PORT
+from tests.conftest import BaseRunner, UNITTEST_HOST, UNITTEST_PORT
 
 
 class TestSocketTCPClient(BaseRunner):
+
+	def _get_client_connection_from_server(self) -> core.objects.Client:
+		time.sleep(.8)
+		return self.tcp_server.clients_identified[list(self.tcp_server.clients_identified.keys())[0]]
+
 	@pytest.mark.tcp_client
 	@pytest.mark.tcp_core
 	@pytest.mark.tcp
 	def test_start_listening_setter_success(self, tcp_client_mock):
 		client: core.SocketTCPClient = tcp_client_mock()
-		client.connected_to_server = True
+		sender_client = self._get_client_connection_from_server()
+
 		assert client.connected_to_server is True
+		assert sender_client.connection.getpeername() == client.socket.getsockname()
 
 	@pytest.mark.tcp_client
 	@pytest.mark.tcp_core
@@ -38,6 +42,57 @@ class TestSocketTCPClient(BaseRunner):
 		client: core.SocketTCPClient = tcp_client_mock()
 		with pytest.raises(TypeError) as _:
 			client.connected_to_server = "some values"
+
+	@pytest.mark.tcp_client
+	@pytest.mark.tcp_core
+	@pytest.mark.tcp
+	def test_request_user_name(self, tcp_client_mock, monkeypatch):
+		user_mock = "userMock"
+		self._request_user_name_mock = lambda : user_mock
+		client: core.SocketTCPClient = tcp_client_mock(user_name=None)
+
+		assert client.user_name == user_mock
+
+	@pytest.mark.tcp_client
+	@pytest.mark.tcp_core
+	@pytest.mark.tcp
+	def test_request_password(self, tcp_client_mock):
+		password_mock = "somePassword__"
+		self._request_password_mock = lambda: password_mock
+		client: core.SocketTCPClient = tcp_client_mock(password=None)
+
+		assert client.password == password_mock
+
+	@pytest.mark.tcp_client
+	@pytest.mark.tcp_core
+	@pytest.mark.tcp
+	def test_thread_receiver(self, tcp_client_mock):
+		_: core.SocketTCPClient = tcp_client_mock()
+		sender_client = self._get_client_connection_from_server()
+		time.sleep(.5)
+
+		message_received = []
+		self._print_message_mock = lambda message: message_received.append(message)
+		message_base = "Very important message"
+		message_expected = []
+		total_messages = 3
+		for i in range(total_messages):
+			message_to_send = f"{message_base} {i}"
+			message_expected.append(message_to_send)
+			self.tcp_server.add_message_to_broadcast(sender_client, message_to_send, send_all=True)
+			time.sleep(.5)
+
+		assert len(message_received) == total_messages
+
+	@pytest.mark.tcp_client
+	@pytest.mark.tcp_core
+	@pytest.mark.tcp
+	def test_thread_sender(self, tcp_client_mock):
+		_ = tcp_client_mock()
+		_ = self._get_client_connection_from_server()
+		time.sleep(.5)
+		self.mock_user_input()
+
 
 	# ----------------------------------
 	# Auth
