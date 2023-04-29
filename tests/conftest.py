@@ -118,22 +118,6 @@ def create_tcp_server_mock():
 	tear_down(server)
 
 
-@pytest.fixture(scope="class")
-def create_database_mock():
-	print("FIXTURE: create_database_mock -> set_up")
-	database: SQLITEConnection = SQLITEConnection(":memory:")
-	with open(DIR_DATABASE_SCHEMA_MAIN, 'r') as file:
-		schema = file.read()
-
-	database.cursor.executescript(schema)
-	database.connection.commit()
-
-	yield database
-
-	print("FIXTURE: create_database_mock -> tear_down")
-	del database
-
-
 @pytest.fixture(scope="function")
 def tcp_client_mock() -> t.Callable[..., core.SocketTCPClient]:
 	clients: list[core.SocketTCPClient] = []
@@ -150,6 +134,7 @@ def tcp_client_mock() -> t.Callable[..., core.SocketTCPClient]:
 	for client in clients:
 		client.terminate()
 
+
 @pytest.fixture(scope='function')
 def network_socket(request) -> core.NetworkSocket:
 	param = hasattr(request, "param") and request.param or {'host': UNITTEST_HOST, 'port': UNITTEST_PORT}
@@ -159,6 +144,7 @@ def network_socket(request) -> core.NetworkSocket:
 
 	network_socket.terminate()
 
+
 @pytest.fixture(scope='function')
 def _socket() -> socket.socket:
 	socket_options = [(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)]
@@ -167,6 +153,7 @@ def _socket() -> socket.socket:
 	yield _socket
 
 	_socket.close()
+
 
 @pytest.fixture(scope='function')
 def socket_create() -> t.Callable[[], socket.socket]:
@@ -183,6 +170,23 @@ def socket_create() -> t.Callable[[], socket.socket]:
 	for _sock in sockets:
 		_sock.close()
 
+
+@pytest.fixture(scope="class")
+def create_database_mock():
+	print("FIXTURE: create_database_mock -> set_up")
+	database: SQLITEConnection = SQLITEConnection(":memory:")
+	with open(DIR_DATABASE_SCHEMA_MAIN, 'r') as file:
+		schema = file.read()
+
+	database.cursor.executescript(schema)
+	database.connection.commit()
+
+	yield database
+
+	print("FIXTURE: create_database_mock -> tear_down")
+	del database
+
+
 class BaseRunner:
 	"""Base Runner where all unit-tests should inherit from"""
 
@@ -197,6 +201,10 @@ class BaseRunner:
 		monkeypatch.setattr(core.SocketTCPClient, "_request_message", lambda _self: self._request_message_mock())
 		monkeypatch.setattr(core.SocketTCPClient, "_request_user_name", lambda _self: self._request_user_name_mock())
 		monkeypatch.setattr(core.SocketTCPClient, "_request_password", lambda _self: self._request_password_mock())
+
+	@pytest.fixture(scope="function", autouse=True)
+	def tear_down_db(self):
+		self.db.cursor.execute("DELETE FROM user")
 
 	def _print_message_mock(self, message: str) -> None:
 		pass
