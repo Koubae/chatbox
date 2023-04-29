@@ -16,10 +16,13 @@ CODES: MappingProxyType[int, str] = MappingProxyType({
 CODE_IDENTIFIER_LEFT: str = "@@##"
 CODE_IDENTIFIER_RIGHT: str = " --"
 
+
 class ChatInternalCodeException(Exception):
 	pass
 
+
 full_code = lambda _code: f"{CODE_IDENTIFIER_LEFT}{_code}{CODE_IDENTIFIER_RIGHT}"
+
 
 def code_in(code: int, message: str) -> int:
 	_code = CODES.get(code, None)
@@ -29,11 +32,13 @@ def code_in(code: int, message: str) -> int:
 		return code
 	return 0
 
-def get_message(code: int, message: str) -> str|None:
+
+def get_message(code: int, message: str) -> str | None:
 	_code = CODES.get(code, None)
 	if not _code:
 		return None
 	return message.replace(full_code(_code), "")
+
 
 def make_message(code: int, message: str) -> str:
 	_code = CODES.get(code, None)

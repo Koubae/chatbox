@@ -5,8 +5,10 @@ TODO: Make docs
 import sys
 from chatbox import launcher
 
+
 def main(argv: tuple[str, ...] = tuple(), from_cli=True) -> None:
     launcher.run(argv, cli=from_cli)
 
+
 if __name__ == '__main__':
-    main(argv=tuple(sys.argv[1:]), from_cli=True)
+    main(argv=tuple(sys.argv[1:]))

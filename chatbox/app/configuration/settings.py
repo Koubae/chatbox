@@ -10,9 +10,8 @@ def configure(env_file_name: str = '.env') -> MappingProxyType:
     dotenv.load_dotenv(configuration_path)
 
     settings = dict(
-        APP_NAME = os.environ.get("APP_NAME") or constants.APP_NAME,
-
-        BACKEND_LOG_CONF_NAME = os.environ.get("BACKEND_LOG_CONF_NAME") or constants.LOG_CONF_NAME_DEFAULT,
+        APP_NAME=os.environ.get("APP_NAME") or constants.APP_NAME,
+        BACKEND_LOG_CONF_NAME=os.environ.get("BACKEND_LOG_CONF_NAME") or constants.LOG_CONF_NAME_DEFAULT,
     )
 
     return MappingProxyType(settings)

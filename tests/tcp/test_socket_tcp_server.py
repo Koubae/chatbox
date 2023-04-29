@@ -54,14 +54,14 @@ class TestSocketTCPServer(BaseRunner):
 
 		results = []
 		for _sock in sockets:
-			for identifier, client in self.tcp_server.clients_undentified.items():
+			for identifier, client in self.tcp_server.clients_unidentified.items():
 				if client.connection.getpeername() == _sock.getsockname():
 					results.append(client.address == core.objects.Address(*_sock.getsockname()))
 					break
 			else:
 				results.append(False)
 
-		assert len(sockets) == len(self.tcp_server.clients_undentified) and all(results)
+		assert len(sockets) == len(self.tcp_server.clients_unidentified) and all(results)
 
 	@pytest.mark.tcp_server
 	@pytest.mark.tcp_core
@@ -88,7 +88,7 @@ class TestSocketTCPServer(BaseRunner):
 		for _sock in sockets:
 			TCPSocketMock.socket_send(_sock, "ping")
 		_ = [TCPSocketMock.socket_receive(_sock) for _sock in sockets]
-		sender_client = self.tcp_server.clients_undentified[list(self.tcp_server.clients_undentified.keys())[0]]
+		sender_client = self.tcp_server.clients_unidentified[list(self.tcp_server.clients_unidentified.keys())[0]]
 		total_messages = 10
 		for i in range(total_messages):
 			message = f"message_{i}"
@@ -150,7 +150,7 @@ class TestSocketTCPServer(BaseRunner):
 	def test_auth_login_returns_false_if_provided_items_are_falsy(self, socket_create):
 		_sock = socket_create()
 		client_conn: core.objects.Client = self.tcp_server.create_client_object(_sock, core.objects.Address(*_sock.getsockname()))
-		self.tcp_server.clients_undentified[client_conn.identifier] = client_conn
+		self.tcp_server.clients_unidentified[client_conn.identifier] = client_conn
 
 		assert self.tcp_server.login(logging_code_type=None, client_conn=client_conn, payload='{"payload": 123}') is False  # noqa
 		assert self.tcp_server.login(logging_code_type=123, client_conn=None, payload='{"payload": 123}') is False  # noqa
@@ -162,7 +162,7 @@ class TestSocketTCPServer(BaseRunner):
 	def test_auth_login_returns_false_if_payload_is_not_json(self, socket_create):
 		_sock = socket_create()
 		client_conn: core.objects.Client = self.tcp_server.create_client_object(_sock, core.objects.Address(*_sock.getsockname()))
-		self.tcp_server.clients_undentified[client_conn.identifier] = client_conn
+		self.tcp_server.clients_unidentified[client_conn.identifier] = client_conn
 
 		assert self.tcp_server.login(logging_code_type=codes.LOGIN, client_conn=client_conn, payload='{"values": "itme""somethingwrong"}') is False  # noqa
 
@@ -172,7 +172,7 @@ class TestSocketTCPServer(BaseRunner):
 	def test_auth_login_success(self, socket_create):
 		_sock = socket_create()
 		client_conn: core.objects.Client = self.tcp_server.create_client_object(_sock, core.objects.Address(*_sock.getsockname()))
-		self.tcp_server.clients_undentified[client_conn.identifier] = client_conn
+		self.tcp_server.clients_unidentified[client_conn.identifier] = client_conn
 		user_info: core.objects.LoginInfo = {
 			"user_name": "user001",
 			"password": "1234",
@@ -180,7 +180,7 @@ class TestSocketTCPServer(BaseRunner):
 		}
 
 		assert self.tcp_server.login(logging_code_type=codes.LOGIN, client_conn=client_conn, payload=json.dumps(user_info)) is True and \
-			client_conn.is_logged() and client_conn.identifier not in self.tcp_server.clients_undentified
+			client_conn.is_logged() and client_conn.identifier not in self.tcp_server.clients_unidentified
 
 	@pytest.mark.auth_server
 	@pytest.mark.auth
@@ -188,7 +188,7 @@ class TestSocketTCPServer(BaseRunner):
 	def test_auth_login_false_if_user_id_not_match(self, socket_create):
 		_sock = socket_create()
 		client_conn: core.objects.Client = self.tcp_server.create_client_object(_sock, core.objects.Address(*_sock.getsockname()))
-		self.tcp_server.clients_undentified[client_conn.identifier] = client_conn
+		self.tcp_server.clients_unidentified[client_conn.identifier] = client_conn
 		user_info: core.objects.LoginInfo = {
 			"user_name": "user001",
 			"password": "1234",
@@ -203,7 +203,7 @@ class TestSocketTCPServer(BaseRunner):
 	def test_auth_login_false_if_user_name_not_exists(self, socket_create):
 		_sock = socket_create()
 		client_conn: core.objects.Client = self.tcp_server.create_client_object(_sock, core.objects.Address(*_sock.getsockname()))
-		self.tcp_server.clients_undentified[client_conn.identifier] = client_conn
+		self.tcp_server.clients_unidentified[client_conn.identifier] = client_conn
 		user_info: core.objects.LoginInfo = {
 			"user_name": None,
 			"password": "1234",
@@ -219,7 +219,7 @@ class TestSocketTCPServer(BaseRunner):
 	def test_auth_login_request_success(self, socket_create):
 		_sock: socket.socket = TCPSocketMock.connect_multiple_clients(socket_create, self.tcp_server.address, total_clients=1)[0]
 		client_conn: core.objects.Client = self.tcp_server.create_client_object(_sock, core.objects.Address(*_sock.getsockname()))
-		self.tcp_server.clients_undentified[client_conn.identifier] = client_conn
+		self.tcp_server.clients_unidentified[client_conn.identifier] = client_conn
 		user_info: core.objects.LoginInfo = {
 			"user_name": "user001",
 			"password": "1234",
@@ -236,7 +236,7 @@ class TestSocketTCPServer(BaseRunner):
 	def test_auth_login_request_failed_response_must_contain_code_identification_required(self, socket_create):
 		_sock: socket.socket = TCPSocketMock.connect_multiple_clients(socket_create, self.tcp_server.address, total_clients=1)[0]
 		client_conn: core.objects.Client = self.tcp_server.create_client_object(_sock, core.objects.Address(*_sock.getsockname()))
-		self.tcp_server.clients_undentified[client_conn.identifier] = client_conn
+		self.tcp_server.clients_unidentified[client_conn.identifier] = client_conn
 		user_info: core.objects.LoginInfo = {
 			"user_name": "user001",
 			"password": "1234",

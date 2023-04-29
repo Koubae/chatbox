@@ -35,7 +35,7 @@ class Color:
 
     STRIKE_THROUGH: str = '\033[9m'
     MARGIN_1: str = '\033[51m'
-    MARGIN_2: str = '\033[52m' # seems equal to MARGIN_1
+    MARGIN_2: str = '\033[52m'  # seems equal to MARGIN_1
     # colors
     BLACK: str = '\033[30m'
     RED_DARK: str = '\033[31m'
@@ -54,6 +54,7 @@ class Color:
     PURPLE: str = '\033[95m'
     CYAN: str = '\033[96m'
     WHITE: str = '\033[97m'
+
 
 class ColoredFormatter(logging.Formatter, Color):
     _LOGGER_COLOR: dict[str, str] = {
@@ -91,13 +92,16 @@ class ColoredFormatter(logging.Formatter, Color):
 
     def formatMessage(self, record):
         res = super().formatMessage(record)
-        LOG_SEPARATOR: str = "LOG-->"
+        log_separator: str = "LOG-->"
         if record.levelno in (logging.WARNING, logging.WARN, logging.ERROR, logging.CRITICAL):
-            log_splitted = res.split(LOG_SEPARATOR) # the formatter must have this 'moreformatting.... LOG--> $DEFAULT $CYAN%(message)s$DEFAULT' in order for this to work
-            log_metadata = log_splitted[0]
-            log_message = log_splitted[1].replace(self.DEFAULT, '').replace(self.CYAN, "") # remove DEFAULT and cyan (if default formatter is $DEFAULT $CYAN%(message)s$DEFAULT
+            # the formatter must have this 'more formatting.... LOG--> $DEFAULT $CYAN%(message)s$DEFAULT' in order for this to work
+            log_split = res.split(log_separator)
+            log_metadata = log_split[0]
+            # remove DEFAULT and cyan (if default formatter is $DEFAULT $CYAN%(message)s$DEFAULT
+            log_message = log_split[1].replace(self.DEFAULT, '').replace(self.CYAN, "")
             log_color_level = self._LOGGER_COLOR_LIGHT[self._LOGGER_LEVEL[record.levelno]]
-            log_message = f"{self.GREEN}{LOG_SEPARATOR}{self.DEFAULT}{log_color_level}{log_message}{self.DEFAULT}" # Dont add the default for any other possible errors logs or strack trace
+            # Don't add the default for any other possible errors logs or stack trace
+            log_message = f"{self.GREEN}{log_separator}{self.DEFAULT}{log_color_level}{log_message}{self.DEFAULT}"
             res = "".join([log_metadata, log_message])
 
         return res
@@ -106,14 +110,14 @@ class ColoredFormatter(logging.Formatter, Color):
     def _props(cls) -> list:
         return sorted(
             [i for i in dir(cls) if not i.startswith('_') and not i.startswith('func') and not i.startswith('format')],
-            key= lambda x: (-len(x), x)
-        ) # first by length and then alpha. So that longest comes first
+            key=lambda x: (-len(x), x)
+        )  # first by length and then alpha. So that longest comes first
 
     @classmethod
-    def func_formatter_message(csl, formatter: str) -> str:
-        for prop in csl._props():
+    def func_formatter_message(cls, formatter: str) -> str:
+        for prop in cls._props():
             template_item = f'${prop}'
-            template_value = getattr(csl, prop)
+            template_value = getattr(cls, prop)
             if not isinstance(template_value, str):
                 continue
 
@@ -124,13 +128,12 @@ class ColoredFormatter(logging.Formatter, Color):
     @staticmethod
     def init(config_filename: str, tcp_app_type: str) -> None:
         """Initialize Global logger"""
-        def loggin_config_initialize() -> FileNotFoundError|None:
+        def logging_config_initialize() -> FileNotFoundError | None:
             config_path = os.path.join(constants.DIR_CONFIG, config_filename)
             try:
                 logging.config.fileConfig(config_path)
             except FileNotFoundError as _error:
                 return _error
-
 
         def add_color_formatter_to_stdout_handler():
             _stream_handler = logging.root.handlers[1]
@@ -140,7 +143,7 @@ class ColoredFormatter(logging.Formatter, Color):
             _stream_handler.setFormatter(ColoredFormatter(formatter))
 
         try:
-            exception: FileNotFoundError = loggin_config_initialize()
+            exception: FileNotFoundError = logging_config_initialize()
             if not exception:
                 add_color_formatter_to_stdout_handler()
         except KeyError as error:
@@ -148,7 +151,7 @@ class ColoredFormatter(logging.Formatter, Color):
         if not exception:
             return
 
-        # Create A crashpad logger
+        # Create A crash pad logger
         ColoredFormatter.init_backup_logger()  # Creating a logger on the fly.
         _logger = logging.getLogger(__name__)
         _logger.exception(
@@ -167,13 +170,14 @@ class ColoredFormatter(logging.Formatter, Color):
         log_name = f"log_{time_now}.log"
         log_path = os.path.join(crash_log_path, log_name)
 
-        formatter = logging.Formatter("%(asctime)s CRASHPAD::[%(levelname)s] proc=(%(processName)s %(process)d) t=(%(threadName)s, %(thread)d)  | ( %(name)s in %(filename)s::%(funcName)s@%(lineno)04d ) -->  %(message)s")
+        formatter = logging.Formatter("%(asctime)s CRASHPAD::[%(levelname)s] proc=(%(processName)s %(process)d) t=(%(threadName)s, %(thread)d) "
+                                      " | ( %(name)s in %(filename)s::%(funcName)s@%(lineno)04d ) -->  %(message)s")
 
         stdout_handler = logging.StreamHandler(sys.stdout)
         stdout_handler.setLevel(logging.DEBUG)
         stdout_handler.setFormatter(formatter)
 
-        file_handler = logging.FileHandler(log_path, mode="a")
+        file_handler = logging.FileHandler(log_path)
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
 

@@ -20,18 +20,19 @@ class SocketTCPServer(NetworkSocket):
     def __init__(self, host: str, port: int):
         super().__init__(host, port)
 
-        self.server_session: uuid.UUID = uuid.uuid4() # TODO. 1. send to client. create session expiration . save sesison to db. session data should be a pickled object using shelfe?
+        # TODO. 1. send to client. create session expiration . save session to db. session data should be a pickled object using shelve?
+        self.server_session: uuid.UUID = uuid.uuid4()
         self._server_listening: bool = False
 
-        self.client_messages : queue.Queue[objects.Message] = queue.Queue(maxsize=constants.SOCKET_MAX_MESSAGE_QUEUE_PER_WORKER)
-        self.clients_undentified: dict[int, objects.Client] = {}
+        self.client_messages: queue.Queue[objects.Message] = queue.Queue(maxsize=constants.SOCKET_MAX_MESSAGE_QUEUE_PER_WORKER)
+        self.clients_unidentified: dict[int, objects.Client] = {}
         self.clients_identified: dict[int, objects.Client] = {}
 
         # metadata
         self.total_client_connected: int = 0
 
     def start(self):
-        exception: BaseException|None = None
+        exception: BaseException | None = None
 
         self.start_listening()
         threading.Thread(target=self.thread_broadcaster, daemon=True).start()
@@ -98,9 +99,9 @@ class SocketTCPServer(NetworkSocket):
         except BaseException as base_error:
             _logger.debug(f'while handling client encountered a BaseException, reason {base_error}')
         finally:
-            if client_conn.identifier in self.clients_undentified:
-                del self.clients_undentified[client_conn.identifier]
-                _logger.debug(f"Delete {client_conn.identifier} from clients_undentified")
+            if client_conn.identifier in self.clients_unidentified:
+                del self.clients_unidentified[client_conn.identifier]
+                _logger.debug(f"Delete {client_conn.identifier} from clients_unidentified")
             if client_conn.identifier in self.clients_identified:
                 del self.clients_identified[client_conn.identifier]
                 _logger.debug(f"Delete {client_conn.identifier} from clients_identified")
@@ -118,7 +119,7 @@ class SocketTCPServer(NetworkSocket):
     def broadcast(self, client_identifier: int, message: str, send_all: bool = False) -> None:
         clients_to_send = self.clients_identified
         if send_all:
-            clients_to_send = {**clients_to_send, **self.clients_undentified}
+            clients_to_send = {**clients_to_send, **self.clients_unidentified}
 
         for identifier in clients_to_send:
             client_conn: objects.Client = clients_to_send[identifier]
@@ -135,7 +136,7 @@ class SocketTCPServer(NetworkSocket):
         self.total_client_connected += 1
 
         new_connection = self.create_client_object(client, address)
-        self.clients_undentified[new_connection.identifier] = new_connection
+        self.clients_unidentified[new_connection.identifier] = new_connection
 
         _logger.info(f'New connection {new_connection} accepted, creating receiving client thread')
         t_receiver = threading.Thread(target=self.thread_client_receiver, args=(new_connection,), daemon=True)
@@ -158,7 +159,7 @@ class SocketTCPServer(NetworkSocket):
     def login(self, logging_code_type: int, client_conn: objects.Client, payload: str) -> bool:
         if not logging_code_type or not client_conn or not payload:
             return False
-        if client_conn.identifier not in self.clients_undentified:
+        if client_conn.identifier not in self.clients_unidentified:
             return False
         login_info = self.parse_json(codes.get_message(logging_code_type, payload))
         if not login_info:
@@ -174,7 +175,7 @@ class SocketTCPServer(NetworkSocket):
         # TODOs:
         # 1. db : select user from db if exist
         # 2. db: create user from db if not exist
-        # 3. db. update user loggins status
+        # 3. db. update user logging status
         # 3. check password
         # 4. save encrypt saved password
         # 5. Send 'session' to client (which the client can save) if session is the same! with expiration!!!
@@ -185,13 +186,12 @@ class SocketTCPServer(NetworkSocket):
         if input_user_password != input_user_password:
             return False
 
-
         client_conn.user_name = input_user_name
         client_conn.login_info = login_info
         client_conn.set_logged_in()
 
         self.clients_identified[client_conn.identifier] = client_conn  # add client to identify
-        del self.clients_undentified[client_conn.identifier]           # remove client from un-identify one
+        del self.clients_unidentified[client_conn.identifier]           # remove client from un-identify one
 
         _logger.info(f"Client {client_conn} identified with credentials {login_info}")
         return True

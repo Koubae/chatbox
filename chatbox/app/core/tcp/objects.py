@@ -4,6 +4,7 @@ import uuid
 import typing as t
 from typing import NamedTuple, ClassVar
 
+
 class Address(NamedTuple):
     host: str
     port: int
@@ -11,6 +12,7 @@ class Address(NamedTuple):
 
 Message = t.TypedDict('Message', {'identifier': int, 'message': str, 'send_all': bool})
 LoginInfo = t.TypedDict('LoginInfo', {'user_name': t.Optional[str], 'password': t.Optional[str], 'user_id': t.Optional[str]})
+
 
 @dataclasses.dataclass
 class Connection:
@@ -23,11 +25,12 @@ class Connection:
     def __str__(self):
         return f'{self.address}'
 
+
 @dataclasses.dataclass
 class Client(Connection):
     _user_id: uuid.UUID
     state: str = dataclasses.field(default='PUBLIC')
-    user_name: str|None = dataclasses.field(default='PUBLIC_USER')
+    user_name: str | None = dataclasses.field(default='PUBLIC_USER')
     login_info: str = dataclasses.field(default=None)
 
     PUBLIC: ClassVar[str] = 'PUBLIC'   # TODO: Use enum???

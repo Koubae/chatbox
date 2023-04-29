@@ -10,6 +10,7 @@ from .objects import Address
 
 _logger = logging.getLogger(__name__)
 
+
 class NetworkSocketException(Exception):
     pass
 
@@ -25,11 +26,11 @@ class NetworkSocket:
         #: Disable Nagle's algorithm by default.
         #: ``[(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)]``
         (socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),
-        (socket.IPPROTO_TCP, socket.TCP_CORK, 1), # TCP_CORK  Only available in linux.
+        (socket.IPPROTO_TCP, socket.TCP_CORK, 1),  # TCP_CORK  Only available in linux.
 
     ]
 
-    socket_options_keep_alive: list[tuple[int, int, int]]  = [
+    socket_options_keep_alive: list[tuple[int, int, int]] = [
         (socket.SOL_TCP, socket.TCP_KEEPCNT, constants.SOCKET_MAX_TCP_KEEPCNT),
         (socket.SOL_TCP, socket.TCP_KEEPIDLE, 1),
         (socket.SOL_TCP, socket.TCP_KEEPINTVL, 1),
@@ -51,6 +52,7 @@ class NetworkSocket:
 
     def __str__(self):
         return f"{self.__class__.__name__}::{self.SOCKET_TYPE} {self.name or f'@<{self.address}>'}"
+
     def __repr__(self):
         return f"{self.__class__.__name__}(socket_type={self.SOCKET_TYPE}, address={self.address})"
 
@@ -102,7 +104,7 @@ class NetworkSocket:
         out_message: str = ""
         log_level: int = logging.INFO
         exit_code: int = 0
-        exception: BaseException|None = None
+        exception: BaseException | None = None
 
         try:
             self.start()
@@ -130,7 +132,7 @@ class NetworkSocket:
             log_level = logging.ERROR
             exit_code = 1
         except (OSError, IOError, socket.error) as io_error:
-            out_message =  "[I/O_ERROR_GENERIC] - Something went wrong with the Connection"
+            out_message = "[I/O_ERROR_GENERIC] - Something went wrong with the Connection"
             exception = io_error
             log_level = logging.ERROR
             exit_code = 1
@@ -223,7 +225,7 @@ Stack Trace:
             try:
                 self.socket.shutdown(socket.SHUT_RDWR)
                 _logger.info(f"{self} - Socket Shutdown for READ and WRITE  with no errors.")
-            except OSError as error: # Is it errors out probably it's already shutdown. No need further actions
+            except OSError as error:  # Is it errors out probably it's already shutdown. No need further actions
                 _logger.warning(f"{self} - Encountered an error while Shutting Down, error : %s", error)
             finally:
                 self.socket_connected.clear()
@@ -292,7 +294,6 @@ Stack Trace:
     def broadcast(self, client_identifier: int, message: str, send_all: bool = False) -> None:
         raise NotImplementedError("Method not implemented!")
 
-
     # --------------------------------------------------
     # Utils
     # --------------------------------------------------
@@ -306,7 +307,7 @@ Stack Trace:
     def get_app_port(port: str) -> int:
         try:
             port = int(port)
-        except (ValueError, AttributeError) as _:
+        except (ValueError, AttributeError):
             port = constants.SOCKET_PORT_DEFAULT
         return port
 
@@ -334,7 +335,7 @@ Stack Trace:
         return message.decode(constants.ENCODING)
 
     @staticmethod
-    def parse_json(message: str) -> dict|None:
+    def parse_json(message: str) -> dict | None:
         try:
             loaded = json.loads(message)
         except json.JSONDecodeError as error:

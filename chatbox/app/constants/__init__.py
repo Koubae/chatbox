@@ -23,9 +23,9 @@ SOCKET_STREAM_LENGTH: int = 1024
 # --------------------
 # Configurations
 # --------------------
-ENV_CONF_NAME : str = ".tcp_server.env"
-LOG_CONF_NAME : str = "logger.server.conf"
-LOG_CONF_NAME_DEFAULT : str = "logger.conf"
+ENV_CONF_NAME: str = ".tcp_server.env"
+LOG_CONF_NAME: str = "logger.server.conf"
+LOG_CONF_NAME_DEFAULT: str = "logger.conf"
 
 # --------------------
 # Directories

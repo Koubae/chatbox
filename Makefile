@@ -83,7 +83,7 @@ clean:
 # Code Inspections
 # ------------------
 inspect_code:
-	flake8 $(APP_DIR)
+	. $(BIN)/activate; flake8 $(APP_DIR)
 
 inspect_code_benchmark:
 	flake8 $(APP_DIR) --benchmark

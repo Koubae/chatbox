@@ -5,7 +5,6 @@ import threading
 from types import MappingProxyType
 
 from . import constants
-from . import usage
 from . import settings
 from . import logger
 
@@ -14,27 +13,25 @@ def run(argv: tuple[str, ...] = tuple(), cli: bool = True) -> None:
     # TODO: use better cli lib
     # TODO: make a default / fallback logger in case we fail to load the app logger!
     if not cli:
-        tcp_app_type, _host, _port =  ("tcp_server", "localIpAddr", "20020")
+        tcp_app_type, _host, _port = ("tcp_server", "localIpAddr", "20020")
     else:
         if len(argv) < 3:
             # print(usage) TODO Add usage
             sys.exit(0)
         tcp_app_type, _host, _port = argv[:3]
 
-    env_file =  f".{tcp_app_type}.env"
+    env_file = f".{tcp_app_type}.env"
     conf: MappingProxyType = settings.configure(env_file)
 
-
     logger.ColoredFormatter.init(conf.get("BACKEND_LOG_CONF_NAME", constants.LOG_CONF_NAME_DEFAULT), tcp_app_type)
-    _logger = logging.getLogger(__name__) # Must Create logger here, as it needs to be initialized
+    _logger = logging.getLogger(__name__)  # Must Create logger here, as it needs to be initialized
 
     # Import here anything that uses the logger
     from .core import NetworkSocket
     from .core import SocketTCPClient
     from .core import SocketTCPServer
 
-
-    app_supported =  NetworkSocket.SOCKET_TYPES
+    app_supported = NetworkSocket.SOCKET_TYPES
     if tcp_app_type not in app_supported:
         _logger.error(f"Supported TCP app {app_supported}, got instead: {tcp_app_type}")
         sys.exit(1)
@@ -43,7 +40,7 @@ def run(argv: tuple[str, ...] = tuple(), cli: bool = True) -> None:
     port: int = NetworkSocket.get_app_port(_port)
     _logger.info("Launching %s app, this may take few milliseconds ....", tcp_app_type)
 
-    if tcp_app_type == app_supported[0]: # TODO: improve this
+    if tcp_app_type == app_supported[0]:  # TODO: improve this
         app = SocketTCPServer(host, port)
     elif tcp_app_type == app_supported[1]:
 
@@ -56,7 +53,7 @@ def run(argv: tuple[str, ...] = tuple(), cli: bool = True) -> None:
                 password = a.replace('--password=', '')
         app = SocketTCPClient(host, port, user, password)
     else:
-        _logger.error(f"Supported TCP app {app_supported}, got instead: {tcp_app_type}") # we check this above, but double check for user errors
+        _logger.error(f"Supported TCP app {app_supported}, got instead: {tcp_app_type}")  # we check this above, but double check for user errors
         sys.exit(1)
 
     out_message: str = f"{app} :: "
@@ -66,21 +63,21 @@ def run(argv: tuple[str, ...] = tuple(), cli: bool = True) -> None:
 
     try:
         app()
-    except KeyboardInterrupt as _:
-        out_message += f"[APP_EXIT_K_INTERRUPT] - Interrupted by signal 2: SIGINT"
+    except KeyboardInterrupt:
+        out_message += "[APP_EXIT_K_INTERRUPT] - Interrupted by signal 2: SIGINT"
         log_level = logging.WARNING
         exit_code = 130
-    except SystemExit as _:
-        out_message += f"[APP_EXIT_SYSTEM] - Interrupted by System"
+    except SystemExit:
+        out_message += "[APP_EXIT_SYSTEM] - Interrupted by System"
         log_level = logging.WARNING
         exit_code = 130
     except (RuntimeError, SyntaxError, TypeError, ValueError, LookupError) as programming_error:
-        out_message += f"[APP_PROG_ERROR] - App Error"
+        out_message += "[APP_PROG_ERROR] - App Error"
         exception = programming_error
         log_level = logging.ERROR
         exit_code = 1
     except socket.timeout as socket_timeout:
-        out_message += f"[APP_SOCKET_TIMEOUT] - Socket Timed out"
+        out_message += "[APP_SOCKET_TIMEOUT] - Socket Timed out"
         exception = socket_timeout
         log_level = logging.ERROR
         exit_code = 1

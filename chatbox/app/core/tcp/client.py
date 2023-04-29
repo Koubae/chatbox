@@ -1,12 +1,11 @@
 import json
 import logging
 import threading
-from typing import Type
-
-from .network_socket import NetworkSocket
 
 from chatbox.app.constants import chat_internal_codes as codes
+from .network_socket import NetworkSocket
 from . import objects
+
 
 _logger = logging.getLogger(__name__)
 
@@ -14,17 +13,17 @@ _logger = logging.getLogger(__name__)
 class SocketTCPClient(NetworkSocket):   # noqa
     SOCKET_TYPE: str = "tcp_client"
 
-    def __init__(self, host: str, port: int, user_name: str|None = None, password: str|None = None):
+    def __init__(self, host: str, port: int, user_name: str | None = None, password: str | None = None):
         super().__init__(host, port)
 
-        self.user_name: str|None = user_name
-        self.password: str|None = password
-        self.credential: tuple[str, str]|None = None
-        self.user_id: str|None = None
+        self.user_name: str | None = user_name
+        self.password: str | None = password
+        self.credential: tuple[str, str] | None = None
+        self.user_id: str | None = None
 
         self.state: str = objects.Client.PUBLIC
         self.server_session: str | None = None
-        self._connected_to_server: bool = False # currently connected to the server
+        self._connected_to_server: bool = False  # currently connected to the server
 
     def __call__(self, *args, **kwargs):
         if not self.user_name:
@@ -38,7 +37,6 @@ class SocketTCPClient(NetworkSocket):   # noqa
             'user_id': self.user_id
         }
         super().__call__(*args, **kwargs)
-
 
     def start(self):
         self.start_connecting_to_server()
@@ -67,7 +65,7 @@ class SocketTCPClient(NetworkSocket):   # noqa
             self.login_info['password'] = self._request_password()
             self.send(codes.make_message(codes.IDENTIFICATION, json.dumps(self.login_info)))
         # TODO: refactor this!
-        # client is not logged in, let's spawn 1 thread for seanding and receiving
+        # client is not logged in, let's spawn 1 thread for sending and receiving
         t_receiver = threading.Thread(target=self.thread_receiver, daemon=True)
         t_sender = threading.Thread(target=self.thread_sender, daemon=True)
 
@@ -103,7 +101,7 @@ class SocketTCPClient(NetworkSocket):   # noqa
                 if exception:
                     self.stop_connecting_to_server()
         else:
-            _logger.warning(f"(t_receiver) Exit naturally")
+            _logger.warning("(t_receiver) Exit naturally")
         self.stop_wait_forever()
 
     def thread_sender(self):
@@ -125,7 +123,7 @@ class SocketTCPClient(NetworkSocket):   # noqa
                 if exception:
                     self.stop_connecting_to_server()
         else:
-            _logger.warning(f"(t_sender) Exit naturally")
+            _logger.warning("(t_sender) Exit naturally")
         self.stop_wait_forever()
 
     def start_connecting_to_server(self):
