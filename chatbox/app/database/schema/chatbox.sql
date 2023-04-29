@@ -1,0 +1,37 @@
+PRAGMA foreign_keys = ON;
+
+CREATE TABLE IF NOT EXISTS `user` (
+    `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+    `username` TEXT NOT NULL UNIQUE,
+    `password` TEXT NOT NULL,
+
+    `created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `modified` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS `user_username_index` ON `user` (`username`);
+
+
+CREATE TABLE IF NOT EXISTS `server_session` (
+    `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+    `session_id` INTEGER NOT NULL UNIQUE,
+    `data` BLOB,
+
+    `created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `modified` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS `server_session_session_id_index` ON `server_session` (`session_id`);
+
+
+CREATE TABLE IF NOT EXISTS `user_login` (
+    `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+    `user_id` INTEGER NOT NULL,
+    `session_id` INTEGER NOT NULL,
+    `attempts` INTEGER NOT NULL,
+
+    `created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `modified` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE ,
+    FOREIGN KEY ('session_id') REFERENCES `server_session`(`id`) ON DELETE CASCADE
+
+);

@@ -8,6 +8,8 @@ import pytest
 
 from chatbox.app import core
 from chatbox.app import constants
+from chatbox.app.constants import DIR_DATABASE_SCHEMA_MAIN
+from chatbox.app.database.sqlite_conn import SQLITEConnection
 
 UNITTEST_HOST: str = "127.2.9.123"
 UNITTEST_PORT: int = 17219
@@ -97,7 +99,7 @@ class TCPSocketMock:
 # ------------------------------------------
 @pytest.fixture(scope="class")
 def create_tcp_server_mock():
-	def set_up():
+	def set_up() -> core.SocketTCPServer:
 		print("FIXTURE: create_tcp_server_mock -> set_up")
 		tcp_server: core.SocketTCPServer = core.SocketTCPServer(UNITTEST_HOST, UNITTEST_PORT)
 
@@ -114,6 +116,23 @@ def create_tcp_server_mock():
 	yield server
 
 	tear_down(server)
+
+
+@pytest.fixture(scope="class")
+def create_database_mock():
+	print("FIXTURE: create_database_mock -> set_up")
+	database: SQLITEConnection = SQLITEConnection(":memory:")
+	with open(DIR_DATABASE_SCHEMA_MAIN, 'r') as file:
+		schema = file.read()
+
+	database.cursor.executescript(schema)
+	database.connection.commit()
+
+	yield database
+
+	print("FIXTURE: create_database_mock -> tear_down")
+	del database
+
 
 @pytest.fixture(scope="function")
 def tcp_client_mock() -> t.Callable[..., core.SocketTCPClient]:
@@ -170,8 +189,9 @@ class BaseRunner:
 	event_input = threading.Event()
 
 	@pytest.fixture(autouse=True)
-	def _app(self, create_tcp_server_mock, monkeypatch):
+	def _app(self, create_tcp_server_mock, create_database_mock, monkeypatch):
 		self.tcp_server: core.SocketTCPServer = create_tcp_server_mock
+		self.db: SQLITEConnection = create_database_mock
 
 		monkeypatch.setattr(core.SocketTCPClient, "_print_message", lambda _self, message: self._print_message_mock(message))
 		monkeypatch.setattr(core.SocketTCPClient, "_request_message", lambda _self: self._request_message_mock())
@@ -191,7 +211,7 @@ class BaseRunner:
 	def _request_password_mock(self) -> str:
 		return "1234"
 
-	def mock_user_input(self, user_input: str = "some input"):
+	def mock_user_input(self, _: str = "some input"):
 		self.event_input.set()
 		time.sleep(.3)
 		self.event_input.clear()
