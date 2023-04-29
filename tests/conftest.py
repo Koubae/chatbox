@@ -18,6 +18,8 @@ logging.getLogger().setLevel(logging.INFO)
 for _logger_name_to_disable in [
 	'chatbox.app.core.tcp.network_socket',
 	'chatbox.app.core.tcp.server',
+	'chatbox.app.database.sqlite_conn',
+
 	'chatbox.app.core.tcp.client',
 ]:
 	_logger = logging.getLogger(_logger_name_to_disable)

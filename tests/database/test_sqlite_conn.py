@@ -1,6 +1,7 @@
 import typing as t
 import pytest
 
+from chatbox.app.database.sqlite_conn import SQLITEConnectionException
 from tests.conftest import BaseRunner
 
 
@@ -25,21 +26,51 @@ class TestSQLITEConnection(BaseRunner):
 
 	@pytest.mark.sqlite
 	@pytest.mark.database
-	def test_create_and_get_items(self):
-		user = {"username": "user1", "password": "1234"}
+	def test_get_throws_sql_connection_exception(self):
+		with pytest.raises(SQLITEConnectionException) as error:
+			self.db.get("SELECT * FROM tablewhatever")
 
-		result: t.Any = (
-			self.db.create("INSERT INTO user (username, password) VALUES (:username, :password)", [user, ])
-				.get("SELECT * FROM user")
-		)
-
-		assert {"username": result["username"], "password": result["password"]} == user and self.db.created is 1
+		assert SQLITEConnectionException.ERROR_GET in str(error.value)
 
 	@pytest.mark.sqlite
 	@pytest.mark.database
 	def test_get_return_none_when_not_found(self):
 		user = self.db.get("SELECT * FROM user WHERE username = :username", {"username": "random-guy"})
 		assert user is None
+
+	@pytest.mark.sqlite
+	@pytest.mark.database
+	def test_create_and_get_items(self):
+		user = {"username": "user1", "password": "1234"}
+
+		result: t.Any = (
+			self.db.create("INSERT INTO user (username, password) VALUES (:username, :password)", [user, ])
+			.get("SELECT * FROM user")
+		)
+
+		assert {"username": result["username"], "password": result["password"]} == user and self.db.created is 1
+
+	@pytest.mark.sqlite
+	@pytest.mark.database
+	def test_list_return_empty_list_when_not_found(self):
+		users = self.db.list("SELECT * FROM user WHERE username = :username", {"username": "random-guy"})
+		assert len(users) is 0 and users == []
+
+	@pytest.mark.sqlite
+	@pytest.mark.database
+	def test_list_throws_sql_connection_exception(self):
+		with pytest.raises(SQLITEConnectionException) as error:
+			self.db.list("SELECT * FROM tablewhatever")
+
+		assert SQLITEConnectionException.ERROR_LIST in str(error.value)
+
+	@pytest.mark.sqlite
+	@pytest.mark.database
+	def test_create_throws_sql_connection_exception(self):
+		with pytest.raises(SQLITEConnectionException) as error:
+			self.db.create("INSERT INTO tablewhatever (username, password) VALUES (:username, :password)", {"username": "ops", "password": None})
+
+		assert SQLITEConnectionException.ERROR_CREATE in str(error.value)
 
 	@pytest.mark.sqlite
 	@pytest.mark.database
@@ -59,9 +90,11 @@ class TestSQLITEConnection(BaseRunner):
 
 	@pytest.mark.sqlite
 	@pytest.mark.database
-	def test_list_return_empty_list_when_not_found(self):
-		users = self.db.list("SELECT * FROM user WHERE username = :username", {"username": "random-guy"})
-		assert len(users) is 0 and users == []
+	def test_update_throws_sql_connection_exception(self):
+		with pytest.raises(SQLITEConnectionException) as error:
+			self.db.update("UPDATE tablewhatever SET password = :password_new WHERE username LIKE 'user%'", {"password_new": "somepass"})
+
+		assert SQLITEConnectionException.ERROR_UPDATE in str(error.value)
 
 	@pytest.mark.sqlite
 	@pytest.mark.database
@@ -96,6 +129,14 @@ class TestSQLITEConnection(BaseRunner):
 		self.db.update("UPDATE user SET password = :password_new WHERE username = :username", {"password_new": "4321", "username": "random-guy"})
 
 		assert self.db.updated is 0
+
+	@pytest.mark.sqlite
+	@pytest.mark.database
+	def test_delete_throws_sql_connection_exception(self):
+		with pytest.raises(SQLITEConnectionException) as error:
+			self.db.delete("DELETE FROM tablewhatever")  # noqa
+
+		assert SQLITEConnectionException.ERROR_DELETE in str(error.value)
 
 	@pytest.mark.sqlite
 	@pytest.mark.database
