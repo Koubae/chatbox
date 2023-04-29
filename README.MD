@@ -60,20 +60,7 @@ StackOverflow
 Projects ideas / TODO
 ----
 
-* fix log: add log error color 
-* Make client input ">>>" as so, but will disapper and won't be printed in the terminal history
-* echo server
-* ping server
-* heart beat server
-* sniffer
-* broser like server 
-* TCP chat 
-* Send Database stuff via TCP server - client architecture
-* CAN network
-* Add colorama print (especially for cli usage)
-* fix print when chat usage in cli, when writting and receiving a message and receive after wards. the receivin one is in the same line :/
-* Create BroadCaster : should be a separeate socket - class ? 
-* create bots test
+See [TODO](./TODO.md)
 
 Framework lib references
 ------------------------

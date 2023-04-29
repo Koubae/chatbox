@@ -3,7 +3,6 @@ import socket
 import threading
 import queue
 import uuid
-from typing import Type
 
 
 from chatbox.app import constants
@@ -105,14 +104,6 @@ class SocketTCPServer(NetworkSocket):
             if client_conn.identifier in self.clients_identified:
                 del self.clients_identified[client_conn.identifier]
                 _logger.debug(f"Delete {client_conn.identifier} from clients_identified")
-
-        # TODO:
-        # 1 identify client
-        # 2 when identified remove from identify and add to known client
-        # 3 if error remove client from known/unknown clients
-        # exit gracefull,and capture corerct errors
-        # add sender thread
-        # Implement queue for message to broadcast
 
     def thread_broadcaster(self) -> None:
         while self.server_listening:
