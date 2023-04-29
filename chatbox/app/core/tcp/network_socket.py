@@ -98,7 +98,7 @@ class NetworkSocket:
             _logger.info("%s Connected to %s", self, self.address)
             return True
 
-    def _start(self):
+    def _start(self):  # noqa:C901
         self.start_before()
 
         out_message: str = ""
