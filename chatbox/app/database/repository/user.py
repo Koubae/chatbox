@@ -37,12 +37,11 @@ class UserRepository(RepositoryBase):
 	def create_new_user(self, username: str, password: str) -> UserModel | None:
 		try:
 			return (
-				self.create("INSERT INTO user (username, password) VALUES (:username, :password)",
-							({"username": username, "password": password},)
-				).get_user_by_username(username)
+				self.create("INSERT INTO user (username, password) VALUES (:username, :password)", ({"username": username, "password": password},))
+				.get_user_by_username(username)
 			)
 		except SQLITEConnectionException as error:
-			_logger.error(f"Error while creting new user {username}, reason {error}")
+			_logger.error(f"Error while creating new user {username}, reason {error}")
 			return None
 
 	def update_user(self, user: UserModel, data: dict) -> UserModel | None:

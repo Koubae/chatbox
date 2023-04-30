@@ -202,6 +202,8 @@ class BaseRunner:
 	@pytest.fixture(scope="function", autouse=True)
 	def tear_down_db(self):
 		self.db.cursor.execute("DELETE FROM user")
+		self.db.cursor.execute("DELETE FROM server_session")
+		self.db.cursor.execute("DELETE FROM user_login")
 
 	def _print_message_mock(self, message: str) -> None:
 		pass
