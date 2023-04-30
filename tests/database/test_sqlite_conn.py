@@ -6,6 +6,17 @@ from tests.conftest import BaseRunner
 
 
 class TestSQLITEConnection(BaseRunner):
+	@pytest.mark.sqlite
+	@pytest.mark.database
+	def test_call_to_unmapped_execution_type_raises_query(self):
+		with pytest.raises(SQLITEConnectionException) as _:
+			self.db("SELECT * FROM user", execution_type=-1)
+
+	@pytest.mark.sqlite
+	@pytest.mark.database
+	def test_sqlite_connection_exception_raises_on_operation_not_mapped(self):
+		with pytest.raises(TypeError) as _:
+			SQLITEConnectionException.error_type(-1)
 
 	@pytest.mark.sqlite
 	@pytest.mark.database
