@@ -13,27 +13,49 @@ _logger = logging.getLogger(__name__)
 class UserRepository(RepositoryBase):
 	_table_name: t.Final[str] = "user"
 
-	def create_new_user(self, username: str, password: str) -> UserModel | None:
-		return (self.create("INSERT INTO user (username, password) VALUES (:username, :password)",({"username": username, "password": password},))
-			.get_user_by_username(username)
-		)
-
 	def get_user(self, _id: int) -> UserModel | None:
-		return self._build_object(self.get("SELECT * FROM user WHERE id = :id", {"id": _id}))
+		try:
+			return self._build_object(self.get("SELECT * FROM user WHERE id = :id", {"id": _id}))
+		except SQLITEConnectionException as error:
+			_logger.error(f"Error while get user {_id}, reason {error}")
+			return None
 
 	def get_user_by_username(self, username: str) -> UserModel | None:
-		return self._build_object(self.get("SELECT * FROM user WHERE username = :username", {"username": username}))
+		try:
+			return self._build_object(self.get("SELECT * FROM user WHERE username = :username", {"username": username}))
+		except SQLITEConnectionException as error:
+			_logger.error(f"Error while get user by username {username}, reason {error}")
+			return None
 
 	def list_users(self, limit: int = 100, offset: int = 0) -> list[UserModel]:
-		return self._build_objects(self.list("SELECT * FROM user LIMIT :limit OFFSET :offset", {"limit": limit, "offset": offset}))
+		try:
+			return self._build_objects(self.list("SELECT * FROM user LIMIT :limit OFFSET :offset", {"limit": limit, "offset": offset}))
+		except SQLITEConnectionException as error:
+			_logger.error(f"Error while list users, limit = {limit}, offset = {offset}, reason {error}")
+			return []
 
-	def update_user(self, user: UserModel, data: dict):
+	def create_new_user(self, username: str, password: str) -> UserModel | None:
+		try:
+			return (
+				self.create("INSERT INTO user (username, password) VALUES (:username, :password)",
+							({"username": username, "password": password},)
+				).get_user_by_username(username)
+			)
+		except SQLITEConnectionException as error:
+			_logger.error(f"Error while creting new user {username}, reason {error}")
+			return None
+
+	def update_user(self, user: UserModel, data: dict) -> UserModel | None:
 		query_data = {
 			"id": user.id,
 			"username": user.username
 		}
 		query_data.update(data)
-		return self.update("UPDATE user SET username = :username WHERE id = :id", query_data).get_user(user.id)
+		try:
+			return self.update("UPDATE user SET username = :username WHERE id = :id", query_data).get_user(user.id)
+		except SQLITEConnectionException as error:
+			_logger.error(f"Error while updating user {user.id}, reason {error}")
+			return None
 
 	def delete_user(self, _id: int) -> bool:
 		try:
@@ -53,7 +75,8 @@ class UserRepository(RepositoryBase):
 				data["id"],
 				data["created"],
 				data["modified"],
-				data["username"]
+				data["username"],
+				data["password"],
 			)
 		except KeyError as error:
 			_logger.exception(f"Error while building object for table {self._table_name}, reason {error}", exc_info=error)
