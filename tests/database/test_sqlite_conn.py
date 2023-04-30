@@ -1,11 +1,21 @@
 import typing as t
 import pytest
+import os
 
-from chatbox.app.database.sqlite_conn import SQLITEConnectionException
+from chatbox.app.constants import DIR_APP
+from chatbox.app.database.sqlite_conn import SQLITEConnectionException, SQLITEConnection
 from tests.conftest import BaseRunner
 
 
 class TestSQLITEConnection(BaseRunner):
+	@pytest.mark.sqlite
+	@pytest.mark.database
+	def test_init_schema_not_exists_raises(self):
+		with pytest.raises(SQLITEConnectionException) as error:
+			SQLITEConnection(":memory:", schema=os.path.join(DIR_APP, "database", "schema", "no-existing-schema.sql"))
+
+		assert SQLITEConnectionException.ERROR_SCHEMA_INIT_NOT_FOUND.split("]")[0] in str(error.value)
+
 	@pytest.mark.sqlite
 	@pytest.mark.database
 	def test_call_to_unmapped_execution_type_raises_query(self):

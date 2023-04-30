@@ -176,12 +176,7 @@ def socket_create() -> t.Callable[[], socket.socket]:
 @pytest.fixture(scope="class")
 def create_database_mock():
 	print("FIXTURE: create_database_mock -> set_up")
-	database: SQLITEConnection = SQLITEConnection(":memory:")
-	with open(DIR_DATABASE_SCHEMA_MAIN, 'r') as file:
-		schema = file.read()
-
-	database.cursor.executescript(schema)
-	database.connection.commit()
+	database: SQLITEConnection = SQLITEConnection(":memory:", schema=DIR_DATABASE_SCHEMA_MAIN)
 
 	yield database
 

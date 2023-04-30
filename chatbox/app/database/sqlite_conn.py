@@ -1,3 +1,4 @@
+import os
 import sqlite3
 import logging
 import typing as t
@@ -25,6 +26,7 @@ class SQLCRUDOperation(Enum):
 
 class SQLITEConnectionException(Exception):
 	ERROR_RUNTIME: t.Final[str] = "[DB_ERROR_RUNTIME] - Something when wrong"
+	ERROR_SCHEMA_INIT_NOT_FOUND: t.Final[str] = "[DB_ERROR_SCHEMA_INIT_NOT_FOUND] - Schema %s not found"
 	ERROR_GET: t.Final[str] = "[DB_ERROR_GET] - Error while get resource"
 	ERROR_LIST: t.Final[str] = "[DB_ERROR_GET] - Error while list resource"
 	ERROR_CREATE: t.Final[str] = "[DB_ERROR_CREATE] - Error while create resource"
@@ -50,7 +52,7 @@ class SQLITEConnectionException(Exception):
 
 class SQLITEConnection:
 
-	def __init__(self, database: str):
+	def __init__(self, database: str, schema: t.Optional[str | os.PathLike] = None):
 		self.database: str = database
 
 		sqlite3.enable_callback_tracebacks(True)
@@ -59,9 +61,13 @@ class SQLITEConnection:
 		self.connection.row_factory = sqlite3.Row
 		self.cursor: sqlite3.Cursor = self.connection.cursor()
 
-		self.__last_count_created = -1
-		self.__last_count_updated = -1
-		self.__last_count_deleted = -1
+		self.__last_count_created: int = -1
+		self.__last_count_updated: int = -1
+		self.__last_count_deleted: int = -1
+
+		self.schema: t.Final[str | os.PathLike] = schema
+		if self.schema:
+			self._init_schema()
 
 	def __del__(self):   # pragma: no cover
 		self.connection.close()
@@ -127,3 +133,12 @@ class SQLITEConnection:
 			error_type = SQLITEConnectionException.error_type(crud_operation)
 			_logger.exception(f"{error_type}, reason: {sqlite_error}", exc_info=sqlite_error)
 			raise SQLITEConnectionException(f"{error_type} - {sqlite_error}") from None
+
+	def _init_schema(self):
+		try:
+			with open(self.schema, "r") as file:
+				schema = file.read()
+		except FileNotFoundError as error:
+			raise SQLITEConnectionException(f"{SQLITEConnectionException.ERROR_SCHEMA_INIT_NOT_FOUND % self.schema}, error: {error}") from None
+		else:
+			self._run_query(schema, None, crud_operation=SQLCRUDOperation.CREATE, execution_type=SQLExecution.EXECUTE_SCRIPT)
