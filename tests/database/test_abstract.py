@@ -1,11 +1,12 @@
 import typing as t
 import pytest
 
-from chatbox.app.database.orm.abstrac_base_model import ModelBase
+from chatbox.app.database.orm.abstrac_base_repository import RepositoryBase
+from chatbox.app.database.orm.types import Item
 from tests.conftest import BaseRunner
 
 
-class ModelConcrete(ModelBase):
+class RepositoryConcrete(RepositoryBase):
 	_table_name = "user"
 
 	def create_user(self, username: str, password: str):
@@ -30,12 +31,14 @@ class ModelConcrete(ModelBase):
 	def delete_users(self):
 		return self.delete("DELETE FROM user")  # noqa
 
+	def _build_object(self, data: Item) -> t.Any: ...
+
 class TestModelBase(BaseRunner):
 	@pytest.mark.db_abstract
 	@pytest.mark.sqlite
 	@pytest.mark.database
 	def test_subclass_abstract_properties_implementation(self):
-		model = ModelConcrete(self.db)
+		model = RepositoryConcrete(self.db)
 
 		assert model._table_name == "user"
 
@@ -43,7 +46,7 @@ class TestModelBase(BaseRunner):
 	@pytest.mark.sqlite
 	@pytest.mark.database
 	def test_subclass_crud_operations(self):
-		model = ModelConcrete(self.db)
+		model = RepositoryConcrete(self.db)
 
 		# CREATE
 		model.create_user("user1", "1234")
