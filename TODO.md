@@ -23,9 +23,8 @@ Server
 
 ### Database
 
-2. Create Schema
-3. Create integrations for schemas
-4. Create lower ORM (not using a library!)
+2. ~~Create Schema~~
+4. ~~Create lower ORM (not using a library!)~~
 5. Create ORM - Data Mapper ---> SQL implementations
 5. Create models | Domain Model --> Business Logic
 6. Create DTO | Representation of enties and model . Should it be same as model?

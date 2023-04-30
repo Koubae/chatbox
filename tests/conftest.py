@@ -9,7 +9,7 @@ import pytest
 from chatbox.app import core
 from chatbox.app import constants
 from chatbox.app.constants import DIR_DATABASE_SCHEMA_MAIN
-from chatbox.app.database.sqlite_conn import SQLITEConnection
+from chatbox.app.database.orm.sqlite_conn import SQLITEConnection
 
 UNITTEST_HOST: str = "127.2.9.123"
 UNITTEST_PORT: int = 17219

@@ -3,7 +3,7 @@ import pytest
 import os
 
 from chatbox.app.constants import DIR_APP
-from chatbox.app.database.sqlite_conn import SQLITEConnectionException, SQLITEConnection
+from chatbox.app.database.orm.sqlite_conn import SQLITEConnectionException, SQLITEConnection
 from tests.conftest import BaseRunner
 
 

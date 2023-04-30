@@ -4,7 +4,8 @@ import logging
 import typing as t
 from enum import Enum
 
-from chatbox.app.database.types import SQLParams, Item
+from chatbox.app.database.orm.abstract import Connector
+from chatbox.app.database.orm.types import SQLParams, Item
 
 
 _logger = logging.getLogger(__name__)
@@ -50,9 +51,10 @@ class SQLITEConnectionException(Exception):
 				raise TypeError(f"Value {_type} is not a valid sql Operation!")
 
 
-class SQLITEConnection:
+class SQLITEConnection(Connector):
 
 	def __init__(self, database: str, schema: t.Optional[str | os.PathLike] = None):
+		super().__init__()
 		self.database: str = database
 
 		sqlite3.enable_callback_tracebacks(True)
@@ -60,10 +62,6 @@ class SQLITEConnection:
 		self.connection: sqlite3.Connection = sqlite3.connect(database)
 		self.connection.row_factory = sqlite3.Row
 		self.cursor: sqlite3.Cursor = self.connection.cursor()
-
-		self.__last_count_created: int = -1
-		self.__last_count_updated: int = -1
-		self.__last_count_deleted: int = -1
 
 		self.schema: t.Final[str | os.PathLike] = schema
 		if self.schema:
@@ -84,18 +82,6 @@ class SQLITEConnection:
 				raise SQLITEConnectionException(f"{SQLITEConnectionException.ERROR_RUNTIME} - execution {execution_type} is not supported.")
 		return self
 
-	@property
-	def created(self) -> int:
-		return self.__last_count_created
-
-	@property
-	def updated(self) -> int:
-		return self.__last_count_updated
-
-	@property
-	def deleted(self) -> int:
-		return self.__last_count_deleted
-
 	def get(self, query: str, parameters: SQLParams = None) -> Item | None:
 		self._run_query(query, parameters, crud_operation=SQLCRUDOperation.READ)
 		item = self.cursor.fetchone()
@@ -107,17 +93,17 @@ class SQLITEConnection:
 
 	def create(self, query: str, parameters: t.Iterable[SQLParams] = None) -> t.Self:
 		self._run_query(query, parameters, crud_operation=SQLCRUDOperation.CREATE, execution_type=SQLExecution.EXECUTE_MANY)
-		self.__last_count_created = self.cursor.rowcount
+		self.created = self.cursor.rowcount
 		return self
 
 	def update(self, query: str, parameters: t.Iterable[SQLParams] = None) -> t.Self:
 		self._run_query(query, parameters, crud_operation=SQLCRUDOperation.UPDATE)
-		self.__last_count_updated = self.cursor.rowcount
+		self.updated = self.cursor.rowcount
 		return self
 
 	def delete(self, query: str, parameters: SQLParams = None) -> t.Self:
 		self._run_query(query, parameters, crud_operation=SQLCRUDOperation.DELETE)
-		self.__last_count_deleted = self.cursor.rowcount
+		self.deleted = self.cursor.rowcount
 		return self
 
 	def _run_query(self,
