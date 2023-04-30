@@ -101,7 +101,13 @@ class SQLITEConnection(Connector):
 		self.created = self.cursor.rowcount
 		return self
 
-	def update(self, query: str, parameters: t.Iterable[SQLParams] = None) -> t.Self:
+	def update(self, query: str, parameters: SQLParams = None) -> t.Self:
+		def _inject_modified_timestamp():
+			query_block = query.split("SET")
+			query_block.insert(1, "SET modified = CURRENT_TIMESTAMP, ")
+			return " ".join(query_block)
+		query = _inject_modified_timestamp()
+
 		self._run_query(query, parameters, crud_operation=SQLCRUDOperation.UPDATE)
 		self.updated = self.cursor.rowcount
 		return self
