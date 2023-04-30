@@ -4,7 +4,7 @@ import logging
 import typing as t
 from enum import Enum
 
-from chatbox.app.database.orm.abstract import Connector
+from chatbox.app.database.orm.abstract_connector import Connector
 from chatbox.app.database.orm.types import SQLParams, Item
 
 
@@ -70,12 +70,17 @@ class SQLITEConnection(Connector):
 	def __del__(self):   # pragma: no cover
 		self.connection.close()
 
-	def __call__(self, query: str, parameters: SQLParams = None, execution_type: SQLExecution = SQLExecution.EXECUTE_ONE) -> t.Self:
+	def __call__(self,
+		query: str,
+		parameters: SQLParams | t.Iterable[SQLParams] = None,
+		execution_type: SQLExecution = SQLExecution.EXECUTE_ONE
+	) -> t.Self:
+
 		match execution_type:
 			case SQLExecution.EXECUTE_ONE:
 				self.cursor.execute(query, parameters or {})
 			case SQLExecution.EXECUTE_MANY:
-				self.cursor.executemany(query, parameters or {})
+				self.cursor.executemany(query, parameters or [{}, ])
 			case SQLExecution.EXECUTE_SCRIPT:
 				self.cursor.executescript(query)
 			case _:
