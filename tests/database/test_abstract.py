@@ -7,31 +7,36 @@ from tests.conftest import BaseRunner
 
 
 class RepositoryConcrete(RepositoryBase):
-	_table_name = "user"
+	_table: t.Final[str] = "user"
+	_name: t.Final[str] = "username"
+
+	_columns = ["username", "password"]
 
 	def create_user(self, username: str, password: str):
-		self.create("INSERT INTO user (username, password) VALUES (:username, :password)", ({"username": username, "password": password}, ))
+		self.create({"username": username, "password": password})
 
 	def create_users(self, users: list[dict]):
-		self.create("INSERT INTO user (username, password) VALUES (:username, :password)", users)
+		self.create(users)
 
 	def get_user_by_name(self, username: str) -> dict:
-		return self.get("SELECT * FROM user WHERE username = :username", {"username": username})
+		return self.get_by_name(username)
 
 	def list_users(self) -> list[dict]:
-		return self.list("SELECT * FROM user")
+		return self.get_many()
 
-	def update_username(self, username_old: str, username_new: str) -> t.Self:
-		return self.update("UPDATE user SET username = :username_new WHERE username = :username_old",
-						   {"username_old": username_old, "username_new": username_new})
+	def update_username(self, _id: int, username_new: str) -> t.Self:
+		return self.update(_id, {"username": username_new})
 
-	def delete_user(self, username: str) -> t.Self:
-		return self.delete("DELETE FROM user WHERE username = :username", {"username": username})
+	def delete_user(self, _id: int) -> t.Self:
+		return self.delete(_id)
 
 	def delete_users(self):
-		return self.delete("DELETE FROM user")  # noqa
+		self.db.delete("DELETE FROM user")  # noqa
+		self.deleted = self.db.deleted
+		return
 
-	def _build_object(self, data: Item) -> t.Any: ...
+	def _build_object(self, data: Item) -> t.Any:
+		return data  # need to test raw data in here
 
 class TestRepositoryBase(BaseRunner):
 	@pytest.mark.db_abstract
@@ -40,7 +45,7 @@ class TestRepositoryBase(BaseRunner):
 	def test_subclass_abstract_properties_implementation(self):
 		repository = RepositoryConcrete(self.db)
 
-		assert repository._table_name == "user"
+		assert repository._table == "user" and repository._name == "username" and repository._columns == ["username", "password"]
 
 	@pytest.mark.db_abstract
 	@pytest.mark.sqlite
@@ -69,7 +74,7 @@ class TestRepositoryBase(BaseRunner):
 		username_old = "user1"
 		username_new = "user1-new"
 		user_before_update = repository.get_user_by_name(username_old)
-		repository.update_username(username_old, username_new)
+		repository.update_username(user_before_update["id"], username_new)
 		user_after_update = repository.get_user_by_name(username_new)
 		assert (
 				repository.get_user_by_name("user1") is None and
@@ -79,7 +84,7 @@ class TestRepositoryBase(BaseRunner):
 		)
 
 		# DELETE
-		repository.delete_user(username_new)
+		repository.delete_user(user_before_update["id"])
 		use_after_delete = repository.get_user_by_name(username_old)
 		assert use_after_delete is None and repository.deleted is 1
 

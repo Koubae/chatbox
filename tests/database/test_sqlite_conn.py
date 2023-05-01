@@ -74,16 +74,16 @@ class TestSQLITEConnection(BaseRunner):
 	@pytest.mark.sqlite
 	@pytest.mark.database
 	def test_list_return_empty_list_when_not_found(self):
-		users = self.db.list("SELECT * FROM user WHERE username = :username", {"username": "random-guy"})
+		users = self.db.get_many("SELECT * FROM user WHERE username = :username", {"username": "random-guy"})
 		assert len(users) is 0 and users == []
 
 	@pytest.mark.sqlite
 	@pytest.mark.database
 	def test_list_throws_sql_connection_exception(self):
 		with pytest.raises(SQLITEConnectionException) as error:
-			self.db.list("SELECT * FROM tablewhatever")
+			self.db.get_many("SELECT * FROM tablewhatever")
 
-		assert SQLITEConnectionException.ERROR_LIST in str(error.value)
+		assert SQLITEConnectionException.ERROR_GET_MANY in str(error.value)
 
 	@pytest.mark.sqlite
 	@pytest.mark.database
@@ -104,7 +104,7 @@ class TestSQLITEConnection(BaseRunner):
 
 		result: t.Any = (
 			self.db.create("INSERT INTO user (username, password) VALUES (:username, :password)", users)
-			.list("SELECT * FROM user")
+			.get_many("SELECT * FROM user")
 		)
 
 		assert [{"username": user["username"], "password": user["password"]} for user in result] == list(users) and self.db.created is len(users)
@@ -127,13 +127,13 @@ class TestSQLITEConnection(BaseRunner):
 				{"username": "user2", "password": old_password},
 				{"username": "user3", "password": old_password},
 			))
-			.list("SELECT * FROM user")
+			.get_many("SELECT * FROM user")
 		)
 
 		new_password = "4321"
 		user_after_update: list = (
 			self.db.update("UPDATE user SET password = :password_new WHERE username LIKE 'user%'", {"password_new": new_password})
-			.list("SELECT * FROM user")
+			.get_many("SELECT * FROM user")
 		)
 
 		results = [before["password"] == old_password and after["password"] == new_password for before, after in zip(user_before_update, user_after_update)]

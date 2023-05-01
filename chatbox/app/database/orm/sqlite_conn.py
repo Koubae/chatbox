@@ -19,7 +19,7 @@ class SQLExecution(Enum):
 
 class SQLCRUDOperation(Enum):
 	READ = 1
-	LIST = 2
+	READ_MANY = 2
 	CREATE = 3
 	UPDATE = 4
 	DELETE = 5
@@ -29,7 +29,7 @@ class SQLITEConnectionException(Exception):
 	ERROR_RUNTIME: t.Final[str] = "[DB_ERROR_RUNTIME] - Something when wrong"
 	ERROR_SCHEMA_INIT_NOT_FOUND: t.Final[str] = "[DB_ERROR_SCHEMA_INIT_NOT_FOUND] - Schema %s not found"
 	ERROR_GET: t.Final[str] = "[DB_ERROR_GET] - Error while get resource"
-	ERROR_LIST: t.Final[str] = "[DB_ERROR_GET] - Error while list resource"
+	ERROR_GET_MANY: t.Final[str] = "[DB_ERROR_GET_MANY] - Error while get_many resource"
 	ERROR_CREATE: t.Final[str] = "[DB_ERROR_CREATE] - Error while create resource"
 	ERROR_UPDATE: t.Final[str] = "[DB_ERROR_CREATE] - Error while update resource"
 	ERROR_DELETE: t.Final[str] = "[DB_ERROR_DELETE] - Error while delete resource"
@@ -39,8 +39,8 @@ class SQLITEConnectionException(Exception):
 		match _type:
 			case SQLCRUDOperation.READ:
 				return SQLITEConnectionException.ERROR_GET
-			case SQLCRUDOperation.LIST:
-				return SQLITEConnectionException.ERROR_LIST
+			case SQLCRUDOperation.READ_MANY:
+				return SQLITEConnectionException.ERROR_GET_MANY
 			case SQLCRUDOperation.CREATE:
 				return SQLITEConnectionException.ERROR_CREATE
 			case SQLCRUDOperation.UPDATE:
@@ -92,12 +92,17 @@ class SQLITEConnection(Connector):
 		item = self.cursor.fetchone()
 		return item and dict(item) or None
 
-	def list(self, query: str, parameters: SQLParams = None) -> list[Item]:
-		self._run_query(query, parameters, crud_operation=SQLCRUDOperation.LIST)
+	def get_many(self, query: str, parameters: SQLParams = None) -> list[Item]:
+		self._run_query(query, parameters, crud_operation=SQLCRUDOperation.READ_MANY)
 		return [dict(item) for item in self.cursor.fetchall()]
 
-	def create(self, query: str, parameters: t.Iterable[SQLParams] = None) -> t.Self:
-		self._run_query(query, parameters, crud_operation=SQLCRUDOperation.CREATE, execution_type=SQLExecution.EXECUTE_MANY)
+	def create(self, query: str, parameters: tuple[SQLParams] | list[SQLParams] | t.Iterable[SQLParams] = None) -> t.Self:
+		execution_type = SQLExecution.EXECUTE_MANY
+		if parameters and len(parameters) == 1:
+			parameters = parameters[0]
+			execution_type = SQLExecution.EXECUTE_ONE
+
+		self._run_query(query, parameters, crud_operation=SQLCRUDOperation.CREATE, execution_type=execution_type)
 		self.created = self.cursor.rowcount
 		return self
 
