@@ -69,7 +69,7 @@ class RepositoryBase(Connector):
 		try:
 			return self._build_object(self.db.get(self.__query_build(self._get_query), {"id": _id}))
 		except SQLITEConnectionException as error:
-			_logger.error(f"Error while get {self._table} {_id}, reason {error}")
+			_logger.exception(f"Error while get {self._table} {_id}, reason {error}", exc_info=error)
 			return None
 
 	def get_by_name(self, name: int | str) -> T | None:
@@ -79,7 +79,7 @@ class RepositoryBase(Connector):
 		try:
 			return self._build_object(self.db.get(self.__query_build(self._get_query_by_name), {self._name: name}))
 		except SQLITEConnectionException as error:
-			_logger.error(f"Error while get {self._table} by name {name}, reason {error}")
+			_logger.exception(f"Error while get {self._table} by name {name}, reason {error}", exc_info=error)
 			return None
 
 	def get_many(self, limit: int = 100, offset: int = 0) -> list[T]:
@@ -89,7 +89,7 @@ class RepositoryBase(Connector):
 		try:
 			return self._build_objects(self.db.get_many(self.__query_build(self._get_many_query), {"limit": limit, "offset": offset}))
 		except SQLITEConnectionException as error:
-			_logger.error(f"Error while get-many {self._table}, limit = {limit}, offset = {offset}, reason {error}")
+			_logger.exception(f"Error while get-many {self._table}, limit = {limit}, offset = {offset}, reason {error}", exc_info=error)
 			return []
 
 	def create(self, data: t.Iterable[dict] | dict) -> T | None:
@@ -102,7 +102,7 @@ class RepositoryBase(Connector):
 		try:
 			self.db.create(self.__query_build(self._create_query), data)
 		except SQLITEConnectionException as error:
-			_logger.error(f"Error while creating new {self._table}, reason {error}")
+			_logger.exception(f"Error while creating new {self._table}, data {data}, reason {error}", exc_info=error)
 			return None
 		else:
 			self.created = self.db.created
@@ -120,7 +120,7 @@ class RepositoryBase(Connector):
 		try:
 			self.db.update(query, data)
 		except SQLITEConnectionException as error:
-			_logger.error(f"Error while updating new {self._table} for item id {_id}, reason {error}")
+			_logger.exception(f"Error while updating new {self._table} for item id {_id}, reason {error}", exc_info=error)
 			return None
 		else:
 			self.updated = self.db.updated
@@ -133,7 +133,7 @@ class RepositoryBase(Connector):
 		try:
 			self.db.delete(self.__query_build(self._delete_query), {"id": _id})
 		except SQLITEConnectionException as error:
-			_logger.error(f"Error while deleting {self._table} item id {_id}, reason {error}")
+			_logger.exception(f"Error while deleting {self._table} item id {_id}, reason {error}", exc_info=error)
 			return False
 		else:
 			self.deleted = self.db.deleted
