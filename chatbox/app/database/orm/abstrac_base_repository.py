@@ -14,6 +14,8 @@ QUERY_REPLACE_KEYS: t.Final[frozenset] = frozenset({
 	"__params",
 })
 QUERY_REPLACE_KEY_EQUAL: t.Final[str] = "__placeholder = __value"
+QUERY_REPLACE_KEY_NO_EQUAL: t.Final[str] = "__placeholder != __value"
+QUERY_REPLACE_KEY_LIKE: t.Final[str] = "__placeholder LIKE __value"
 
 
 class RepositoryBase(Connector):
@@ -22,7 +24,7 @@ class RepositoryBase(Connector):
 	_get_many_query = "SELECT * FROM __table LIMIT :limit OFFSET :offset"
 	_create_query = "INSERT INTO __table (__columns) VALUES (__params)"
 	_update_query = f"UPDATE __table SET {QUERY_REPLACE_KEY_EQUAL} WHERE id = :id"
-	_delete_query = f"DELETE FROM __table WHERE id = :id"
+	_delete_query = "DELETE FROM __table WHERE id = :id"
 
 	_operations: tuple[DatabaseOperations] = (
 		DatabaseOperations.READ,
@@ -110,11 +112,11 @@ class RepositoryBase(Connector):
 	def update(self, _id: int, data: dict) -> T | None:
 		if DatabaseOperations.WRITE_UPDATE not in self._operations:
 			raise RuntimeError(f"{self._table} cannot {DatabaseOperations.WRITE_UPDATE.name}!")
-
+		query: str = self.__query_build(self._update_query, data)
 		data["id"] = _id
 
 		try:
-			self.db.update(self.__query_build(self._update_query, data), data)
+			self.db.update(query, data)
 		except SQLITEConnectionException as error:
 			_logger.error(f"Error while updating new {self._table} for item id {_id}, reason {error}")
 			return None
@@ -147,12 +149,13 @@ class RepositoryBase(Connector):
 		return [item for item in [self._build_object(item_raw) for item_raw in data]]
 
 	def __query_build(self, query: str, params: t.Optional[dict] = None) -> str:
-		if QUERY_REPLACE_KEY_EQUAL in query:
-			if not params:
-				raise RuntimeError(f"Query {query} contains keys {QUERY_REPLACE_KEY_EQUAL} but no params was provided!")
-			set_query = [f"{key} = :{key}" for key, value in params.items()]
-			query = query.replace("__placeholder = __value", ", ".join(set_query))
+		query = self.__inject_table_data(query)
+		query = self.__inject_parameters(params, query)
 
+		_logger.debug("Build Query : %s", query)
+		return query
+
+	def __inject_table_data(self, query):
 		for key in sorted(list(QUERY_REPLACE_KEYS)):
 			if key == "__params":
 				value = getattr(self, "_columns")
@@ -164,6 +167,20 @@ class RepositoryBase(Connector):
 			if key == "__columns":
 				value = ", ".join(value)
 			query = query.replace(key, value)
-
-		_logger.debug("Build Query : %s", query)
 		return query
+
+	@staticmethod
+	def __inject_parameters(params, query) -> str:
+		if QUERY_REPLACE_KEY_EQUAL in query:
+			key_type: str = "="
+		elif QUERY_REPLACE_KEY_NO_EQUAL in query:
+			key_type: str = "!="
+		elif QUERY_REPLACE_KEY_LIKE in query:
+			key_type: str = "LIKE"
+		else:
+			return query
+		if not params:
+			raise RuntimeError(f"Query {query} contains keys {key_type} but no params was provided!")
+
+		set_query = [f"{key} {key_type} :{key}" for key in params]
+		return query.replace("__placeholder = __value", ", ".join(set_query))
