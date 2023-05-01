@@ -1,7 +1,9 @@
 import logging
 import typing as t
 from abc import abstractmethod
+from datetime import datetime
 
+from chatbox.app.constants import DATETIME_DEFAULT
 from chatbox.app.database.orm.abstract_connector import Connector
 from chatbox.app.database.orm.sqlite_conn import SQLITEConnection, SQLITEConnectionException
 from chatbox.app.database.orm.types import Item, T, DatabaseOperations
@@ -140,6 +142,17 @@ class RepositoryBase(Connector):
 	def _build_object(self, data: Item) -> T | None:
 		if not data:
 			return
+
+		try:
+			created = datetime.strptime(data["created"], DATETIME_DEFAULT)
+			modified = datetime.strptime(data["modified"], DATETIME_DEFAULT)
+		except (KeyError, TypeError, ValueError) as error:
+			_logger.exception(f"Error while converting datetime fields of object for table {self._table}, reason {error}", exc_info=error)
+			return None
+
+		data["created"] = created
+		data["modified"] = modified
+
 		try:
 			return self._model(**data)
 		except KeyError as error:
