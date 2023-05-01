@@ -14,6 +14,11 @@ class TestUserRepository(BaseRunner):
 	def test_create_user(self):
 		repository = UserRepository(self.db)
 
+		print(UserModel.__annotations__)
+		print(UserModel.__annotations__)
+		print(UserModel.__annotations__)
+		print(UserModel.__annotations__)
+
 		username = "user1"
 		user: UserModel = repository.create({"username": username, "password": "1234"})
 

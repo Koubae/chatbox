@@ -1,16 +1,22 @@
 import typing as t
 import pytest
+from dataclasses import dataclass
 
 from chatbox.app.database.orm.abstrac_base_repository import RepositoryBase
 from chatbox.app.database.orm.types import Item
 from tests.conftest import BaseRunner
 
 
+@dataclass
+class ConcreteModel:
+	username: str
+	password: str
+
 class RepositoryConcrete(RepositoryBase):
 	_table: t.Final[str] = "user"
 	_name: t.Final[str] = "username"
+	_model: ConcreteModel = ConcreteModel
 
-	_columns = ["username", "password"]
 
 	def create_user(self, username: str, password: str):
 		self.create({"username": username, "password": password})

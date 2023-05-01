@@ -43,7 +43,11 @@ class RepositoryBase(Connector):
 
 	@property
 	@abstractmethod
-	def _columns(self) -> str: ...
+	def _model(self) -> T: ...
+
+	@property
+	def _columns(self):
+		return list(self._model.__annotations__.keys())
 
 	@abstractmethod
 	def _build_object(self, data: Item) -> t.Any: ...
@@ -129,5 +133,5 @@ class RepositoryBase(Connector):
 				value = ", ".join(value)
 			query = query.replace(key, value)
 
-		_logger.info("Build Query : %s", query)
+		_logger.debug("Build Query : %s", query)
 		return query

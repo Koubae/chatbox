@@ -13,8 +13,7 @@ _logger = logging.getLogger(__name__)
 class ServerSessionRepository(RepositoryBase):
 	_table: t.Final[str] = "server_session"
 	_name: t.Final[str] = "session_id"
-
-	_columns = ["session_id", "data"]   # TODO: make dynamic
+	_model: ServerSessionModel = ServerSessionModel
 
 	def create(self, data: t.Iterable[dict] | dict) -> ServerSessionModel | None:
 		data["data"] = self._pack_data(data["session_id"], data["data"])
