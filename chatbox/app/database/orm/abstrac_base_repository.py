@@ -4,8 +4,7 @@ from abc import abstractmethod
 
 from chatbox.app.database.orm.abstract_connector import Connector
 from chatbox.app.database.orm.sqlite_conn import SQLITEConnection, SQLITEConnectionException
-from chatbox.app.database.orm.types import Item, T
-
+from chatbox.app.database.orm.types import Item, T, DatabaseOperations
 
 _logger = logging.getLogger(__name__)
 QUERY_REPLACE_KEYS: t.Final[frozenset] = frozenset({
@@ -25,10 +24,20 @@ class RepositoryBase(Connector):
 	_update_query = f"UPDATE __table SET {QUERY_REPLACE_KEY_EQUAL} WHERE id = :id"
 	_delete_query = f"DELETE FROM __table WHERE id = :id"
 
+	_operations: tuple[DatabaseOperations] = (
+		DatabaseOperations.READ,
+		DatabaseOperations.READ_MANY,
+		DatabaseOperations.WRITE_CREATE,
+		DatabaseOperations.WRITE_CREATE_MANY,
+		DatabaseOperations.WRITE_UPDATE,
+		DatabaseOperations.DELETE,
+		DatabaseOperations.DELETE_MANY,
+	)
+
 	def __init__(self, database: SQLITEConnection):
 		super().__init__()
 		self.__database: SQLITEConnection = database
-	
+
 	@property
 	def db(self) -> SQLITEConnection:
 		return self.__database
@@ -50,6 +59,9 @@ class RepositoryBase(Connector):
 		return list(self._model.__annotations__.keys())
 
 	def get(self, _id: int) -> T | None:
+		if DatabaseOperations.READ not in self._operations:
+			raise RuntimeError(f"{self._table} cannot {DatabaseOperations.READ.name}!")
+
 		try:
 			return self._build_object(self.db.get(self.__query_build(self._get_query), {"id": _id}))
 		except SQLITEConnectionException as error:
@@ -57,6 +69,9 @@ class RepositoryBase(Connector):
 			return None
 
 	def get_by_name(self, name: int | str) -> T | None:
+		if DatabaseOperations.READ not in self._operations:
+			raise RuntimeError(f"{self._table} cannot {DatabaseOperations.READ.name}!")
+
 		try:
 			return self._build_object(self.db.get(self.__query_build(self._get_query_by_name), {self._name: name}))
 		except SQLITEConnectionException as error:
@@ -64,6 +79,9 @@ class RepositoryBase(Connector):
 			return None
 
 	def get_many(self, limit: int = 100, offset: int = 0) -> list[T]:
+		if DatabaseOperations.READ_MANY not in self._operations:
+			raise RuntimeError(f"{self._table} cannot {DatabaseOperations.READ_MANY.name}!")
+
 		try:
 			return self._build_objects(self.db.get_many(self.__query_build(self._get_many_query), {"limit": limit, "offset": offset}))
 		except SQLITEConnectionException as error:
@@ -71,6 +89,9 @@ class RepositoryBase(Connector):
 			return []
 
 	def create(self, data: t.Iterable[dict] | dict) -> T | None:
+		if DatabaseOperations.WRITE_CREATE not in self._operations:
+			raise RuntimeError(f"{self._table} cannot {DatabaseOperations.WRITE_CREATE.name}!")
+
 		if isinstance(data, dict):
 			data = (data, )
 
@@ -87,6 +108,9 @@ class RepositoryBase(Connector):
 			return self.get(created_id)
 
 	def update(self, _id: int, data: dict) -> T | None:
+		if DatabaseOperations.WRITE_UPDATE not in self._operations:
+			raise RuntimeError(f"{self._table} cannot {DatabaseOperations.WRITE_UPDATE.name}!")
+
 		data["id"] = _id
 
 		try:
@@ -99,6 +123,9 @@ class RepositoryBase(Connector):
 			return self.get(_id)
 
 	def delete(self, _id: int) -> bool:
+		if DatabaseOperations.DELETE not in self._operations:
+			raise RuntimeError(f"{self._table} cannot {DatabaseOperations.DELETE.name}!")
+
 		try:
 			self.db.delete(self.__query_build(self._delete_query), {"id": _id})
 		except SQLITEConnectionException as error:

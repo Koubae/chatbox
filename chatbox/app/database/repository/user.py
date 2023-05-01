@@ -3,7 +3,7 @@ import typing as t
 
 from chatbox.app.core.model.user import UserModel, UserLoginModel
 from chatbox.app.database.orm.abstrac_base_repository import RepositoryBase
-
+from chatbox.app.database.orm.types import DatabaseOperations
 
 _logger = logging.getLogger(__name__)
 
@@ -19,5 +19,10 @@ class UserLoginRepository(RepositoryBase):
 	_name: t.Final[int] = "user_id"
 	_model: UserLoginModel = UserLoginModel
 
-	def update(self, _id: int, data: dict) -> None:   # TODO : make dynamic at abstraction level
-		raise RuntimeError(f"{self._table} cannot be updated!")
+	_operations: tuple[DatabaseOperations] = (
+			DatabaseOperations.READ,
+			DatabaseOperations.READ_MANY,
+			DatabaseOperations.WRITE_CREATE,
+			DatabaseOperations.DELETE,
+			DatabaseOperations.DELETE_MANY,
+		)

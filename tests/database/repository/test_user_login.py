@@ -11,7 +11,8 @@ class TestUserLoginRepository(BaseRunner):
 		server_repo = ServerSessionRepository(self.db)
 		user_repo = UserRepository(self.db)
 
-		server_session: ServerSessionModel = server_repo.create({"session_id":  ServerSessionModel.create_session_id(), "data": {"key1": "val1", "key2": ["value" for _ in range(10)], "key3": {"object": "helloworld"}}})
+		data = {"key1": "val1", "key2": ["value" for _ in range(10)], "key3": {"object": "helloworld"}}
+		server_session: ServerSessionModel = server_repo.create({"session_id":  ServerSessionModel.create_session_id(), "data": data})
 		user: UserModel = user_repo.create({"username": username, "password": "1234"})
 
 		return server_repo, user_repo, server_session, user
