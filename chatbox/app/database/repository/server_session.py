@@ -27,20 +27,8 @@ class ServerSessionRepository(RepositoryBase):
 	def _build_object(self, data: Item | None) -> ServerSessionModel | None:
 		if not data:
 			return
-		_id = data["id"]
-		session_id = data["session_id"]
-		session_data = self._unpack_data(session_id, data["data"])
-
-		try:
-			return ServerSessionModel(
-				_id,
-				data["created"],
-				data["modified"],
-				session_id,
-				session_data
-			)
-		except KeyError as error:
-			_logger.exception(f"Error while building object for table {self._table}, reason {error}", exc_info=error)
+		data["data"] = self._unpack_data(data["session_id"], data["data"])
+		return super()._build_object(data)
 
 	@staticmethod
 	def _pack_data(_id: str | int, data: dict) -> str | None:

@@ -49,9 +49,6 @@ class RepositoryBase(Connector):
 	def _columns(self):
 		return list(self._model.__annotations__.keys())
 
-	@abstractmethod
-	def _build_object(self, data: Item) -> t.Any: ...
-
 	def get(self, _id: int) -> T | None:
 		try:
 			return self._build_object(self.db.get(self.__query_build(self._get_query), {"id": _id}))
@@ -110,6 +107,14 @@ class RepositoryBase(Connector):
 		else:
 			self.deleted = self.db.deleted
 			return True
+
+	def _build_object(self, data: Item) -> T | None:
+		if not data:
+			return
+		try:
+			return self._model(**data)
+		except KeyError as error:
+			_logger.exception(f"Error while building object for table {self._table}, reason {error}", exc_info=error)
 
 	def _build_objects(self, data: t.Iterable[Item]) -> list:
 		return [item for item in [self._build_object(item_raw) for item_raw in data]]
