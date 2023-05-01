@@ -59,7 +59,7 @@ class SQLITEConnection(Connector):
 
 		sqlite3.enable_callback_tracebacks(True)
 		sqlite3.threadsafety = 3
-		self.connection: sqlite3.Connection = sqlite3.connect(database)
+		self.connection: sqlite3.Connection = sqlite3.connect(database, check_same_thread=False)
 		self.connection.row_factory = sqlite3.Row
 		self.cursor: sqlite3.Cursor = self.connection.cursor()
 
