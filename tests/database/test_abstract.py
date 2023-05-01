@@ -2,7 +2,7 @@ import typing as t
 import pytest
 from dataclasses import dataclass
 
-from chatbox.app.database.orm.abstrac_base_repository import RepositoryBase
+from chatbox.app.database.orm.abstract_base_repository import RepositoryBase
 from chatbox.app.database.orm.types import Item
 from tests.conftest import BaseRunner
 
