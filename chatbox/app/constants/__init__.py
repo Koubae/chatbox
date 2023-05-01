@@ -1,5 +1,12 @@
 import os
 
+# --------------------
+# MISC
+# --------------------
+SECONDS: int = 1
+MINUTES: int = SECONDS * 60
+HOUR: int = MINUTES * 60
+DAY: int = HOUR * 24
 
 # --------------------
 # App
@@ -8,6 +15,7 @@ APP_NAME: str = "ChatBox-Master"
 
 CLI_NEXT_INPUT: str = ">>> "
 
+SERVER_SESSION_TIME_SECONDS: int = HOUR
 KILL_APP_AT_SOCKET_TERMINATE: bool = False  # if the socket app (client or server) is terminated, run sys.exit else skip
 ENCODING: str = "UTF-8"
 DATETIME_DEFAULT: str = "%Y-%m-%d %H:%M:%S"
