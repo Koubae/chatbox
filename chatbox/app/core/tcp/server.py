@@ -4,12 +4,15 @@ import threading
 import queue
 import uuid
 
-
 from chatbox.app import constants
-from chatbox.app.constants import chat_internal_codes as codes
+from chatbox.app.constants import chat_internal_codes as codes, DIR_DATABASE_SCHEMA_MAIN, DIR_DATABASE_MAIN
 from .network_socket import NetworkSocket
+from ..model.server_session import ServerSessionModel
 from . import objects
-
+from ..model.user import UserModel
+from ...database.orm.sqlite_conn import SQLITEConnection
+from ...database.repository.server_session import ServerSessionRepository
+from ...database.repository.user import UserRepository, UserLoginRepository
 
 _logger = logging.getLogger(__name__)
 
@@ -20,16 +23,31 @@ class SocketTCPServer(NetworkSocket):
     def __init__(self, host: str, port: int):
         super().__init__(host, port)
 
-        # TODO. 1. send to client. create session expiration . save session to db. session data should be a pickled object using shelve?
-        self.server_session: uuid.UUID = uuid.uuid4()
         self._server_listening: bool = False
-
         self.client_messages: queue.Queue[objects.Message] = queue.Queue(maxsize=constants.SOCKET_MAX_MESSAGE_QUEUE_PER_WORKER)
         self.clients_unidentified: dict[int, objects.Client] = {}
         self.clients_identified: dict[int, objects.Client] = {}
 
         # metadata
         self.total_client_connected: int = 0
+        # DATABASE  | TODO: refactor this!
+        self.database: SQLITEConnection = SQLITEConnection(DIR_DATABASE_MAIN, schema=DIR_DATABASE_SCHEMA_MAIN)
+        # TODO: make a repo pool !
+        self.repo_server: ServerSessionRepository = ServerSessionRepository(self.database)
+        self.repo_user: UserRepository = UserRepository(self.database)
+        self.repo_user_login: UserLoginRepository = UserLoginRepository(self.database)
+
+        # TODO. 1. send to client. create session expiration . save session to db. session data should be a pickled object using shelve?
+        # push data to session?
+        self.server_session: ServerSessionModel = self.repo_server.get_session_or_create()
+
+    def __del__(self):
+        super().__del__()
+        try:
+            self.database.__del__()
+            del self.database
+        except Exception as error:
+            _logger.exception(f"An exception occurred while closing connection to database, error {error}", exc_info=error)
 
     def start(self):
         exception: BaseException | None = None
@@ -149,11 +167,13 @@ class SocketTCPServer(NetworkSocket):
         logging_code_type = codes.code_in(codes.LOGIN, payload) or codes.code_in(codes.IDENTIFICATION, payload)
         logged_in = self.login(logging_code_type, client_conn, payload)
         if not logged_in:
-            _logger.info(f"Client {client_conn} not identified, requesting identification and sending user_id")
+            client_conn.login_attempts += 1
+            _logger.info(f"Client {client_conn} not identified, total login attempts = {client_conn.login_attempts} "
+                         f"requesting identification and sending user_id")
             self.send(client_conn.connection, codes.make_message(codes.IDENTIFICATION_REQUIRED, client_conn.user_id))
             return False
 
-        self.send(client_conn.connection, codes.make_message(codes.LOGIN_SUCCESS, str(self.server_session)))
+        self.send(client_conn.connection, codes.make_message(codes.LOGIN_SUCCESS, self.server_session.session_id))
         return True
 
     def login(self, logging_code_type: int, client_conn: objects.Client, payload: str) -> bool:
@@ -173,28 +193,39 @@ class SocketTCPServer(NetworkSocket):
 
         _logger.info(f"{client_conn.user_name} - with user_id {client_conn.user_id} request {codes.CODES[logging_code_type]}")
         # TODOs:
-        # 1. db : select user from db if exist
-        # 2. db: create user from db if not exist
-        # 3. db. update user logging status
+        # DONE ------1. db : select user from db if exist
+        # DONE ------2. db: create user from db if not exist
+        # DONE ------3. db. update user logging status
         # 3. check password
         # 4. save encrypt saved password
         # 5. Send 'session' to client (which the client can save) if session is the same! with expiration!!!
         if input_user_id != client_conn.user_id:
             return False
 
-        # TODO: check password!!!!
-        if input_user_password != input_user_password:
-            return False
+        user: UserModel = self.repo_user.get_by_name(input_user_name)
+        if not user:
+            # TODO . put this login on the repo
+            user: UserModel = self.repo_user.create({"username": input_user_name, "password": input_user_password})  # TODO: check password!
+        else:
+            # TODO: hash and check hash password!
+            if user.password != input_user_password:
+                return False
 
         client_conn.user_name = input_user_name
         client_conn.login_info = login_info
+        client_conn.user = user
         client_conn.set_logged_in()
 
-        self.clients_identified[client_conn.identifier] = client_conn  # add client to identify
-        del self.clients_unidentified[client_conn.identifier]           # remove client from un-identify one
+        self._login_move_client_to_identified(client_conn)
+
+        self.repo_user_login.create({"user_id": user.id, "session_id": self.server_session.id, "attempts": client_conn.login_attempts})
 
         _logger.info(f"Client {client_conn} identified with credentials {login_info}")
         return True
+
+    def _login_move_client_to_identified(self, client_conn: objects.Client) -> None:
+        self.clients_identified[client_conn.identifier] = client_conn  # add client to identify
+        del self.clients_unidentified[client_conn.identifier]  # remove client from un-identify one
 
     def add_message_to_broadcast(self, client_conn: objects.Client, message: str, send_all: bool = False) -> None:
         _logger.info(f"[RECEIVED]::({client_conn}) to broadcast >>> {message}")
