@@ -10,6 +10,7 @@ CLI_NEXT_INPUT: str = ">>> "
 
 KILL_APP_AT_SOCKET_TERMINATE: bool = False  # if the socket app (client or server) is terminated, run sys.exit else skip
 ENCODING: str = "UTF-8"
+DATETIME_DEFAULT: str = "%Y-%m-%d %H:%M:%S"
 
 # ...... SOCKET ......
 SOCKET_HOST_DEFAULT: str = "localIpAddr"
