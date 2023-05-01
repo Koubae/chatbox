@@ -2,7 +2,7 @@ import logging
 import typing as t
 
 from chatbox.app.core.model.user import UserModel, UserLoginModel
-from chatbox.app.database.orm.abstrac_base_repository import RepositoryBase
+from chatbox.app.database.orm.abstract_base_repository import RepositoryBase
 from chatbox.app.database.orm.sqlite_conn import SQLITEConnectionException
 from chatbox.app.database.orm.types import Item
 

@@ -3,7 +3,7 @@ import typing as t
 import json
 
 from chatbox.app.core.model.server_session import ServerSessionModel
-from chatbox.app.database.orm.abstrac_base_repository import RepositoryBase
+from chatbox.app.database.orm.abstract_base_repository import RepositoryBase
 from chatbox.app.database.orm.types import Item
 
 
