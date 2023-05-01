@@ -4,6 +4,8 @@ import uuid
 import typing as t
 from typing import NamedTuple, ClassVar
 
+from chatbox.app.core.model.user import UserModel
+
 
 class Address(NamedTuple):
     host: str
@@ -32,6 +34,8 @@ class Client(Connection):
     state: str = dataclasses.field(default='PUBLIC')
     user_name: str | None = dataclasses.field(default='PUBLIC_USER')
     login_info: str = dataclasses.field(default=None)
+    user: UserModel = dataclasses.field(default=None)
+    login_attempts: int = dataclasses.field(default=0)
 
     PUBLIC: ClassVar[str] = 'PUBLIC'   # TODO: Use enum???
     LOGGED: ClassVar[str] = 'LOGGED'
