@@ -26,6 +26,7 @@ for _logger_name_to_disable in [
 	_logger.propagate = False
 	_logger.disabled = True
 lock = threading.Lock()
+__database_mock = None
 
 
 class TCPSocketMock:
@@ -103,6 +104,8 @@ class TCPSocketMock:
 def create_tcp_server_mock():
 	def set_up() -> core.SocketTCPServer:
 		print("FIXTURE: create_tcp_server_mock -> set_up")
+		core.SocketTCPServer._connect_to_database = lambda _: __database_mock
+
 		tcp_server: core.SocketTCPServer = core.SocketTCPServer(UNITTEST_HOST, UNITTEST_PORT)
 
 		tcp_server_thread = threading.Thread(target=tcp_server, daemon=True)
@@ -175,8 +178,11 @@ def socket_create() -> t.Callable[[], socket.socket]:
 
 @pytest.fixture(scope="class")
 def create_database_mock():
+	global __database_mock
 	print("FIXTURE: create_database_mock -> set_up")
 	database: SQLITEConnection = SQLITEConnection(":memory:", schema=DIR_DATABASE_SCHEMA_MAIN)
+	database.cursor.execute("PRAGMA foreign_keys = OFF;")
+	__database_mock = database
 
 	yield database
 
@@ -190,20 +196,21 @@ class BaseRunner:
 	event_input = threading.Event()
 
 	@pytest.fixture(autouse=True)
-	def _app(self, create_tcp_server_mock, create_database_mock, monkeypatch):
-		self.tcp_server: core.SocketTCPServer = create_tcp_server_mock
-		self.db: SQLITEConnection = create_database_mock
-
+	def _app(self, create_database_mock, create_tcp_server_mock, monkeypatch):
 		monkeypatch.setattr(core.SocketTCPClient, "_print_message", lambda _self, message: self._print_message_mock(message))
 		monkeypatch.setattr(core.SocketTCPClient, "_request_message", lambda _self: self._request_message_mock())
 		monkeypatch.setattr(core.SocketTCPClient, "_request_user_name", lambda _self: self._request_user_name_mock())
 		monkeypatch.setattr(core.SocketTCPClient, "_request_password", lambda _self: self._request_password_mock())
 
+		self.db: SQLITEConnection = create_database_mock
+		self.tcp_server: core.SocketTCPServer = create_tcp_server_mock
+
+
 	@pytest.fixture(scope="function", autouse=True)
 	def tear_down_db(self):
+		self.db.cursor.execute("DELETE FROM user_login")
 		self.db.cursor.execute("DELETE FROM user")
 		self.db.cursor.execute("DELETE FROM server_session")
-		self.db.cursor.execute("DELETE FROM user_login")
 
 	def _print_message_mock(self, message: str) -> None:
 		pass
