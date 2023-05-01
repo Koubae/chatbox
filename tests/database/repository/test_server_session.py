@@ -5,7 +5,7 @@ from chatbox.app.database.repository.server_session import ServerSessionReposito
 from tests.conftest import BaseRunner
 
 
-class TestUserRepository(BaseRunner):
+class ServerSessionRepositoryRepository(BaseRunner):
 	def _create_session(self, repository: ServerSessionRepository):
 		session_id = ServerSessionModel.create_session_id()
 		data = {"key1": "val1", "key2": ["value" for _ in range(10)], "key3": {"object": "helloworld"}}

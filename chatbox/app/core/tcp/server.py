@@ -9,7 +9,7 @@ from chatbox.app.constants import chat_internal_codes as codes, DIR_DATABASE_SCH
 from .network_socket import NetworkSocket
 from ..model.server_session import ServerSessionModel
 from . import objects
-from ..model.user import UserModel
+from ..model.user import UserModel, UserLoginModel
 from ...database.orm.sqlite_conn import SQLITEConnection
 from ...database.repository.server_session import ServerSessionRepository
 from ...database.repository.user import UserRepository, UserLoginRepository
@@ -27,19 +27,10 @@ class SocketTCPServer(NetworkSocket):
         self.client_messages: queue.Queue[objects.Message] = queue.Queue(maxsize=constants.SOCKET_MAX_MESSAGE_QUEUE_PER_WORKER)
         self.clients_unidentified: dict[int, objects.Client] = {}
         self.clients_identified: dict[int, objects.Client] = {}
-
         # metadata
         self.total_client_connected: int = 0
-        # DATABASE  | TODO: refactor this!
-        self.database: SQLITEConnection = SQLITEConnection(DIR_DATABASE_MAIN, schema=DIR_DATABASE_SCHEMA_MAIN)
-        # TODO: make a repo pool !
-        self.repo_server: ServerSessionRepository = ServerSessionRepository(self.database)
-        self.repo_user: UserRepository = UserRepository(self.database)
-        self.repo_user_login: UserLoginRepository = UserLoginRepository(self.database)
-
-        # TODO. 1. send to client. create session expiration . save session to db. session data should be a pickled object using shelve?
-        # push data to session?
-        self.server_session: ServerSessionModel = self.repo_server.get_session_or_create()
+        # DATABASE
+        self._init_database()
 
     def __del__(self):
         super().__del__()
@@ -48,6 +39,20 @@ class SocketTCPServer(NetworkSocket):
             del self.database
         except Exception as error:
             _logger.exception(f"An exception occurred while closing connection to database, error {error}", exc_info=error)
+
+    def _init_database(self):   # | TODO: refactor this!
+        self.database: SQLITEConnection = self._connect_to_database()
+        # TODO: make a repo pool !
+        self.repo_server: ServerSessionRepository = ServerSessionRepository(self.database)
+        self.repo_user: UserRepository = UserRepository(self.database)
+        self.repo_user_login: UserLoginRepository = UserLoginRepository(self.database)
+        # TODO. 1. send to client. create session expiration . save session to db. session data should be a pickled object using shelve?
+        # push data to session?
+        self.server_session: ServerSessionModel = self.repo_server.get_session_or_create()
+
+    @staticmethod
+    def _connect_to_database() -> SQLITEConnection:
+        return SQLITEConnection(DIR_DATABASE_MAIN, schema=DIR_DATABASE_SCHEMA_MAIN)
 
     def start(self):
         exception: BaseException | None = None
@@ -218,7 +223,9 @@ class SocketTCPServer(NetworkSocket):
 
         self._login_move_client_to_identified(client_conn)
 
-        self.repo_user_login.create({"user_id": user.id, "session_id": self.server_session.id, "attempts": client_conn.login_attempts})
+        user_login: UserLoginModel = self.repo_user_login.create({"user_id": user.id, "session_id": self.server_session.id,
+                                                                  "attempts": client_conn.login_attempts})
+        assert user_login is not None
 
         _logger.info(f"Client {client_conn} identified with credentials {login_info}")
         return True

@@ -40,12 +40,14 @@ class ServerSessionRepository(RepositoryBase):
 			_logger.error(f"Error while get last session {self._table}, reason {error}")
 			return None
 
-		last_session_seconds = 0
-		if session:
-			last_session_seconds = int((datetime.utcnow() - session.modified).total_seconds())
-		if last_session_seconds > SERVER_SESSION_TIME_SECONDS:
-			_logger.info(f"Last session has expired {last_session_seconds} seconds ago, creating new session")
+		if not session:
+			_logger.info(f"Session not found, creating new session")
 			session = self.create({"session_id": ServerSessionModel.create_session_id(), "data": {}})
+		else:
+			last_session_seconds = int((datetime.utcnow() - session.modified).total_seconds())
+			if last_session_seconds > SERVER_SESSION_TIME_SECONDS:
+				_logger.info(f"Last session has expired {last_session_seconds} seconds ago, creating new session")
+				session = self.create({"session_id": ServerSessionModel.create_session_id(), "data": {}})
 
 		return session
 

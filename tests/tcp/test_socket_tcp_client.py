@@ -104,7 +104,7 @@ class TestSocketTCPClient(BaseRunner):
 		client: core.SocketTCPClient = tcp_client_mock()
 		time.sleep(1)
 
-		assert client.server_session == str(self.tcp_server.server_session) and client.state == core.objects.Client.LOGGED
+		assert client.server_session == str(self.tcp_server.server_session.session_id) and client.state == core.objects.Client.LOGGED
 
 	@pytest.mark.auth_client
 	@pytest.mark.auth
@@ -128,4 +128,3 @@ class TestSocketTCPClient(BaseRunner):
 
 		tcp_client_1.terminate()
 		tcp_client_2.terminate()
-
