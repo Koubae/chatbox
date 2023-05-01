@@ -11,7 +11,7 @@ class TestUserRepository(BaseRunner):
 	@pytest.mark.repo_user
 	@pytest.mark.repository
 	@pytest.mark.database
-	def test_create_user(self):
+	def test_create(self):
 		repository = UserRepository(self.db)
 
 		username = "user1"
@@ -77,3 +77,4 @@ class TestUserRepository(BaseRunner):
 		user_after_delete: None = repository.get(user.id)
 
 		assert deleted and user_after_delete is None
+
