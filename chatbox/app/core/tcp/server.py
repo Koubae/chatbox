@@ -10,6 +10,7 @@ from .network_socket import NetworkSocket
 from ..model.server_session import ServerSessionModel
 from . import objects
 from ..model.user import UserModel, UserLoginModel
+from ..security.password import generate_password_hash, check_password_hash
 from ...database.orm.sqlite_conn import SQLITEConnection
 from ...database.repository.server_session import ServerSessionRepository
 from ...database.repository.user import UserRepository, UserLoginRepository
@@ -181,7 +182,7 @@ class SocketTCPServer(NetworkSocket):
         self.send(client_conn.connection, codes.make_message(codes.LOGIN_SUCCESS, self.server_session.session_id))
         return True
 
-    def login(self, logging_code_type: int, client_conn: objects.Client, payload: str) -> bool:
+    def login(self, logging_code_type: int, client_conn: objects.Client, payload: str) -> bool:  # TODO: refactor this inot a separate module!
         if not logging_code_type or not client_conn or not payload:
             return False
         if client_conn.identifier not in self.clients_unidentified:
@@ -201,19 +202,22 @@ class SocketTCPServer(NetworkSocket):
         # DONE ------1. db : select user from db if exist
         # DONE ------2. db: create user from db if not exist
         # DONE ------3. db. update user logging status
-        # 3. check password
-        # 4. save encrypt saved password
+        # DONE ------3. 3. check password
+        # DONE ------3. 4. save encrypt saved password
         # 5. Send 'session' to client (which the client can save) if session is the same! with expiration!!!
+        # 6. save stuff to session? if yes what???
         if input_user_id != client_conn.user_id:
             return False
 
         user: UserModel = self.repo_user.get_by_name(input_user_name)
         if not user:
             # TODO . put this login on the repo
-            user: UserModel = self.repo_user.create({"username": input_user_name, "password": input_user_password})  # TODO: check password!
+            password_hash = generate_password_hash(input_user_password)
+            user: UserModel = self.repo_user.create({"username": input_user_name, "password": password_hash})  # TODO: check password!
         else:
             # TODO: hash and check hash password!
-            if user.password != input_user_password:
+            check_pass = check_password_hash(user.password, input_user_password)
+            if not check_pass:
                 return False
 
         client_conn.user_name = input_user_name

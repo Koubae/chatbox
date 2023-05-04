@@ -51,6 +51,7 @@ Client
 
 - Make client input ">>>" as so, but will disappear and won't be printed in the terminal history
 - Save session sent by server and save it somewhere; when client re-starts checks is current session. if still the same then can log in already
+- When login for the first time (so basically when creating the user for the first time), change the text when re-questing the password to something like 'new user created, please enter password again'
 
 Projects ideas
 --------------

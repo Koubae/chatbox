@@ -4,6 +4,8 @@ import hmac
 import secrets
 import string
 
+
+__all__ = ["generate_password_hash", "check_password_hash"]
 SALT_CHARS: str = string.ascii_letters + string.digits + string.punctuation
 DEFAULT_PBKDF2_ITERATIONS: int = 600000
 HASH_SEPARATOR: str = "$&?¿"
