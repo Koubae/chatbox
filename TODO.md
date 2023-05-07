@@ -18,6 +18,7 @@ Server
 
 - Add colorama print (especially for cli usage)
 - Create BroadCaster : should be a separate socket - class ? 
+- The object.Message probably will need to be moved into a Model and create a "Message Object!"
 
 ### Routes
 
@@ -57,6 +58,8 @@ Server
 - get many by id
 - get many by name
 
+- message [Repository, Model] . moved from object.Message to this new implementation 
+  - How save message on client side???? shelves??? probably just better create a "memory" mysql or an actualy db... 
 - group [Repository, Model]
 - channel [Repository, Model]
 

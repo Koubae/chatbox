@@ -1,6 +1,6 @@
 from getpass import getpass
 
-from .... import tcp
+from chatbox.app.core import tcp
 
 
 # TODO: Improve printing

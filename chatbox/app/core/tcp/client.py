@@ -1,12 +1,15 @@
 import json
 import logging
 import threading
+import queue
 
+from chatbox.app import constants
 from chatbox.app.constants import chat_internal_codes as _c
 from .network_socket import NetworkSocket
 from . import objects
 from ..components.client.auth import AuthUser
 from ..components.client.ui.terminal import Terminal
+
 
 _logger = logging.getLogger(__name__)
 
@@ -26,6 +29,8 @@ class SocketTCPClient(NetworkSocket):   # noqa
         self.state: str = objects.Client.PUBLIC
         self.server_session: str | None = None
         self._connected_to_server: bool = False  # currently connected to the server
+
+        self.messages: queue.Queue[objects.Message] = queue.Queue(maxsize=constants.SOCKET_MAX_MESSAGE_QUEUE_PER_WORKER)
 
         self.ui: Terminal = Terminal(self)  # TODO: make GUI type too depending on how we lunch the client!
 
@@ -50,10 +55,11 @@ class SocketTCPClient(NetworkSocket):   # noqa
 
         # TODO: refactor this!
         t_receiver = threading.Thread(target=self.thread_receiver, daemon=True)
+        t_broadcaster = threading.Thread(target=self.thread_broadcaster, daemon=True)
         t_sender = threading.Thread(target=self.thread_sender, daemon=True)
 
-        # start threads
         t_receiver.start()
+        t_broadcaster.start()
         t_sender.start()
 
         self.wait_or_die()  # keep main thread alive -
@@ -62,6 +68,14 @@ class SocketTCPClient(NetworkSocket):   # noqa
         self.stop_connecting_to_server()
         self.stop_wait_forever()
 
+    def start_connecting_to_server(self):
+        self.ui.message_echo("Connecting to Server ...")
+        self.connected_to_server = True
+
+    def stop_connecting_to_server(self):
+        self.ui.message_echo("Closing Server Connection ...")
+        self.connected_to_server = False
+
     def thread_receiver(self):
         exception: BaseException | None = None
         while self.connected_to_server:
@@ -69,8 +83,10 @@ class SocketTCPClient(NetworkSocket):   # noqa
                 message: str = self.receive(self.socket)
                 if not message:
                     break
+
                 _logger.debug(message)
-                self.ui.message_echo(message)
+                self.messages.put({'identifier': -1, 'message': message, 'send_all': False})  # TODO: mmg. identifier and send_all?=
+
             except KeyboardInterrupt as error:
                 _logger.warning(f"(t_receiver) Interrupted by User, reason: {error}")
                 exception = error
@@ -109,13 +125,20 @@ class SocketTCPClient(NetworkSocket):   # noqa
             _logger.warning("(t_sender) Exit naturally")
         self.stop_wait_forever()
 
-    def start_connecting_to_server(self):
-        self.ui.message_echo("Connecting to Server ...")
-        self.connected_to_server = True
+    def thread_broadcaster(self) -> None:
+        while self.connected_to_server:
+            message_to_broadcast: objects.Message = self.messages.get()  # blocking - t_broadcaster
 
-    def stop_connecting_to_server(self):
-        self.ui.message_echo("Closing Server Connection ...")
-        self.connected_to_server = False
+            client_identifier = message_to_broadcast['identifier']
+            message = message_to_broadcast['message']
+            send_all = message_to_broadcast['send_all']
+            self.broadcast(client_identifier, message, send_all=send_all)
+
+            self.messages.task_done()
+
+    # TODO: send from to --> user , group , channel
+    def broadcast(self, client_identifier: int, message: str, send_all: bool = False) -> None:
+        self.ui.message_echo(message)
 
     def send(self, message: str) -> int:  # noqa
         return super().send(self.socket, message)

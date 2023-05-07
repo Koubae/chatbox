@@ -177,7 +177,7 @@ class SocketTCPServer(NetworkSocket):
     def add_message_to_broadcast(self, client_conn: objects.Client, message: str, send_all: bool = False) -> None:
         _logger.info(f"[RECEIVED]::({client_conn}) to broadcast >>> {message}")
         message = f'-- {client_conn.user_name} :: {message}'
-        self.client_messages.put({'identifier': client_conn.identifier, 'message': message, 'send_all': send_all})
+        self.client_messages.put({'identifier': client_conn.identifier, 'message': message, 'send_all': send_all})  # TOOD: make send_to and destination. no like this!
 
     # ------------------------------------
     # Getter and setters
