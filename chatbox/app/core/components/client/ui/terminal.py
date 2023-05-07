@@ -13,9 +13,9 @@ class Terminal:
 		print(message)
 
 	def message_prompt(self, prompt: str | None = None) -> str:
-		if prompt is None:
-			return input()
-		return input(prompt)
+		value = input(prompt and prompt or '')
+		print('\033[1A' + '\033[K', end='')  # erase text that user typed
+		return value
 
 	def input_username(self) -> str:
 		return self.message_prompt(">>> Enter user name: ")

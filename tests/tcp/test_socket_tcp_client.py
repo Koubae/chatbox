@@ -102,7 +102,7 @@ class TestSocketTCPClient(BaseRunner):
 	@pytest.mark.tcp_client
 	def test_auth_login_success(self, tcp_client_mock):
 		client: core.SocketTCPClient = tcp_client_mock()
-		time.sleep(1)
+		time.sleep(1.2)
 
 		assert client.id == self.tcp_server.clients_identified.get(client.id, None).user.id
 		assert client.server_session == str(self.tcp_server.server_session.session_id)

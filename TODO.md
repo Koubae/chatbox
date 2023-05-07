@@ -9,7 +9,6 @@ Main
 
 - Add & search other similar projects, chats open-source/not open_source, tcp apps, etc..
 - fix log & prints in terminal: add log error color 
-- fix print when chat usage in cli, when writing and receiving a message and receive after wards. the receiving one is in the same line :/
 - create bots test
 
 
@@ -134,3 +133,11 @@ Server
 - ~~Send session to client~~
 - ~~Session should expire~~
 - ~~Save session in db.~~ 
+
+
+Client
+------
+
+### UI
+
+- ~~fix print when chat usage in cli, when writing and receiving a message and receive after wards. the receiving one is in the same line :/~~
