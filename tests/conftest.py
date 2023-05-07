@@ -9,6 +9,7 @@ import pytest
 from chatbox.app import core
 from chatbox.app import constants
 from chatbox.app.constants import DIR_DATABASE_SCHEMA_MAIN
+from chatbox.app.core.security.auth import AuthUser
 from chatbox.app.database.orm.sqlite_conn import SQLITEConnection
 
 UNITTEST_HOST: str = "127.2.9.123"
@@ -104,6 +105,9 @@ class TCPSocketMock:
 def create_tcp_server_mock():
 	def set_up() -> core.SocketTCPServer:
 		print("FIXTURE: create_tcp_server_mock -> set_up")
+
+		AuthUser.REQUEST_PASSWORD_AFTER_USER_CREATION = False  # Skip The
+
 		core.SocketTCPServer._connect_to_database = lambda _: __database_mock
 
 		tcp_server: core.SocketTCPServer = core.SocketTCPServer(UNITTEST_HOST, UNITTEST_PORT)
