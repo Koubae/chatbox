@@ -10,12 +10,26 @@ class Terminal:
 	def __init__(self, chat: 'tcp.SocketTCPClient'):
 		self.chat: 'tcp.SocketTCPClient' = chat
 
-	def message_echo(self, message: str, destination: None = None): # todo Add message destination?
-		command = Commands.read_command(message)
+	def message_echo(self, message: str, destination: None = None):
+		print(message)
 
+	def message_prompt(self, prompt: str | None = None) -> str:
+		value = input(prompt and prompt or '')
+		print('\033[1A' + '\033[K', end='')  # erase text that user typed
+		return value
+
+	def input_username(self) -> str:
+		return self.message_prompt(">>> Enter user name: ")
+
+	def input_password(self) -> str:
+		return getpass(">>> Enter Password: ")
+
+	def next_command(self):
+		user_input = self.message_prompt()
+		command = Commands.read_command(user_input)
 		match command:
 			case Command.QUIT:
-				...
+				self.chat.quit()
 			case Command.LOGIN:
 				...
 			case Command.LOGOUT:
@@ -65,17 +79,7 @@ class Terminal:
 			case Command.CHANNEL_DELETE:
 				...
 
-			case Command.ECHO_MESSAGE, _:
-				print(message)
-
-
-	def message_prompt(self, prompt: str | None = None) -> str:
-		value = input(prompt and prompt or '')
-		print('\033[1A' + '\033[K', end='')  # erase text that user typed
-		return value
-
-	def input_username(self) -> str:
-		return self.message_prompt(">>> Enter user name: ")
-
-	def input_password(self) -> str:
-		return getpass(">>> Enter Password: ")
+			case Command.ECHO_MESSAGE:
+				return user_input
+			case _:
+				return user_input

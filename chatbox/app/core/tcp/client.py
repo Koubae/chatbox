@@ -107,7 +107,7 @@ class SocketTCPClient(NetworkSocket):   # noqa
         exception: BaseException | None = None
         while self.connected_to_server:
             try:
-                message: str = self.ui.message_prompt()
+                message: str = self.ui.next_command()
                 self.send(message)
             except KeyboardInterrupt as error:
                 _logger.warning(f"(t_sender) Interrupted by User, reason: {error}")

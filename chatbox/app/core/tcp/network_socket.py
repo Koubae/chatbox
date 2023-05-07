@@ -3,6 +3,7 @@ import sys
 import socket
 import threading
 import logging
+import time
 
 from chatbox.app import constants
 from .objects import Address
@@ -195,6 +196,11 @@ Stack Trace:
     # noinspection PyMethodMayBeStatic
     def start(self):
         return NotImplemented
+
+    def quit(self):
+        self.terminate()
+        time.sleep(.5)
+        sys.exit(0)
 
     def terminate(self):
         self._close()
