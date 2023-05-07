@@ -201,10 +201,10 @@ class BaseRunner:
 
 	@pytest.fixture(autouse=True)
 	def _app(self, create_database_mock, create_tcp_server_mock, monkeypatch):
-		monkeypatch.setattr(core.SocketTCPClient, "_print_message", lambda _self, message: self._print_message_mock(message))
-		monkeypatch.setattr(core.SocketTCPClient, "_request_message", lambda _self: self._request_message_mock())
-		monkeypatch.setattr(core.SocketTCPClient, "_request_user_name", lambda _self: self._request_user_name_mock())
-		monkeypatch.setattr(core.SocketTCPClient, "_request_password", lambda _self: self._request_password_mock())
+		monkeypatch.setattr(core.client_components.ui.Terminal, "message_echo", lambda _self, message: self._print_message_mock(message))
+		monkeypatch.setattr(core.client_components.ui.Terminal, "message_prompt", lambda _self: self._request_message_mock())
+		monkeypatch.setattr(core.client_components.ui.Terminal, "input_username", lambda _self: self._request_user_name_mock())
+		monkeypatch.setattr(core.client_components.ui.Terminal, "input_password", lambda _self: self._request_password_mock())
 
 		self.db: SQLITEConnection = create_database_mock
 		self.tcp_server: core.SocketTCPServer = create_tcp_server_mock

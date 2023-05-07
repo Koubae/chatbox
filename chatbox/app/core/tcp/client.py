@@ -27,11 +27,11 @@ class SocketTCPClient(NetworkSocket):   # noqa
         self.server_session: str | None = None
         self._connected_to_server: bool = False  # currently connected to the server
 
-        self.ui: Terminal = Terminal(self)
+        self.ui: Terminal = Terminal(self)  # TODO: make GUI type too depending on how we lunch the client!
 
     def __call__(self, *args, **kwargs):
         if not self.user_name:
-            self.user_name = self._request_user_name()
+            self.user_name = self.ui.input_username()
         self.credential = (self.user_name, self.password)
         self.login_info: objects.LoginInfo = {
             'id': self.id,
@@ -46,11 +46,9 @@ class SocketTCPClient(NetworkSocket):   # noqa
 
         self.send(_c.make_message(_c.Codes.LOGIN, json.dumps(self.login_info)))
 
-        # TODO: Improve printing
         AuthUser.auth(self)
 
         # TODO: refactor this!
-        # client is not logged in, let's spawn 1 thread for sending and receiving
         t_receiver = threading.Thread(target=self.thread_receiver, daemon=True)
         t_sender = threading.Thread(target=self.thread_sender, daemon=True)
 
@@ -72,7 +70,7 @@ class SocketTCPClient(NetworkSocket):   # noqa
                 if not message:
                     break
                 _logger.debug(message)
-                self._print_message(message)
+                self.ui.message_echo(message)
             except KeyboardInterrupt as error:
                 _logger.warning(f"(t_receiver) Interrupted by User, reason: {error}")
                 exception = error
@@ -93,7 +91,7 @@ class SocketTCPClient(NetworkSocket):   # noqa
         exception: BaseException | None = None
         while self.connected_to_server:
             try:
-                message: str = self._request_message()
+                message: str = self.ui.message_prompt()
                 self.send(message)
             except KeyboardInterrupt as error:
                 _logger.warning(f"(t_sender) Interrupted by User, reason: {error}")
@@ -112,29 +110,15 @@ class SocketTCPClient(NetworkSocket):   # noqa
         self.stop_wait_forever()
 
     def start_connecting_to_server(self):
-        self._print_message("Connecting to Server ...")
+        self.ui.message_echo("Connecting to Server ...")
         self.connected_to_server = True
 
     def stop_connecting_to_server(self):
-        self._print_message("Closing Server Connection ...")
+        self.ui.message_echo("Closing Server Connection ...")
         self.connected_to_server = False
 
     def send(self, message: str) -> int:  # noqa
         return super().send(self.socket, message)
-
-    def _print_message(self, message: str) -> None:  # pragma: no cover
-        print(message)
-
-    def _request_message(self) -> str:               # pragma: no cover
-        return input()
-
-    def _request_user_name(self) -> str:             # pragma: no cover
-        user_name = input(">>> Enter user name: ")
-        return user_name
-
-    def _request_password(self) -> str:              # pragma: no cover
-        password = input(">>> Enter Password: ")
-        return password
 
     # ------------------------------------
     # Getter and setters

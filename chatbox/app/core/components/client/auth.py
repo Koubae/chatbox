@@ -29,7 +29,7 @@ class AuthUser:
 				server.login_info["id"] = server.id
 				server.server_session = login_data["session_id"]
 				server.state = objects.Client.LOGGED
-				server._print_message(f"You are logged in, server session {server.server_session} your user id is {server.id}")
+				server.ui.message_echo(f"You are logged in, server session {server.server_session} your user id is {server.id}")
 				break
 			elif _c.code_in(_c.Codes.IDENTIFICATION_REQUIRED, message):
 				if not server.user_id:
@@ -37,18 +37,18 @@ class AuthUser:
 					server.login_info['user_id'] = server.user_id
 					_logger.info(f">>> client token is {server.user_id}")
 				else:
-					server._print_message("Authentication failed")
+					server.ui.message_echo("Authentication failed")
 			elif _c.code_in(_c.Codes.LOGIN_CREATED, message):
 				new_user_info = server.parse_json(_c.get_message(_c.Codes.LOGIN_CREATED, message))
 				server.id = new_user_info["id"]
 				server.user_id = new_user_info["user_id"]
 
-				server._print_message(f"New user created {server.id}, type password again to login:")
+				server.ui.message_echo(f"New user created {server.id}, type password again to login:")
 
 			if attempts == 0:
-				server._print_message("Identification Required")
+				server.ui.message_echo("Identification Required")
 			attempts += 1
-			server.login_info['password'] = server._request_password()
+			server.login_info['password'] = server.ui.input_password()
 			server.send(_c.make_message(_c.Codes.IDENTIFICATION, json.dumps(server.login_info)))
 
 		return Access.GRANTED

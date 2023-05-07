@@ -3,3 +3,5 @@ from .tcp.server import SocketTCPServer
 from .tcp.client import SocketTCPClient
 
 from .tcp import objects
+from .components import client as client_components
+from .components import server as server_components
