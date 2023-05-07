@@ -21,7 +21,6 @@ Server
 
 ### Login
 
-- send to client also the user id (that is, the database id!)
 - Add the user into the session "data", then if user logs in and is inside. the user shouldn't log in again!
 
 ### Routes
@@ -121,6 +120,7 @@ Server
 3. ~~Check how to implement a basic auth~~
 4. ~~Save user password , username, info, and session~~
 5. ~~Request correct password to user~~
+6. ~~send to client also the user id (that is, the database id!)~~
 
 ### Session
 

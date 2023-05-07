@@ -16,6 +16,7 @@ class SocketTCPClient(NetworkSocket):   # noqa
     def __init__(self, host: str, port: int, user_name: str | None = None, password: str | None = None):
         super().__init__(host, port)
 
+        self.id: int | None = None
         self.user_name: str | None = user_name
         self.password: str | None = password
         self.credential: tuple[str, str] | None = None
@@ -32,6 +33,7 @@ class SocketTCPClient(NetworkSocket):   # noqa
             self.password = self._request_password()
         self.credential = (self.user_name, self.password)
         self.login_info: objects.LoginInfo = {
+            'id': self.id,
             'user_name': self.user_name,
             'password': self.password,
             'user_id': self.user_id
@@ -52,7 +54,10 @@ class SocketTCPClient(NetworkSocket):   # noqa
                 raise ConnectionResetError("Server closed connection before could login")
 
             if codes.code_in(codes.LOGIN_SUCCESS, message):
-                self.server_session = codes.get_message(codes.LOGIN_SUCCESS, message)
+                login_data = self.parse_json(codes.get_message(codes.LOGIN_SUCCESS, message))
+                self.id = login_data["id"]
+                self.login_info["id"] = self.id
+                self.server_session = login_data["session_id"]
                 self.state = objects.Client.LOGGED
                 break
             elif codes.code_in(codes.IDENTIFICATION_REQUIRED, message):

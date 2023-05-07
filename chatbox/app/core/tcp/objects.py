@@ -13,7 +13,7 @@ class Address(NamedTuple):
 
 
 Message = t.TypedDict('Message', {'identifier': int, 'message': str, 'send_all': bool})
-LoginInfo = t.TypedDict('LoginInfo', {'user_name': t.Optional[str], 'password': t.Optional[str], 'user_id': t.Optional[str]})
+LoginInfo = t.TypedDict('LoginInfo', {'id': t.Optional[int], 'user_name': t.Optional[str], 'password': t.Optional[str], 'user_id': t.Optional[str]})
 
 
 @dataclasses.dataclass
@@ -41,7 +41,7 @@ class Client(Connection):
     LOGGED: ClassVar[str] = 'LOGGED'
 
     def __str__(self):
-        return f'{self.user_name} ({self.state})'
+        return f'{self.user_name} {self.user and f"#{self.user.id}" or ""} ({self.state})'
 
     def str_full(self) -> str:
         return f'{self.user_name}{self._user_id} @ {self.address} ({self.state})'

@@ -1,3 +1,4 @@
+import json
 import logging
 import socket
 import threading
@@ -128,7 +129,7 @@ class SocketTCPServer(NetworkSocket):
                 _logger.debug(f"Delete {client_conn.identifier} from clients_unidentified")
             if client_conn.identifier in self.clients_identified:
                 del self.clients_identified[client_conn.identifier]
-                _logger.debug(f"Delete {client_conn.identifier} from clients_identified")
+                _logger.debug(f"Delete {client_conn.identifier} identifier = {getattr(client_conn, '_identifier')} from clients_identified")
 
     def thread_broadcaster(self) -> None:
         while self.server_listening:
@@ -179,7 +180,8 @@ class SocketTCPServer(NetworkSocket):
             self.send(client_conn.connection, codes.make_message(codes.IDENTIFICATION_REQUIRED, client_conn.user_id))
             return False
 
-        self.send(client_conn.connection, codes.make_message(codes.LOGIN_SUCCESS, self.server_session.session_id))
+        payload = {"id": client_conn.user.id, "session_id": self.server_session.session_id}
+        self.send(client_conn.connection, codes.make_message(codes.LOGIN_SUCCESS, json.dumps(payload)))
         return True
 
     def login(self, logging_code_type: int, client_conn: objects.Client, payload: str) -> bool:  # TODO: refactor this inot a separate module!
@@ -216,7 +218,7 @@ class SocketTCPServer(NetworkSocket):
         client_conn.user = user
         client_conn.set_logged_in()
 
-        self._login_move_client_to_identified(client_conn)
+        self._identify_user(client_conn)
 
         user_login: UserLoginModel = self.repo_user_login.create({"user_id": user.id, "session_id": self.server_session.id,
                                                                   "attempts": client_conn.login_attempts})
@@ -225,9 +227,11 @@ class SocketTCPServer(NetworkSocket):
         _logger.info(f"Client {client_conn} identified with credentials {login_info}")
         return True
 
-    def _login_move_client_to_identified(self, client_conn: objects.Client) -> None:
-        self.clients_identified[client_conn.identifier] = client_conn  # add client to identify
-        del self.clients_unidentified[client_conn.identifier]          # remove client from un-identify one
+    def _identify_user(self, client_conn: objects.Client) -> None:
+        client_conn._identifier = client_conn.identifier
+        client_conn.identifier = client_conn.user.id
+        self.clients_identified[client_conn.identifier] = client_conn
+        del self.clients_unidentified[client_conn._identifier]
 
     def add_message_to_broadcast(self, client_conn: objects.Client, message: str, send_all: bool = False) -> None:
         _logger.info(f"[RECEIVED]::({client_conn}) to broadcast >>> {message}")
