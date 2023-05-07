@@ -1,6 +1,6 @@
 import pytest
 
-from chatbox.app.core.components.client.ui.commands import Command, Commands
+from chatbox.app.core.components.client.ui.commands import Command, Commands, Codes
 
 
 class TestCommands:
@@ -29,3 +29,11 @@ class TestCommands:
 
 		expected_command = Command.SEND_TO_CHANNEL
 		assert command is expected_command
+
+	@pytest.mark.clientui
+	def test_get_server_code(self):
+		command: Command = Command.QUIT
+
+		code: Codes = Commands.get_server_code(command)
+
+		assert code is Codes.QUIT

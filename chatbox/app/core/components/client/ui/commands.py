@@ -13,6 +13,8 @@ class Command(Enum):
 	LOGIN = auto()
 	LOGOUT = auto()
 
+	ECHO_MESSAGE = auto()
+
 	SEND_TO_ALL = auto()
 	SEND_TO_CHANNEL = auto()
 	SEND_TO_GROUP = auto()
@@ -42,11 +44,17 @@ class Command(Enum):
 		return f"{COMMAND_PREFIX}{self.name.lower()}"
 
 class Commands:
-	DEFAULT_COMMAND: Command = Command.SEND_TO_ALL
+	def __new__(cls, *_, **__):
+		raise NotImplementedError(f"{cls} cannot be created")
+
+	DEFAULT_COMMAND: Command = Command.ECHO_MESSAGE
+
 	_command_code_mapping: t.Final[MappingProxyType[Command, Codes]] = MappingProxyType({
 		Command.QUIT: Codes.QUIT,
 		Command.LOGIN: Codes.LOGIN,
 		Command.LOGOUT: Codes.LOGOUT,
+
+		Command.ECHO_MESSAGE: None,
 
 		Command.SEND_TO_ALL: Codes.SEND_TO_ALL,
 		Command.SEND_TO_CHANNEL: Codes.SEND_TO_CHANNEL,
@@ -82,3 +90,9 @@ class Commands:
 			return next(command for command in Command if str(command) in user_command)
 		except StopIteration:
 			return cls.DEFAULT_COMMAND
+
+	@classmethod
+	def get_server_code(cls, command: Command) -> Codes | None:
+		if command not in cls._command_code_mapping:
+			return None
+		return cls._command_code_mapping[command]
