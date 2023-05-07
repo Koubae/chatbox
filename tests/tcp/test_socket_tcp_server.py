@@ -17,7 +17,8 @@ import pytest
 
 from chatbox.app import core
 from chatbox.app.constants import chat_internal_codes as _c
-from chatbox.app.core.security.auth import AuthUser, Access
+from chatbox.app.core.components.server.auth import AuthUser
+from chatbox.app.core.security.objects import Access
 
 from tests.conftest import BaseRunner, TCPSocketMock, UNITTEST_HOST, UNITTEST_PORT
 

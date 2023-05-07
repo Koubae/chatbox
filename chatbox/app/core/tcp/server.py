@@ -9,7 +9,7 @@ from chatbox.app.constants import DIR_DATABASE_SCHEMA_MAIN, DIR_DATABASE_MAIN
 from .network_socket import NetworkSocket
 from ..model.server_session import ServerSessionModel
 from . import objects
-from ..security.auth import AuthUser
+from chatbox.app.core.components.server.auth import AuthUser
 from ...database.orm.sqlite_conn import SQLITEConnection
 from ...database.repository.server_session import ServerSessionRepository
 from ...database.repository.user import UserRepository, UserLoginRepository
@@ -104,6 +104,7 @@ class SocketTCPServer(NetworkSocket):
                             AuthUser.auth(self, client_conn, message)
                             continue
 
+                        # Add message "Routes" or "Commands" as Commands
                         self.add_message_to_broadcast(client_conn, message)
 
                     _logger.warning(f"{client_conn} receive a close network socket message, closing socket... ")
@@ -141,6 +142,9 @@ class SocketTCPServer(NetworkSocket):
                 self.broadcast(client_identifier, message, send_all=send_all)
             self.client_messages.task_done()
 
+    # TODO:
+    # 1. There is somethin a RuntiemError (dictionary change size during iteration)
+    # 2. Broadcast depending on the command (send to user , global , group or channel)
     def broadcast(self, client_identifier: int, message: str, send_all: bool = False) -> None:
         clients_to_send = self.clients_identified
         if send_all:

@@ -9,7 +9,7 @@ import pytest
 from chatbox.app import core
 from chatbox.app import constants
 from chatbox.app.constants import DIR_DATABASE_SCHEMA_MAIN
-from chatbox.app.core.security.auth import AuthUser
+from chatbox.app.core.components.server.auth import AuthUser
 from chatbox.app.database.orm.sqlite_conn import SQLITEConnection
 
 UNITTEST_HOST: str = "127.2.9.123"

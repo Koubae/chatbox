@@ -1,22 +1,16 @@
 import json
 import logging
 import typing as t
-from enum import Enum
 
 from chatbox.app.constants import chat_internal_codes as _c
 from chatbox.app.core import tcp
+from chatbox.app.core.security.objects import Access
 from chatbox.app.core.tcp import objects
 from chatbox.app.core.model.user import UserModel, UserLoginModel
 from chatbox.app.core.security.password import generate_password_hash, check_password_hash
 
 
 _logger = logging.getLogger(__name__)
-
-
-class Access(Enum):
-	GRANTED = True
-	DENIED = False
-	CREATED = -1
 
 
 class AuthUser:

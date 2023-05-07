@@ -19,11 +19,6 @@ Server
 - Add colorama print (especially for cli usage)
 - Create BroadCaster : should be a separate socket - class ? 
 
-### Login
-
-
-
-
 ### Routes
 
 - Create list of commands
@@ -84,6 +79,12 @@ Client
 - Save session sent by server and save it somewhere; when client re-starts checks is current session. if still the same then can log in already
 - When login for the first time (so basically when creating the user for the first time), change the text when re-quest
 - chenge text shown when user logs in for the first time to something like 'new user created, please enter password again'
+
+### UI
+
+- Create a "ui" interface 
+  - Terminal - terminal ui 
+  - GUI - tkinter ui 
 
 Projects ideas
 --------------
