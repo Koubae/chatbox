@@ -1,6 +1,6 @@
 import pytest
 
-from chatbox.app.core.components.client.ui.commands import Command, Commands, Codes
+from chatbox.app.core.components.client.commands import Command, Commands, Codes
 
 
 class TestCommands:

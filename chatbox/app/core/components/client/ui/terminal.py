@@ -1,11 +1,8 @@
-import json
-import time
 from getpass import getpass
 
 from chatbox.app.core import tcp
-from chatbox.app.constants import chat_internal_codes as _c
 from chatbox.app.core.components.client.auth import AuthUser
-from chatbox.app.core.components.client.ui.commands import Command, Commands, Codes
+from chatbox.app.core.components.client.commands import Command, Commands
 
 
 # TODO: Improve printing
