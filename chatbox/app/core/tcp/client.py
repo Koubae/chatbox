@@ -29,8 +29,6 @@ class SocketTCPClient(NetworkSocket):   # noqa
     def __call__(self, *args, **kwargs):
         if not self.user_name:
             self.user_name = self._request_user_name()
-        if not self.password:
-            self.password = self._request_password()
         self.credential = (self.user_name, self.password)
         self.login_info: objects.LoginInfo = {
             'id': self.id,
@@ -69,6 +67,12 @@ class SocketTCPClient(NetworkSocket):   # noqa
                     _logger.info(f">>> client token is {self.user_id}")
                 else:
                     print("Authentication failed")
+            elif codes.code_in(codes.LOGIN_CREATED, message):
+                new_user_info = self.parse_json(codes.get_message(codes.LOGIN_CREATED, message))
+                self.id = new_user_info["id"]
+                self.user_id = new_user_info["user_id"]
+
+                print(f"New user created {self.id}, type password again to login:")
 
             if attempts == 0:
                 print("Identification Required")
