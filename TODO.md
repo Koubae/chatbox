@@ -50,6 +50,7 @@ Server
     - update channel
     - leave channel
     - delete channel
+    - join channel
     - add user to channel
 
 ### Database 

@@ -8,6 +8,34 @@ class Codes(Enum):
 	LOGIN_SUCCESS = auto()
 	LOGIN_CREATED = auto()
 
+	LOGOUT = auto()
+	QUIT = auto()
+
+	SEND_TO_ALL = auto()
+	SEND_TO_CHANNEL = auto()
+	SEND_TO_GROUP = auto()
+	SEND_TO_USER = auto()
+
+	USER_LIST_ALL = auto()
+	USER_LIST_LOGGED = auto()
+	USER_LIST_UN_LOGGED = auto()
+
+	GROUP_LIST = auto()
+	GROUP_CREATE = auto()
+	GROUP_UPDATE = auto()
+	GROUP_LEAVE = auto()
+	GROUP_DELETE = auto()
+
+	CHANNEL_LIST_ALL = auto()
+	CHANNEL_LIST_JOINED = auto()
+	CHANNEL_LIST_UN_JOINED = auto()
+	CHANNEL_CREATE = auto()
+	CHANNEL_UPDATE = auto()
+	CHANNEL_LEAVE = auto()
+	CHANNEL_ADD = auto()
+	CHANNEL_JOIN = auto()
+	CHANNEL_DELETE = auto()
+
 	def __str__(self):
 		return f'{self.name}'
 
