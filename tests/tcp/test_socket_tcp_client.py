@@ -61,7 +61,7 @@ class TestSocketTCPClient(BaseRunner):
 		self._request_password_mock = lambda: password_mock
 		client: core.SocketTCPClient = tcp_client_mock(password=None)
 
-		assert client.password == None
+		assert client.password is None
 
 	@pytest.mark.tcp_client
 	@pytest.mark.tcp_core

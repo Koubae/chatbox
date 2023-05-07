@@ -2,7 +2,7 @@ import json
 import logging
 import threading
 
-from chatbox.app.constants import chat_internal_codes as codes
+from chatbox.app.constants import chat_internal_codes as _c
 from .network_socket import NetworkSocket
 from . import objects
 
@@ -41,7 +41,7 @@ class SocketTCPClient(NetworkSocket):   # noqa
     def start(self):
         self.start_connecting_to_server()
 
-        self.send(codes.make_message(codes.LOGIN, json.dumps(self.login_info)))
+        self.send(_c.make_message(_c.Codes.LOGIN, json.dumps(self.login_info)))
         # TODO: Improve printing
         # TODO: check that, once password is saved in server side, this will work!
         # TODO: login logic should go in a separate compoment (even just as another method!)
@@ -52,23 +52,23 @@ class SocketTCPClient(NetworkSocket):   # noqa
             if not message:
                 raise ConnectionResetError("Server closed connection before could login")
 
-            if codes.code_in(codes.LOGIN_SUCCESS, message):
-                login_data = self.parse_json(codes.get_message(codes.LOGIN_SUCCESS, message))
+            if _c.code_in(_c.Codes.LOGIN_SUCCESS, message):
+                login_data = self.parse_json(_c.get_message(_c.Codes.LOGIN_SUCCESS, message))
                 self.id = login_data["id"]
                 self.login_info["id"] = self.id
                 self.server_session = login_data["session_id"]
                 self.state = objects.Client.LOGGED
                 print(f"You are logged in, server session {self.server_session} your user id is {self.id}")
                 break
-            elif codes.code_in(codes.IDENTIFICATION_REQUIRED, message):
+            elif _c.code_in(_c.Codes.IDENTIFICATION_REQUIRED, message):
                 if not self.user_id:
-                    self.user_id = codes.get_message(codes.IDENTIFICATION_REQUIRED, message)
+                    self.user_id = _c.get_message(_c.Codes.IDENTIFICATION_REQUIRED, message)
                     self.login_info['user_id'] = self.user_id
                     _logger.info(f">>> client token is {self.user_id}")
                 else:
                     print("Authentication failed")
-            elif codes.code_in(codes.LOGIN_CREATED, message):
-                new_user_info = self.parse_json(codes.get_message(codes.LOGIN_CREATED, message))
+            elif _c.code_in(_c.Codes.LOGIN_CREATED, message):
+                new_user_info = self.parse_json(_c.get_message(_c.Codes.LOGIN_CREATED, message))
                 self.id = new_user_info["id"]
                 self.user_id = new_user_info["user_id"]
 
@@ -78,7 +78,7 @@ class SocketTCPClient(NetworkSocket):   # noqa
                 print("Identification Required")
             attempts += 1
             self.login_info['password'] = self._request_password()
-            self.send(codes.make_message(codes.IDENTIFICATION, json.dumps(self.login_info)))
+            self.send(_c.make_message(_c.Codes.IDENTIFICATION, json.dumps(self.login_info)))
         # TODO: refactor this!
         # client is not logged in, let's spawn 1 thread for sending and receiving
         t_receiver = threading.Thread(target=self.thread_receiver, daemon=True)

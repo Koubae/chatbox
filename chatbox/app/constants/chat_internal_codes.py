@@ -1,19 +1,16 @@
-from types import MappingProxyType
+from enum import Enum, auto
 
-# TODO: make enums!
-LOGIN = 1
-IDENTIFICATION = 2
-IDENTIFICATION_REQUIRED = 3
-LOGIN_SUCCESS = 4
-LOGIN_CREATED = 5
 
-CODES: MappingProxyType[int, str] = MappingProxyType({
-	LOGIN: 'LOGIN',
-	IDENTIFICATION: 'IDENTIFICATION',
-	IDENTIFICATION_REQUIRED: 'IDENTIFICATION_REQUIRED',
-	LOGIN_SUCCESS: 'LOGIN_SUCCESS',
-	LOGIN_CREATED: 'LOGIN_CREATED',
-})
+class Codes(Enum):
+	LOGIN = auto()
+	IDENTIFICATION = auto()
+	IDENTIFICATION_REQUIRED = auto()
+	LOGIN_SUCCESS = auto()
+	LOGIN_CREATED = auto()
+
+	def __str__(self):
+		return f'{self.name}'
+
 
 CODE_IDENTIFIER_LEFT: str = "@@##"
 CODE_IDENTIFIER_RIGHT: str = " --"
@@ -26,25 +23,23 @@ class ChatInternalCodeException(Exception):
 full_code = lambda _code: f"{CODE_IDENTIFIER_LEFT}{_code}{CODE_IDENTIFIER_RIGHT}"
 
 
-def code_in(code: int, message: str) -> int:
-	_code = CODES.get(code, None)
+def code_in(code: Codes, message: str) -> Codes | None:
+	_code = code.name
 	if not _code:
-		return 0
+		return None
 	if f"{full_code(_code)}" in message:
 		return code
-	return 0
+	return None
 
 
-def get_message(code: int, message: str) -> str | None:
-	_code = CODES.get(code, None)
+def get_message(code: Codes, message: str) -> str | None:
+	_code = code.name
 	if not _code:
 		return None
 	return message.replace(full_code(_code), "")
 
 
-def make_message(code: int, message: str) -> str:
-	_code = CODES.get(code, None)
-	if not _code:
-		ChatInternalCodeException(f"code {_code} not mapped in CODES")
+def make_message(code: Codes, message: str) -> str:
+	_code = code.name
 	code_build = full_code(_code)
 	return f"{code_build}{message}"

@@ -16,7 +16,7 @@ import threading
 import pytest
 
 from chatbox.app import core
-from chatbox.app.constants import chat_internal_codes as codes
+from chatbox.app.constants import chat_internal_codes as _c
 from chatbox.app.core.security.auth import AuthUser, Access
 
 from tests.conftest import BaseRunner, TCPSocketMock, UNITTEST_HOST, UNITTEST_PORT
@@ -74,8 +74,8 @@ class TestSocketTCPServer(BaseRunner):
 
 		messages = [TCPSocketMock.socket_receive(_sock) for _sock in sockets]
 		messages_unique = set(messages)
-		check_message_contains_code = [codes.code_in(codes.IDENTIFICATION_REQUIRED, payload) for payload in messages]
-		check_message_contains_code_expected = [codes.IDENTIFICATION_REQUIRED for _ in messages]
+		check_message_contains_code = [_c.code_in(_c.Codes.IDENTIFICATION_REQUIRED, payload) for payload in messages]
+		check_message_contains_code_expected = [_c.Codes.IDENTIFICATION_REQUIRED for _ in messages]
 
 		assert check_message_contains_code == check_message_contains_code_expected
 		assert len(messages) == len(messages_unique)
@@ -144,7 +144,7 @@ class TestSocketTCPServer(BaseRunner):
 			"user_id": client_conn.user_id
 		}
 
-		assert AuthUser._login(self.tcp_server, logging_code_type=codes.LOGIN, client_conn=client_conn, payload=json.dumps(user_info)) is Access.DENIED
+		assert AuthUser._login(self.tcp_server, logging_code_type=_c.Codes.LOGIN, client_conn=client_conn, payload=json.dumps(user_info)) is Access.DENIED
 
 	@pytest.mark.auth_server
 	@pytest.mark.auth
@@ -166,7 +166,7 @@ class TestSocketTCPServer(BaseRunner):
 		client_conn: core.objects.Client = self.tcp_server.create_client_object(_sock, core.objects.Address(*_sock.getsockname()))
 		self.tcp_server.clients_unidentified[client_conn.identifier] = client_conn
 
-		assert AuthUser._login(self.tcp_server, logging_code_type=codes.LOGIN, client_conn=client_conn, payload='{"values": "itme""somethingwrong"}') is Access.DENIED  # noqa
+		assert AuthUser._login(self.tcp_server, logging_code_type=_c.Codes.LOGIN, client_conn=client_conn, payload='{"values": "itme""somethingwrong"}') is Access.DENIED  # noqa
 
 	@pytest.mark.auth_server
 	@pytest.mark.auth
@@ -183,7 +183,7 @@ class TestSocketTCPServer(BaseRunner):
 		}
 
 		assert AuthUser._login(
-			self.tcp_server, logging_code_type=codes.LOGIN, client_conn=client_conn, payload=json.dumps(user_info)) is Access.GRANTED and \
+			self.tcp_server, logging_code_type=_c.Codes.LOGIN, client_conn=client_conn, payload=json.dumps(user_info)) is Access.GRANTED and \
 			client_conn.is_logged() and client_conn.identifier not in self.tcp_server.clients_unidentified
 
 	@pytest.mark.auth_server
@@ -200,7 +200,7 @@ class TestSocketTCPServer(BaseRunner):
 			"user_id": "nope"
 		}
 
-		assert AuthUser._login(self.tcp_server, logging_code_type=codes.LOGIN, client_conn=client_conn, payload=json.dumps(user_info)) is Access.DENIED
+		assert AuthUser._login(self.tcp_server, logging_code_type=_c.Codes.LOGIN, client_conn=client_conn, payload=json.dumps(user_info)) is Access.DENIED
 
 	@pytest.mark.auth_server
 	@pytest.mark.auth
@@ -216,7 +216,7 @@ class TestSocketTCPServer(BaseRunner):
 			"user_id": client_conn.user_id
 		}
 
-		assert AuthUser._login(self.tcp_server, logging_code_type=codes.LOGIN, client_conn=client_conn, payload=json.dumps(user_info)) is Access.DENIED
+		assert AuthUser._login(self.tcp_server, logging_code_type=_c.Codes.LOGIN, client_conn=client_conn, payload=json.dumps(user_info)) is Access.DENIED
 
 
 	@pytest.mark.auth_server
@@ -232,7 +232,7 @@ class TestSocketTCPServer(BaseRunner):
 			"password": "1234",
 			"user_id": client_conn.user_id
 		}
-		login_request = codes.make_message(codes.LOGIN, json.dumps(user_info))
+		login_request = _c.make_message(_c.Codes.LOGIN, json.dumps(user_info))
 
 		assert AuthUser.auth(self.tcp_server, client_conn=client_conn, payload=login_request) is Access.GRANTED
 
@@ -250,7 +250,7 @@ class TestSocketTCPServer(BaseRunner):
 			"password": "1234",
 			"user_id": "nope"
 		}
-		login_request = codes.make_message(codes.LOGIN, json.dumps(user_info))
+		login_request = _c.make_message(_c.Codes.LOGIN, json.dumps(user_info))
 
 		AuthUser.auth(self.tcp_server, client_conn=client_conn, payload=login_request)
 
@@ -263,7 +263,7 @@ class TestSocketTCPServer(BaseRunner):
 		t.start()
 		t.join(timeout=.5)
 
-		assert codes.code_in(codes.IDENTIFICATION_REQUIRED, messages[0]) is codes.IDENTIFICATION_REQUIRED
+		assert _c.code_in(_c.Codes.IDENTIFICATION_REQUIRED, messages[0]) is _c.Codes.IDENTIFICATION_REQUIRED
 
 	@pytest.mark.tcp_server
 	@pytest.mark.tcp_core
