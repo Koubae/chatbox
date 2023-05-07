@@ -21,7 +21,8 @@ Server
 
 ### Login
 
-- Add the user into the session "data", then if user logs in and is inside. the user shouldn't log in again!
+- Add login into a separate module?
+
 
 ### Routes
 
@@ -121,6 +122,7 @@ Server
 4. ~~Save user password , username, info, and session~~
 5. ~~Request correct password to user~~
 6. ~~send to client also the user id (that is, the database id!)~~
+7. ~~Add the user into the session "data", then if user logs in and is inside. the user shouldn't log in again!~~
 
 ### Session
 

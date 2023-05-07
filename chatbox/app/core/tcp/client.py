@@ -47,7 +47,8 @@ class SocketTCPClient(NetworkSocket):   # noqa
         # TODO: Improve printing
         # TODO: check that, once password is saved in server side, this will work!
         # TODO: login logic should go in a separate compoment (even just as another method!)
-        print("Identification Required")
+
+        attempts = 0
         while self.state != objects.Client.LOGGED:
             message: str = self.receive(self.socket)
             if not message:
@@ -59,6 +60,7 @@ class SocketTCPClient(NetworkSocket):   # noqa
                 self.login_info["id"] = self.id
                 self.server_session = login_data["session_id"]
                 self.state = objects.Client.LOGGED
+                print(f"You are logged in, server session {self.server_session} your user id is {self.id}")
                 break
             elif codes.code_in(codes.IDENTIFICATION_REQUIRED, message):
                 if not self.user_id:
@@ -68,6 +70,9 @@ class SocketTCPClient(NetworkSocket):   # noqa
                 else:
                     print("Authentication failed")
 
+            if attempts == 0:
+                print("Identification Required")
+            attempts += 1
             self.login_info['password'] = self._request_password()
             self.send(codes.make_message(codes.IDENTIFICATION, json.dumps(self.login_info)))
         # TODO: refactor this!

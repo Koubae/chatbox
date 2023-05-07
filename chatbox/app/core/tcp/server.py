@@ -186,6 +186,7 @@ class SocketTCPServer(NetworkSocket):
         return True
 
     def login(self, logging_code_type: int, client_conn: objects.Client, payload: str) -> bool:  # TODO: refactor this inot a separate module!
+        # TODO: instrea of returning True or False, returnb Enum as "AUTHORIZED" or "UNAUTHORIZED" since is more readable!
         if not logging_code_type or not client_conn or not payload:
             return False
         if client_conn.identifier not in self.clients_unidentified:
@@ -197,11 +198,17 @@ class SocketTCPServer(NetworkSocket):
         input_user_id = login_info.get('user_id', None)
         input_user_name = login_info.get('user_name', None)
         input_user_password = login_info.get('password', None)
-        if not input_user_id or not input_user_name or not input_user_password:
-            return False
-
         _logger.info(f"{client_conn.user_name} - with user_id {client_conn.user_id} request {codes.CODES[logging_code_type]}")
 
+        user_id_in_session = self.server_session.get_user_from_session(input_user_name)
+        if user_id_in_session:
+            user: UserModel = self.repo_user.get(user_id_in_session)
+            if user:
+                self._identify_user(client_conn, user, login_info, reconnected=True)
+                return True
+
+        if not input_user_id or not input_user_name or not input_user_password:
+            return False
         if input_user_id != client_conn.user_id:
             return False
 
@@ -214,28 +221,29 @@ class SocketTCPServer(NetworkSocket):
             if not check_pass:
                 return False
 
-        client_conn.user_name = input_user_name
+        self._identify_user(client_conn, user, login_info, reconnected=False)
+        return True
+
+    def _identify_user(self, client_conn: objects.Client, user: UserModel, login_info: dict, reconnected: bool) -> None:
+        client_conn.user_name = user.username
         client_conn.login_info = login_info
         client_conn.user = user
         client_conn.set_logged_in()
 
-        self._identify_user(client_conn)
-
-        user_login: UserLoginModel = self.repo_user_login.create({"user_id": user.id, "session_id": self.server_session.id,
-                                                                  "attempts": client_conn.login_attempts})
-        # add user to session
-        self.server_session = self.repo_server.add_user_to_session(self.server_session, user)
-
-        assert user_login is not None
-
-        _logger.info(f"Client {client_conn} identified with credentials {login_info}")
-        return True
-
-    def _identify_user(self, client_conn: objects.Client) -> None:
         client_conn._identifier = client_conn.identifier
         client_conn.identifier = client_conn.user.id
         self.clients_identified[client_conn.identifier] = client_conn
         del self.clients_unidentified[client_conn._identifier]
+
+        if reconnected:
+            _logger.info(f"Client {client_conn} identified with credentials {login_info} reconnected in session {self.server_session.id}")
+            return
+
+        _: UserLoginModel = self.repo_user_login.create(
+            {"user_id": user.id, "session_id": self.server_session.id, "attempts": client_conn.login_attempts})
+        # add user to session
+        self.server_session = self.repo_server.add_user_to_session(self.server_session, user)
+        _logger.info(f"Client {client_conn} identified with credentials {login_info}")
 
     def add_message_to_broadcast(self, client_conn: objects.Client, message: str, send_all: bool = False) -> None:
         _logger.info(f"[RECEIVED]::({client_conn}) to broadcast >>> {message}")

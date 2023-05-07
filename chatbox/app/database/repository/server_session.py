@@ -43,7 +43,7 @@ class ServerSessionRepository(RepositoryBase):
 
 		if not session:
 			_logger.info(f"Session not found, creating new session")
-			session = self.create({"session_id": ServerSessionModel.create_session_id(), "data": {}})
+			session = self.create({"session_id": ServerSessionModel.create_session_id(), "data": ServerSessionModel.create_session_data()})
 		else:
 			last_session_seconds = int((datetime.utcnow() - session.modified).total_seconds())
 			if last_session_seconds > SERVER_SESSION_TIME_SECONDS:
@@ -53,8 +53,7 @@ class ServerSessionRepository(RepositoryBase):
 		return session
 
 	def add_user_to_session(self, session: ServerSessionModel, user: UserModel) -> ServerSessionModel:
-		session.data.setdefault("users", {})
-		session.data["users"][str(user.id)] = user.username
+		session.add_user(user)
 		session_updated = self.update(session.id, {"data": session.data})
 		return session_updated or session
 
