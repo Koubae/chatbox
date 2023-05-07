@@ -1,3 +1,5 @@
+from getpass import getpass
+
 from .... import tcp
 
 
@@ -19,4 +21,4 @@ class Terminal:
 		return self.message_prompt(">>> Enter user name: ")
 
 	def input_password(self) -> str:
-		return self.message_prompt(">>> Enter Password: ")
+		return getpass(">>> Enter Password: ")
