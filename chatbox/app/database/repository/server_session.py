@@ -5,6 +5,7 @@ import json
 
 from chatbox.app.constants import SERVER_SESSION_TIME_SECONDS
 from chatbox.app.core.model.server_session import ServerSessionModel
+from chatbox.app.core.model.user import UserModel
 from chatbox.app.database.orm.abstract_base_repository import RepositoryBase
 from chatbox.app.database.orm.sqlite_conn import SQLITEConnectionException
 from chatbox.app.database.orm.types import Item
@@ -50,6 +51,12 @@ class ServerSessionRepository(RepositoryBase):
 				session = self.create({"session_id": ServerSessionModel.create_session_id(), "data": {}})
 
 		return session
+
+	def add_user_to_session(self, session: ServerSessionModel, user: UserModel) -> ServerSessionModel:
+		session.data.setdefault("users", {})
+		session.data["users"][str(user.id)] = user.username
+		session_updated = self.update(session.id, {"data": session.data})
+		return session_updated or session
 
 	@staticmethod
 	def _pack_data(_id: str | int, data: dict) -> str | None:

@@ -32,6 +32,7 @@ class SocketTCPServer(NetworkSocket):
         # metadata
         self.total_client_connected: int = 0
         # DATABASE
+        self.server_session: ServerSessionModel | None = None
         self._init_database()
 
     def __del__(self):
@@ -222,6 +223,9 @@ class SocketTCPServer(NetworkSocket):
 
         user_login: UserLoginModel = self.repo_user_login.create({"user_id": user.id, "session_id": self.server_session.id,
                                                                   "attempts": client_conn.login_attempts})
+        # add user to session
+        self.server_session = self.repo_server.add_user_to_session(self.server_session, user)
+
         assert user_login is not None
 
         _logger.info(f"Client {client_conn} identified with credentials {login_info}")

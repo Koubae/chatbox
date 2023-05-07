@@ -43,6 +43,9 @@ class Client(Connection):
     def __str__(self):
         return f'{self.user_name} {self.user and f"#{self.user.id}" or ""} ({self.state})'
 
+    def __hash__(self):
+        return hash((self.user.id, self.user.username))
+
     def str_full(self) -> str:
         return f'{self.user_name}{self._user_id} @ {self.address} ({self.state})'
 
