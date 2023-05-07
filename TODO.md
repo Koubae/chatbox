@@ -19,31 +19,62 @@ Server
 - Add colorama print (especially for cli usage)
 - Create BroadCaster : should be a separate socket - class ? 
 
-**Main Loop on client connection**
-
-### Database
-
-2. ~~Create Schema~~
-4. ~~Create lower ORM (not using a library!)~~
-5. Create ORM - Data Mapper ---> SQL implementations
-5. Create models | Domain Model --> Business Logic
-6. Create DTO | Representation of enties and model . Should it be same as model?
-
 ### Login
 
-1. Create SQLite Database
-2. Create user table
-3. Check how to implement a basic auth
-4. Save user password , username, info, and session
-5. Request correct password to user
-6. 
+- send to client also the user id (that is, the database id!)
+- Add the user into the session "data", then if user logs in and is inside. the user shouldn't log in again!
+
+### Routes
+
+- Create list of commands
+  - quit 
+  - login (half done, need to create in separate loop so that, if logout, it goes inside the login again!)
+  - logout 
+  - send to
+    - send to : all
+    - send to : channel
+    - send to : group
+    - send to : user 
+  - users:
+    - list users
+      - list users : all
+      - list users : logged
+      - list users : un-logged
+  - group:
+    - list groups
+    - create group
+    - update group
+    - leave group
+    - delete group
+  - channel:
+    - list channels
+      - list channels : all
+      - list channels : joined
+      - list channels : un-joined
+    - create channel
+    - update channel
+    - leave channel
+    - delete channel
+    - add user to channel
+
+### Database 
+
+- get many by id
+- get many by name
+
+- group [Repository, Model]
+- channel [Repository, Model]
+
+#### User
+
+- create "data_base.sql" sql to populate the database if not exists!
+- create user type super | Add super user on the data.sql
+- create user type admin QST??: how do we create a new "admin" ? <-- I think only 1 Admin can create other admin . so 1 admin should be created on data_base.sql too!
+- 
 
 ### Session
 
-- Send session to client
-- Session should expire
-- Save session in db. 
-- Session Data can be pickled object using shelf?
+- Session Data can be pickled object using shelf? | still not even sure what we want to safe?
 
 
 Client
@@ -51,7 +82,8 @@ Client
 
 - Make client input ">>>" as so, but will disappear and won't be printed in the terminal history
 - Save session sent by server and save it somewhere; when client re-starts checks is current session. if still the same then can log in already
-- When login for the first time (so basically when creating the user for the first time), change the text when re-questing the password to something like 'new user created, please enter password again'
+- When login for the first time (so basically when creating the user for the first time), change the text when re-quest
+- chenge text shown when user logs in for the first time to something like 'new user created, please enter password again'
 
 Projects ideas
 --------------
@@ -64,3 +96,34 @@ Projects ideas
 - TCP chat 
 - Send Database stuff via TCP server - client architecture
 - CAN Network
+
+
+Done
+====
+
+
+Server
+------
+
+
+### Database
+
+2. ~~Create Schema~~
+4. ~~Create lower ORM (not using a library!)~~
+5. ~~Create ORM - Data Mapper ---> SQL implementations~~
+5. ~~Create models | Domain Model --> Business Logic~~
+6. ~~Create DTO | Representation of enties and model . Should it be same as model?~~
+
+### Login
+
+1. ~~Create SQLite Database~~
+2. ~~Create user table~~
+3. ~~Check how to implement a basic auth~~
+4. ~~Save user password , username, info, and session~~
+5. ~~Request correct password to user~~
+
+### Session
+
+- ~~Send session to client~~
+- ~~Session should expire~~
+- ~~Save session in db.~~ 

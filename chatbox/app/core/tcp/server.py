@@ -198,24 +198,15 @@ class SocketTCPServer(NetworkSocket):
             return False
 
         _logger.info(f"{client_conn.user_name} - with user_id {client_conn.user_id} request {codes.CODES[logging_code_type]}")
-        # TODOs:
-        # DONE ------1. db : select user from db if exist
-        # DONE ------2. db: create user from db if not exist
-        # DONE ------3. db. update user logging status
-        # DONE ------3. 3. check password
-        # DONE ------3. 4. save encrypt saved password
-        # 5. Send 'session' to client (which the client can save) if session is the same! with expiration!!!
-        # 6. save stuff to session? if yes what???
+
         if input_user_id != client_conn.user_id:
             return False
 
         user: UserModel = self.repo_user.get_by_name(input_user_name)
         if not user:
-            # TODO . put this login on the repo
             password_hash = generate_password_hash(input_user_password)
-            user: UserModel = self.repo_user.create({"username": input_user_name, "password": password_hash})  # TODO: check password!
+            user: UserModel = self.repo_user.create({"username": input_user_name, "password": password_hash})
         else:
-            # TODO: hash and check hash password!
             check_pass = check_password_hash(user.password, input_user_password)
             if not check_pass:
                 return False
@@ -236,7 +227,7 @@ class SocketTCPServer(NetworkSocket):
 
     def _login_move_client_to_identified(self, client_conn: objects.Client) -> None:
         self.clients_identified[client_conn.identifier] = client_conn  # add client to identify
-        del self.clients_unidentified[client_conn.identifier]  # remove client from un-identify one
+        del self.clients_unidentified[client_conn.identifier]          # remove client from un-identify one
 
     def add_message_to_broadcast(self, client_conn: objects.Client, message: str, send_all: bool = False) -> None:
         _logger.info(f"[RECEIVED]::({client_conn}) to broadcast >>> {message}")

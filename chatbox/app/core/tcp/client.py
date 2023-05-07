@@ -44,6 +44,7 @@ class SocketTCPClient(NetworkSocket):   # noqa
         self.send(codes.make_message(codes.LOGIN, json.dumps(self.login_info)))
         # TODO: Improve printing
         # TODO: check that, once password is saved in server side, this will work!
+        # TODO: login logic should go in a separate compoment (even just as another method!)
         print("Identification Required")
         while self.state != objects.Client.LOGGED:
             message: str = self.receive(self.socket)
