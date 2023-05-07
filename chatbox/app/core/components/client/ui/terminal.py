@@ -1,6 +1,10 @@
+import json
+import time
 from getpass import getpass
 
 from chatbox.app.core import tcp
+from chatbox.app.constants import chat_internal_codes as _c
+from chatbox.app.core.components.client.auth import AuthUser
 from chatbox.app.core.components.client.ui.commands import Command, Commands, Codes
 
 
@@ -30,11 +34,8 @@ class Terminal:
 		match command:
 			case Command.QUIT:
 				self.chat.quit()
-			case Command.LOGIN:
-				...
 			case Command.LOGOUT:
-				...
-
+				AuthUser.logout(self.chat)
 			case Command.SEND_TO_ALL:
 				...
 			case Command.SEND_TO_CHANNEL:

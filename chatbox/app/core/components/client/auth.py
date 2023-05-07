@@ -1,3 +1,4 @@
+import sys
 import json
 import logging
 import typing as t
@@ -16,7 +17,7 @@ class AuthUser:
 	REQUEST_PASSWORD_AFTER_USER_CREATION: t.Final[bool] = True
 
 	@classmethod
-	def auth(cls, server: 'tcp.SocketTCPClient') -> Access:
+	def login(cls, server: 'tcp.SocketTCPClient') -> Access:
 		attempts = 0
 		while server.state != objects.Client.LOGGED:
 			message: str = server.receive(server.socket)
@@ -52,3 +53,9 @@ class AuthUser:
 			server.send(_c.make_message(_c.Codes.IDENTIFICATION, json.dumps(server.login_info)))
 
 		return Access.GRANTED
+
+	@classmethod
+	def logout(cls, server: 'tcp.SocketTCPClient') -> None:
+		server.send(_c.make_message(_c.Codes.LOGOUT, json.dumps({"id": server.id})))
+		server.ui.message_echo(f"Login out...")
+		sys.exit(_c.Codes.LOGOUT)

@@ -51,7 +51,7 @@ class SocketTCPClient(NetworkSocket):   # noqa
 
         self.send(_c.make_message(_c.Codes.LOGIN, json.dumps(self.login_info)))
 
-        AuthUser.auth(self)
+        AuthUser.login(self)
 
         # TODO: refactor this!
         t_receiver = threading.Thread(target=self.thread_receiver, daemon=True)
@@ -91,6 +91,8 @@ class SocketTCPClient(NetworkSocket):   # noqa
                 _logger.warning(f"(t_receiver) Interrupted by User, reason: {error}")
                 exception = error
             except SystemExit as error:
+                if error.code == _c.Codes.LOGOUT:
+                    self.sys_error = error.code
                 _logger.warning(f"(t_receiver) Interrupted by System, reason: {error}")
                 exception = error
             except (ConnectionResetError, ConnectionRefusedError, ConnectionAbortedError, ConnectionError) as error:
@@ -113,6 +115,8 @@ class SocketTCPClient(NetworkSocket):   # noqa
                 _logger.warning(f"(t_sender) Interrupted by User, reason: {error}")
                 exception = error
             except SystemExit as error:
+                if error.code == _c.Codes.LOGOUT:
+                    self.sys_error = error.code
                 _logger.warning(f"(t_sender) Interrupted by System, reason: {error}")
                 exception = error
             except (ConnectionResetError, ConnectionRefusedError, ConnectionAbortedError, ConnectionError) as error:

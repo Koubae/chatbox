@@ -47,6 +47,7 @@ class NetworkSocket:
         self.socket_connected: threading.Event = threading.Event()     # socket is connected (sock.bind or sock.connect)
         self.socket_closed: threading.Event = threading.Event()        # socket is closed
         self.socket_wait_forever: threading.Event = threading.Event()  # socket is waiting forever.
+        self.sys_error = None
 
     def __del__(self):
         self.terminate()
@@ -184,6 +185,8 @@ Stack Trace:
             finally:
                 if constants.KILL_APP_AT_SOCKET_TERMINATE:
                     sys.exit(exit_code)
+                elif self.sys_error:
+                    sys.exit(self.sys_error)
 
     # noinspection PyMethodMayBeStatic
     def start_before(self):

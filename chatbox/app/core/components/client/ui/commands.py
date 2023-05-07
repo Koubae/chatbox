@@ -10,7 +10,6 @@ COMMAND_PREFIX: t.Final[str] = "/"
 
 class Command(Enum):
 	QUIT = auto()
-	LOGIN = auto()
 	LOGOUT = auto()
 
 	ECHO_MESSAGE = auto()
@@ -51,7 +50,6 @@ class Commands:
 
 	_command_code_mapping: t.Final[MappingProxyType[Command, Codes]] = MappingProxyType({
 		Command.QUIT: Codes.QUIT,
-		Command.LOGIN: Codes.LOGIN,
 		Command.LOGOUT: Codes.LOGOUT,
 
 		Command.ECHO_MESSAGE: None,

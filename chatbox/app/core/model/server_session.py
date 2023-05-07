@@ -37,3 +37,6 @@ class ServerSessionModel(BaseModel):
 
 	def add_user(self, user: UserModel) -> None:
 		self.data["users"][user.username] = str(user.id)
+
+	def remove_user(self, user: UserModel) -> None:
+		del self.data["users"][user.username]

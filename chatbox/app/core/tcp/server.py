@@ -104,6 +104,10 @@ class SocketTCPServer(NetworkSocket):
                             AuthUser.auth(self, client_conn, message)
                             continue
 
+                        access = AuthUser.logout(self, client_conn, message)
+                        if not access.value:
+                            break
+
                         # Add message "Routes" or "Commands" as Commands
                         self.add_message_to_broadcast(client_conn, message)
 
@@ -177,7 +181,8 @@ class SocketTCPServer(NetworkSocket):
     def add_message_to_broadcast(self, client_conn: objects.Client, message: str, send_all: bool = False) -> None:
         _logger.info(f"[RECEIVED]::({client_conn}) to broadcast >>> {message}")
         message = f'-- {client_conn.user_name} :: {message}'
-        self.client_messages.put({'identifier': client_conn.identifier, 'message': message, 'send_all': send_all})  # TOOD: make send_to and destination. no like this!
+        # TOOD: make send_to and destination. no like this!
+        self.client_messages.put({'identifier': client_conn.identifier, 'message': message, 'send_all': send_all})
 
     # ------------------------------------
     # Getter and setters

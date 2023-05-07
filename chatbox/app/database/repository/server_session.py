@@ -57,6 +57,11 @@ class ServerSessionRepository(RepositoryBase):
 		session_updated = self.update(session.id, {"data": session.data})
 		return session_updated or session
 
+	def remove_user_to_session(self, session: ServerSessionModel, user: UserModel) -> ServerSessionModel:
+		session.remove_user(user)
+		session_updated = self.update(session.id, {"data": session.data})
+		return session_updated or session
+
 	@staticmethod
 	def _pack_data(_id: str | int, data: dict) -> str | None:
 		try:

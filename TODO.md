@@ -22,9 +22,9 @@ Server
 ### Routes
 
 - Create list of commands
-  - quit 
-  - login (half done, need to create in separate loop so that, if logout, it goes inside the login again!)
-  - logout 
+  ~~- quit~~ 
+  ~~- login (half done, need to create in separate loop so that, if logout, it goes inside the login again!)~~
+  ~~- logout~~ 
   - send to
     - send to : all
     - send to : channel

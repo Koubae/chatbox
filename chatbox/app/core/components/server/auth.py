@@ -43,6 +43,19 @@ class AuthUser:
 		return Access.GRANTED
 
 	@classmethod
+	def logout(cls,  server: 'tcp.SocketTCPServer', client_conn: objects.Client, payload: str) -> Access:
+		logged_out = _c.code_in(_c.Codes.LOGOUT, payload)
+		if logged_out:
+			user_id = server.parse_json(_c.get_message(logged_out, payload))
+			server.send(client_conn.connection, _c.make_message(_c.Codes.LOGOUT, f"User {user_id} logged out!"))
+
+			server.server_session = server.repo_server.remove_user_to_session(server.server_session, client_conn.user)
+			_logger.info(f"Client {client_conn.user} removed from session")
+			return Access.DENIED
+
+		return Access.GRANTED
+
+	@classmethod
 	def _login(cls, server: 'tcp.SocketTCPServer', logging_code_type: _c.Codes | None, client_conn: objects.Client, payload: str) -> Access:
 		if not logging_code_type or not client_conn or not payload:
 			return Access.DENIED
