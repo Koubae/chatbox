@@ -112,11 +112,11 @@ class SocketTCPClient(NetworkSocket):   # noqa
         self.stop_wait_forever()
 
     def start_connecting_to_server(self):
-        print("Connecting to Server ...")
+        self._print_message("Connecting to Server ...")
         self.connected_to_server = True
 
     def stop_connecting_to_server(self):
-        print("Closing Server Connection ...")
+        self._print_message("Closing Server Connection ...")
         self.connected_to_server = False
 
     def send(self, message: str) -> int:  # noqa
