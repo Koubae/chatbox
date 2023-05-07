@@ -1,4 +1,3 @@
-import json
 import logging
 import socket
 import threading
@@ -6,15 +5,15 @@ import queue
 import uuid
 
 from chatbox.app import constants
-from chatbox.app.constants import chat_internal_codes as codes, DIR_DATABASE_SCHEMA_MAIN, DIR_DATABASE_MAIN
+from chatbox.app.constants import DIR_DATABASE_SCHEMA_MAIN, DIR_DATABASE_MAIN
 from .network_socket import NetworkSocket
 from ..model.server_session import ServerSessionModel
 from . import objects
-from ..model.user import UserModel, UserLoginModel
-from ..security.password import generate_password_hash, check_password_hash
+from ..security.auth import AuthUser
 from ...database.orm.sqlite_conn import SQLITEConnection
 from ...database.repository.server_session import ServerSessionRepository
 from ...database.repository.user import UserRepository, UserLoginRepository
+
 
 _logger = logging.getLogger(__name__)
 
@@ -102,7 +101,7 @@ class SocketTCPServer(NetworkSocket):
                             break
 
                         if not client_conn.is_logged():
-                            self.login_request(client_conn, message)
+                            AuthUser.auth(self, client_conn, message)
                             continue
 
                         self.add_message_to_broadcast(client_conn, message)
@@ -171,80 +170,6 @@ class SocketTCPServer(NetworkSocket):
     # ------------------------------------
     # Business Logic
     # ------------------------------------
-    def login_request(self, client_conn: objects.Client, payload: str) -> bool:
-        logging_code_type = codes.code_in(codes.LOGIN, payload) or codes.code_in(codes.IDENTIFICATION, payload)
-        logged_in = self.login(logging_code_type, client_conn, payload)
-        if not logged_in:
-            client_conn.login_attempts += 1
-            _logger.info(f"Client {client_conn} not identified, total login attempts = {client_conn.login_attempts} "
-                         f"requesting identification and sending user_id")
-            self.send(client_conn.connection, codes.make_message(codes.IDENTIFICATION_REQUIRED, client_conn.user_id))
-            return False
-
-        payload = {"id": client_conn.user.id, "session_id": self.server_session.session_id}
-        self.send(client_conn.connection, codes.make_message(codes.LOGIN_SUCCESS, json.dumps(payload)))
-        return True
-
-    def login(self, logging_code_type: int, client_conn: objects.Client, payload: str) -> bool:  # TODO: refactor this inot a separate module!
-        # TODO: instrea of returning True or False, returnb Enum as "AUTHORIZED" or "UNAUTHORIZED" since is more readable!
-        if not logging_code_type or not client_conn or not payload:
-            return False
-        if client_conn.identifier not in self.clients_unidentified:
-            return False
-        login_info = self.parse_json(codes.get_message(logging_code_type, payload))
-        if not login_info:
-            return False
-
-        input_user_id = login_info.get('user_id', None)
-        input_user_name = login_info.get('user_name', None)
-        input_user_password = login_info.get('password', None)
-        _logger.info(f"{client_conn.user_name} - with user_id {client_conn.user_id} request {codes.CODES[logging_code_type]}")
-
-        user_id_in_session = self.server_session.get_user_from_session(input_user_name)
-        if user_id_in_session:
-            user: UserModel = self.repo_user.get(user_id_in_session)
-            if user:
-                self._identify_user(client_conn, user, login_info, reconnected=True)
-                return True
-
-        if not input_user_id or not input_user_name or not input_user_password:
-            return False
-        if input_user_id != client_conn.user_id:
-            return False
-
-        user: UserModel = self.repo_user.get_by_name(input_user_name)
-        if not user:
-            password_hash = generate_password_hash(input_user_password)
-            user: UserModel = self.repo_user.create({"username": input_user_name, "password": password_hash})
-        else:
-            check_pass = check_password_hash(user.password, input_user_password)
-            if not check_pass:
-                return False
-
-        self._identify_user(client_conn, user, login_info, reconnected=False)
-        return True
-
-    def _identify_user(self, client_conn: objects.Client, user: UserModel, login_info: dict, reconnected: bool) -> None:
-        client_conn.user_name = user.username
-        client_conn.login_info = login_info
-        client_conn.user = user
-        client_conn.set_logged_in()
-
-        client_conn._identifier = client_conn.identifier
-        client_conn.identifier = client_conn.user.id
-        self.clients_identified[client_conn.identifier] = client_conn
-        del self.clients_unidentified[client_conn._identifier]
-
-        if reconnected:
-            _logger.info(f"Client {client_conn} identified with credentials {login_info} reconnected in session {self.server_session.id}")
-            return
-
-        _: UserLoginModel = self.repo_user_login.create(
-            {"user_id": user.id, "session_id": self.server_session.id, "attempts": client_conn.login_attempts})
-        # add user to session
-        self.server_session = self.repo_server.add_user_to_session(self.server_session, user)
-        _logger.info(f"Client {client_conn} identified with credentials {login_info}")
-
     def add_message_to_broadcast(self, client_conn: objects.Client, message: str, send_all: bool = False) -> None:
         _logger.info(f"[RECEIVED]::({client_conn}) to broadcast >>> {message}")
         message = f'-- {client_conn.user_name} :: {message}'
