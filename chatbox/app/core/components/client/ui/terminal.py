@@ -3,6 +3,7 @@ from getpass import getpass
 from chatbox.app.core import tcp
 from chatbox.app.core.components.client.auth import AuthUser
 from chatbox.app.core.components.client.commands import Command, Commands
+from chatbox.app.core.model.message import ServerMessageModel, MessageRole
 
 
 class Terminal:
@@ -10,10 +11,24 @@ class Terminal:
 	def __init__(self, chat: 'tcp.SocketTCPClient'):
 		self.chat: 'tcp.SocketTCPClient' = chat
 
-	def message_echo(self, message: str, destination: None = None):
+	@staticmethod
+	def message_echo(message: str):
 		print(message)
 
-	def message_prompt(self, prompt: str | None = None) -> str:
+	def message_display(self, payload: ServerMessageModel): # TODO: send from to --> user , group , channel
+		owner = payload.owner
+		sender = payload.sender
+
+		if sender.role not in (MessageRole.USER, MessageRole.ALL):
+			name = f"[{sender.name}] $ {owner.name} -->"
+		else:
+			name = f"$ {sender.name} -->"
+
+		message = f'{name} {payload.body}'
+		self.message_echo(message)
+
+	@staticmethod
+	def message_prompt(prompt: str | None = None) -> str:
 		value = input(prompt and prompt or '')
 		print('\033[1A' + '\033[K', end='')  # erase text that user typed
 		return value
@@ -21,7 +36,8 @@ class Terminal:
 	def input_username(self) -> str:
 		return self.message_prompt(">>> Enter user name: ")
 
-	def input_password(self) -> str:
+	@staticmethod
+	def input_password() -> str:
 		return getpass(">>> Enter Password: ")
 
 	def next_command(self):

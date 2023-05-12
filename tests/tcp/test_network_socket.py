@@ -15,9 +15,9 @@ import time
 
 import pytest
 
+from chatbox.app.core.model.message import MessageDestination, ServerMessageModel, MessageRole
 from chatbox.app.core.tcp.network_socket import NetworkSocket
 from chatbox.app import constants
-from chatbox.app.core.tcp.objects import MessageDestination
 
 from tests.conftest import TCPSocketMock, lock
 
@@ -108,8 +108,17 @@ class TestNetworkSocket:
     def test_net_socket_overridable_functions_raise_notImplementedError(self, network_socket):
         network_socket: NetworkSocket = network_socket
         client_identifier = hash((network_socket.socket.getsockname(), id(network_socket)))
+
+        owner = MessageDestination(
+            identifier=client_identifier,
+            name="user001",
+            role=MessageRole.USER
+        )
+        send_all = MessageDestination(identifier=owner.identifier, name=owner.name, role=MessageRole.ALL)
+        payload: ServerMessageModel = ServerMessageModel.new_message(owner, owner, send_all, "my-message")
+
         with pytest.raises(NotImplementedError) as _:
-            network_socket.broadcast(client_identifier, "my-message", send_to={'identifier': -1, 'destination': MessageDestination.ALL})
+            network_socket.broadcast(payload)
 
     @pytest.mark.tcp_core
     @pytest.mark.tcp

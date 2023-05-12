@@ -14,7 +14,6 @@ _logger = logging.getLogger(__name__)
 
 
 class AuthUser:
-	# Business Logic
 	REQUEST_PASSWORD_AFTER_USER_CREATION: t.Final[bool] = True
 
 	def __new__(cls, *_, **__):
@@ -30,22 +29,24 @@ class AuthUser:
 				_logger.info(f"Client {client_conn} new user created, identification required total login attempts = {client_conn.login_attempts} "
 							 f"requesting identification and sending user_id")
 				payload = {"id": client_conn.user.id, "user_id": client_conn.user_id}
-				server.send(client_conn.connection, _c.make_message(_c.Codes.LOGIN_CREATED, json.dumps(payload)))
+
+				server.send_to_client(client_conn, _c.make_message(_c.Codes.LOGIN_CREATED, json.dumps(payload)))
 				return Access.CREATED
 
 			_logger.info(f"Client {client_conn} not identified, total login attempts = {client_conn.login_attempts} "
 						 f"requesting identification and sending user_id")
-			server.send(client_conn.connection, _c.make_message(_c.Codes.IDENTIFICATION_REQUIRED, client_conn.user_id))
+
+			server.send_to_client(client_conn, _c.make_message(_c.Codes.IDENTIFICATION_REQUIRED, client_conn.user_id))
 			return Access.DENIED
 
 		payload = {"id": client_conn.user.id, "session_id": server.server_session.session_id}
-		server.send(client_conn.connection, _c.make_message(_c.Codes.LOGIN_SUCCESS, json.dumps(payload)))
+		server.send_to_client(client_conn,_c.make_message(_c.Codes.LOGIN_SUCCESS, json.dumps(payload)))
 		return Access.GRANTED
 
 	@classmethod
 	def logout(cls,  server: 'tcp.SocketTCPServer', client_conn: objects.Client, payload: str) -> Access:
 		user_id = server.parse_json(_c.get_message(_c.Codes.LOGOUT, payload))
-		server.send(client_conn.connection, _c.make_message(_c.Codes.LOGOUT, f"User {user_id} logged out!"))
+		server.send_to_client(client_conn, _c.make_message(_c.Codes.LOGOUT, f"User {user_id} logged out!"))
 
 		server.server_session = server.repo_server.remove_user_to_session(server.server_session, client_conn.user)
 		_logger.info(f"Client {client_conn.user} removed from session")

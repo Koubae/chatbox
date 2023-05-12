@@ -18,6 +18,9 @@ Server
 - Add colorama print (especially for cli usage)
 - Create BroadCaster : should be a separate socket - class ? 
 - The object.Message probably will need to be moved into a Model and create a "Message Object!"
+- fix error when multiple message are received in the same time, we need to add separator between messages!
+
+
 
 ### Routes
 
@@ -30,9 +33,9 @@ Server
       ~~1. Change send_all naming in broadcast thread to send_to~~
       ~~2. send_to should be a identifier and not a boolean like now.~~ 
       3~~. Possibly the "send_to" should be a struct as well , where the type is the destination (enum would be great) and target possible identifier~~
-      4. Create a "create message" when sending
-      5. Create a "read message" when received 
-      6. These 2 should be able to identify from wher ethe msssage came from with Message struct Model
+      ~~4. Create a "create message" when sending~~
+      ~~5. Create a "read message" when received~~ 
+      ~~6. These 2 should be able to identify from wher ethe msssage came from with Message struct Model~~
       5. send_to:: all should be restricted to admin ?? <-- wont need to implement this now but keep on todo later
       5. On broadcast meth, select - match send_to type first , then select / search targets then send !
       6. This has to be implemented on the nclient as well!" since the message has to go on the correct place (channel or whatever) this will be done on GUI only (terminal is always on the same line! )

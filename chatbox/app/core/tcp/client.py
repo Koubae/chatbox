@@ -1,5 +1,6 @@
 import json
 import logging
+import socket
 import threading
 import queue
 
@@ -9,7 +10,7 @@ from .network_socket import NetworkSocket
 from . import objects
 from ..components.client.auth import AuthUser
 from ..components.client.ui.terminal import Terminal
-
+from ..model.message import MessageModel, MessageDestination, MessageRole, ServerMessageModel
 
 _logger = logging.getLogger(__name__)
 
@@ -30,7 +31,7 @@ class SocketTCPClient(NetworkSocket):   # noqa
         self.server_session: str | None = None
         self._connected_to_server: bool = False  # currently connected to the server
 
-        self.messages: queue.Queue[objects.Message] = queue.Queue(maxsize=constants.SOCKET_MAX_MESSAGE_QUEUE_PER_WORKER)
+        self.messages: queue.Queue[ServerMessageModel] = queue.Queue(maxsize=constants.SOCKET_MAX_MESSAGE_QUEUE_PER_WORKER)
 
         self.ui: Terminal = Terminal(self)  # TODO: make GUI type too depending on how we lunch the client!
 
@@ -49,7 +50,7 @@ class SocketTCPClient(NetworkSocket):   # noqa
     def start(self):
         self.start_connecting_to_server()
 
-        self.send(_c.make_message(_c.Codes.LOGIN, json.dumps(self.login_info)))
+        self.send_to_server(_c.make_message(_c.Codes.LOGIN, json.dumps(self.login_info)))
 
         AuthUser.login(self)
 
@@ -80,12 +81,11 @@ class SocketTCPClient(NetworkSocket):   # noqa
         exception: BaseException | None = None
         while self.connected_to_server:
             try:
-                message: str = self.receive(self.socket)
+                message: MessageModel = self.receive_message(self.socket)
                 if not message:
                     break
-
-                _logger.debug(message)
-                self.messages.put({'identifier': -1, 'message': message, 'send_to': False})  # TODO: mmg. identifier and send_to?=
+                _logger.debug(message.body)
+                self.messages.put(message)
 
             except KeyboardInterrupt as error:
                 _logger.warning(f"(t_receiver) Interrupted by User, reason: {error}")
@@ -110,7 +110,7 @@ class SocketTCPClient(NetworkSocket):   # noqa
         while self.connected_to_server:
             try:
                 message: str = self.ui.next_command()
-                self.send(message)
+                self.send_to_all(message)  # TODO: this should be controlled by the command!
             except KeyboardInterrupt as error:
                 _logger.warning(f"(t_sender) Interrupted by User, reason: {error}")
                 exception = error
@@ -131,21 +131,41 @@ class SocketTCPClient(NetworkSocket):   # noqa
 
     def thread_broadcaster(self) -> None:
         while self.connected_to_server:
-            message_to_broadcast: objects.Message = self.messages.get()  # blocking - t_broadcaster
-
-            client_identifier = message_to_broadcast['identifier']
-            message = message_to_broadcast['message']
-            send_to = message_to_broadcast['send_to']
-            self.broadcast(client_identifier, message, send_to=send_to)
-
+            message_to_broadcast: ServerMessageModel = self.messages.get()  # blocking - t_broadcaster
+            self.broadcast(message_to_broadcast)
             self.messages.task_done()
 
-    # TODO: send from to --> user , group , channel
-    def broadcast(self, client_identifier: int, message: str, send_to: bool = False) -> None:
-        self.ui.message_echo(message)
+    def broadcast(self, payload: ServerMessageModel) -> None:
+        self.ui.message_display(payload)
+
+    def receive_message(self, connection: socket.socket, buffer_size: int = constants.SOCKET_STREAM_LENGTH) -> ServerMessageModel | None:
+        message: str = self.receive(connection, buffer_size)
+        if not message:
+            return
+
+        message: ServerMessageModel = ServerMessageModel.from_json(message)
+        return message
 
     def send(self, message: str) -> int:  # noqa
         return super().send(self.socket, message)
+
+    def send_message(self, message: MessageModel) -> int:   # noqa
+        return self.send(message.to_json())
+
+    def send_to_server(self, payload: str) -> None:
+        sender = MessageDestination(self.id, self.user_name, role=MessageRole.USER)
+        to = MessageDestination(self.server_session, "SERVER", role=MessageRole.SERVER)
+        message = MessageModel.new_message(sender, to, payload)
+
+        self.send_message(message)
+
+    def send_to_all(self, payload: str) -> None:
+        sender = MessageDestination(self.id, self.user_name, role=MessageRole.USER)
+        to = MessageDestination(self.server_session, "SERVER", role=MessageRole.ALL)
+        message = MessageModel.new_message(sender, to, payload)
+
+        self.send_message(message)
+
 
     # ------------------------------------
     # Getter and setters

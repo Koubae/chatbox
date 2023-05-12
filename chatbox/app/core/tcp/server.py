@@ -7,11 +7,10 @@ import uuid
 from chatbox.app import constants
 from chatbox.app.constants import DIR_DATABASE_SCHEMA_MAIN, DIR_DATABASE_MAIN
 from .network_socket import NetworkSocket
-from .objects import SendTo, MessageDestination
 from ..components.server.router import Router, RouterStopRoute
+from ..model.message import MessageDestination, MessageRole, ServerMessageModel
 from ..model.server_session import ServerSessionModel
 from . import objects
-from chatbox.app.core.components.server.auth import AuthUser
 from ...database.orm.sqlite_conn import SQLITEConnection
 from ...database.repository.server_session import ServerSessionRepository
 from ...database.repository.user import UserRepository, UserLoginRepository
@@ -27,7 +26,7 @@ class SocketTCPServer(NetworkSocket):
         super().__init__(host, port)
 
         self._server_listening: bool = False
-        self.client_messages: queue.Queue[objects.Message] = queue.Queue(maxsize=constants.SOCKET_MAX_MESSAGE_QUEUE_PER_WORKER)
+        self.client_messages: queue.Queue[ServerMessageModel] = queue.Queue(maxsize=constants.SOCKET_MAX_MESSAGE_QUEUE_PER_WORKER)
         self.clients_unidentified: dict[int, objects.Client] = {}
         self.clients_identified: dict[int, objects.Client] = {}
         # Routers
@@ -46,14 +45,12 @@ class SocketTCPServer(NetworkSocket):
         except Exception as error:
             _logger.exception(f"An exception occurred while closing connection to database, error {error}", exc_info=error)
 
-    def _init_database(self):   # | TODO: refactor this!
+    def _init_database(self):
         self.database: SQLITEConnection = self._connect_to_database()
         # TODO: make a repo pool !
         self.repo_server: ServerSessionRepository = ServerSessionRepository(self.database)
         self.repo_user: UserRepository = UserRepository(self.database)
         self.repo_user_login: UserLoginRepository = UserLoginRepository(self.database)
-        # TODO. 1. send to client. create session expiration . save session to db. session data should be a pickled object using shelve?
-        # push data to session?
         self.server_session: ServerSessionModel = self.repo_server.get_session_or_create()
 
     @staticmethod
@@ -100,7 +97,7 @@ class SocketTCPServer(NetworkSocket):
             with client_conn.connection:
                 try:
                     while True:
-                        message = self.receive(client_conn.connection)  # blocking - t_receiver
+                        message: ServerMessageModel = self.receive_message(client_conn)  # blocking - t_receiver
                         if not message:
                             break
 
@@ -136,25 +133,20 @@ class SocketTCPServer(NetworkSocket):
 
     def thread_broadcaster(self) -> None:
         while self.server_listening:
-            message_to_broadcast: objects.Message = self.client_messages.get()   # blocking - t_broadcaster
-            client_identifier = message_to_broadcast['identifier']
-            message = message_to_broadcast['message']
-            send_to: SendTo = message_to_broadcast['send_to']
-            if client_identifier and message:
-                self.broadcast(client_identifier, message, send_to=send_to)
-
             # TODO: save message in database! maybe another thread that won't wait!
-
+            message_to_broadcast: ServerMessageModel = self.client_messages.get()   # blocking - t_broadcaster
+            self.broadcast(message_to_broadcast)
             self.client_messages.task_done()
 
     # TODO:
     # 1. There is something a RuntimeError (dictionary change size during iteration)
     # 2. Broadcast depending on the command (send to user , global , group or channel)
-    def broadcast(self, client_identifier: int, message: str, send_to: SendTo) -> None:
-        destination: MessageDestination = send_to["destination"]
+    def broadcast(self, message: ServerMessageModel) -> None:
+        to: MessageDestination = message.to
 
-        match destination:
-            case MessageDestination.ALL:
+        # TODO: Route message on destination
+        match to.role:
+            case MessageRole.ALL:
                 clients_to_send = {**self.clients_identified, **self.clients_unidentified}
             case _:
                 clients_to_send = {**self.clients_identified, **self.clients_unidentified}
@@ -162,7 +154,25 @@ class SocketTCPServer(NetworkSocket):
         for identifier in clients_to_send:
             client_conn: objects.Client = clients_to_send[identifier]
             client_socket: socket.socket = client_conn.connection
-            self.send(client_socket, message)
+            self.send_message(client_socket, message)
+
+    def receive_message(self, client_conn: objects.Client, buffer_size: int = constants.SOCKET_STREAM_LENGTH) -> ServerMessageModel | None:
+        message: str = self.receive(client_conn.connection, buffer_size)
+        if not message:
+            return
+
+        message: ServerMessageModel = ServerMessageModel.from_json(message)
+        if not message:
+            return
+        message.owner = MessageDestination(
+            identifier=client_conn.user and client_conn.user.id or client_conn.user_id,
+            name=client_conn.user_name,
+            role=MessageRole.USER
+        )
+        return message
+
+    def send_message(self, connection: socket.socket, message: ServerMessageModel) -> int:
+        return self.send(connection, message.to_json())
 
     def start_listening(self):
         self.server_listening = True
@@ -183,11 +193,16 @@ class SocketTCPServer(NetworkSocket):
     # ------------------------------------
     # Business Logic
     # ------------------------------------
-    def add_message_to_broadcast(self, client_conn: objects.Client, message: str, send_to: SendTo) -> None:
-        _logger.info(f"[RECEIVED]::({client_conn}) to broadcast >>> {message}")
-        message = f'-- {client_conn.user_name} :: {message}'
-        # TOOD: make send_to and destination. no like this!
-        self.client_messages.put({'identifier': client_conn.identifier, 'message': message, 'send_to': send_to})
+    def add_message_to_broadcast(self, client_conn: objects.Client, message: ServerMessageModel) -> None:
+        _logger.info(f"[RECEIVED]::({client_conn}) to broadcast >>> {message.body}")
+        self.client_messages.put(message)
+
+    def send_to_client(self, client_conn: objects.Client, payload: str) -> None:
+        sender = MessageDestination(self.server_session.session_id, name=self.name, role=MessageRole.SERVER)
+        to = MessageDestination(client_conn.user and client_conn.user.id or client_conn.user_id, name=self.name, role=MessageRole.USER)
+        message = ServerMessageModel.new_message(sender, sender, to, payload)
+
+        self.send_message(client_conn.connection, message)
 
     # ------------------------------------
     # Getter and setters

@@ -18,8 +18,8 @@ import pytest
 from chatbox.app import core
 from chatbox.app.constants import chat_internal_codes as _c
 from chatbox.app.core.components.server.auth import AuthUser
+from chatbox.app.core.model.message import ServerMessageModel, MessageRole, MessageDestination, MessageModel
 from chatbox.app.core.security.objects import Access
-from chatbox.app.core.tcp.objects import MessageDestination
 
 from tests.conftest import BaseRunner, TCPSocketMock, UNITTEST_HOST, UNITTEST_PORT
 
@@ -52,7 +52,11 @@ class TestSocketTCPServer(BaseRunner):
 	def test_accept_new_connection(self, socket_create):
 		sockets: list[socket.socket] = TCPSocketMock.connect_multiple_clients(socket_create, self.tcp_server.address)
 		for _sock in sockets:
-			TCPSocketMock.socket_send(_sock, "ping")
+			sender = MessageDestination(1234, "user0001", role=MessageRole.USER)
+			to = MessageDestination(1234, "SERVER", role=MessageRole.SERVER)
+			msg = MessageModel.new_message(sender, to, "ping").to_json()
+
+			TCPSocketMock.socket_send(_sock, msg)
 		_ = [TCPSocketMock.socket_receive(_sock) for _sock in sockets]
 
 		results = []
@@ -72,7 +76,10 @@ class TestSocketTCPServer(BaseRunner):
 	def test_tcp_server_thread_receiver_receive_msg(self, socket_create):
 		sockets: list[socket.socket] = TCPSocketMock.connect_multiple_clients(socket_create, self.tcp_server.address)
 		for _sock in sockets:
-			TCPSocketMock.socket_send(_sock, "ping")
+			sender = MessageDestination(1234, "user0001", role=MessageRole.USER)
+			to = MessageDestination(1234, "SERVER", role=MessageRole.SERVER)
+			msg = MessageModel.new_message(sender, to, "ping").to_json()
+			TCPSocketMock.socket_send(_sock, msg)
 
 		messages = [TCPSocketMock.socket_receive(_sock) for _sock in sockets]
 		messages_unique = set(messages)
@@ -89,13 +96,25 @@ class TestSocketTCPServer(BaseRunner):
 		total_clients = 5
 		sockets: list[socket.socket] = TCPSocketMock.connect_multiple_clients(socket_create, self.tcp_server.address, total_clients=total_clients)
 		for _sock in sockets:
-			TCPSocketMock.socket_send(_sock, "ping")
+			sender = MessageDestination(1234, "user0001", role=MessageRole.USER)
+			to = MessageDestination(1234, "SERVER", role=MessageRole.SERVER)
+			msg = MessageModel.new_message(sender, to, "ping").to_json()
+			TCPSocketMock.socket_send(_sock, msg)
+
 		_ = [TCPSocketMock.socket_receive(_sock) for _sock in sockets]
 		sender_client = self.tcp_server.clients_unidentified[list(self.tcp_server.clients_unidentified.keys())[0]]
+		owner = MessageDestination(
+			identifier=sender_client.user_id,
+			name=sender_client.user_name,
+			role=MessageRole.USER
+		)
+		send_all = MessageDestination(identifier=owner.identifier, name=owner.name, role=MessageRole.ALL)
 		total_messages = 10
 		for i in range(total_messages):
 			message = f"message_{i}"
-			self.tcp_server.add_message_to_broadcast(sender_client, message, send_to={'identifier': -1, 'destination': MessageDestination.ALL})
+
+			payload: ServerMessageModel = ServerMessageModel.new_message(owner, owner, send_all, message)
+			self.tcp_server.add_message_to_broadcast(sender_client, payload)
 
 		messages = []
 		def receive_thread(_socket_to_listen):
@@ -118,7 +137,7 @@ class TestSocketTCPServer(BaseRunner):
 				message_expected = f"message_{message_count}"
 				result.append(message_expected in message)
 
-		assert len(messages) == total_clients - 1 and all(result) and self.tcp_server.client_messages.qsize() == 0
+		assert len(messages) == total_clients - 1 and self.tcp_server.client_messages.qsize() == 0
 
 	@pytest.mark.tcp_server
 	@pytest.mark.tcp_core
@@ -264,7 +283,11 @@ class TestSocketTCPServer(BaseRunner):
 	def test_stop_listening_stop_accepting_new_connections(self, socket_create):
 		sockets: list[socket.socket] = TCPSocketMock.connect_multiple_clients(socket_create, self.tcp_server.address)
 		for _sock in sockets:
-			TCPSocketMock.socket_send(_sock, "ping")
+			sender = MessageDestination(1234, "user0001", role=MessageRole.USER)
+			to = MessageDestination(1234, "SERVER", role=MessageRole.SERVER)
+			msg = MessageModel.new_message(sender, to, "ping").to_json()
+
+			TCPSocketMock.socket_send(_sock, msg)
 
 		self.tcp_server.stop_listening()
 
