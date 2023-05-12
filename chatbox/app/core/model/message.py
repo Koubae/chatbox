@@ -106,8 +106,8 @@ class ServerMessageModel(MessageModel):
 
 		return new_message
 
-	def to_json(self) -> str:
-		return json.dumps({
+	def get_struct(self) -> dict:
+		return {
 			"id": self.id,
 			"created": self.created,
 			"modified": self.modified,
@@ -127,4 +127,38 @@ class ServerMessageModel(MessageModel):
 				"name": self.to.name,
 				"role": self.to.role.name,
 			},
-		})
+		}
+
+	def to_json(self) -> str:
+		return json.dumps(self.get_struct())
+
+
+@dataclass
+class ServerInternalMessageModel(BaseModel):
+	session_id: int
+
+	owner_name: str
+	from_name: str
+	from_role: str
+	to_name: str
+	to_role: str
+
+	body: str
+	owner: MessageDestination
+	sender: MessageDestination
+	to: MessageDestination
+
+	def __post_init__(self):
+		if isinstance(self.sender, dict):
+			self.sender = MessageDestination(self.sender["identifier"], self.sender["name"], self.sender["role"])
+		if isinstance(self.to, dict):
+			self.to = MessageDestination(self.to["identifier"], self.to["name"], self.to["role"])
+		if isinstance(self.owner, dict):
+			self.owner = MessageDestination(self.owner["identifier"], self.owner["name"], self.owner["role"])
+
+		if not isinstance(self.sender.role, MessageRole):
+			self.sender = MessageDestination(self.sender.identifier, self.sender.name, MessageRole[self.sender.role])  # noqa
+		if not isinstance(self.to.role, MessageRole):
+			self.to = MessageDestination(self.to.identifier, self.to.name, MessageRole[self.to.role])  # noqa
+		if not isinstance(self.owner.role, MessageRole):
+			self.owner = MessageDestination(self.owner.identifier, self.owner.name, MessageRole[self.owner.role])  # noqa

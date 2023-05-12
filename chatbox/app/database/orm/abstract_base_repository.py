@@ -22,7 +22,7 @@ QUERY_REPLACE_KEY_LIKE: t.Final[str] = "__placeholder LIKE __value"
 
 class RepositoryBase(Connector):
 	_get_query = "SELECT * FROM __table WHERE id = :id"
-	_get_query_by_name = "SELECT * FROM __table WHERE __name = :__name"
+	_get_query_by_name = "SELECT * FROM __table WHERE __name = :__name ORDER BY `created` DESC LIMIT 1"
 	_get_many_query = "SELECT * FROM __table LIMIT :limit OFFSET :offset"
 	_create_query = "INSERT INTO __table (__columns) VALUES (__params)"
 	_update_query = f"UPDATE __table SET {QUERY_REPLACE_KEY_EQUAL} WHERE id = :id"
@@ -178,7 +178,7 @@ class RepositoryBase(Connector):
 
 			value = getattr(self, key[1:])
 			if key == "__columns":
-				value = ", ".join(value)
+				value = ", ".join([f'`{f}`' for f in value])
 			query = query.replace(key, value)
 		return query
 

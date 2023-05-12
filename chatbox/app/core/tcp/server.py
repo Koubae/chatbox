@@ -14,7 +14,7 @@ from . import objects
 from ...database.orm.sqlite_conn import SQLITEConnection
 from ...database.repository.server_session import ServerSessionRepository
 from ...database.repository.user import UserRepository, UserLoginRepository
-
+from ...database.repository.message import MessageRepository
 
 _logger = logging.getLogger(__name__)
 
@@ -53,6 +53,7 @@ class SocketTCPServer(NetworkSocket):
         self.repo_server: ServerSessionRepository = ServerSessionRepository(self.database)
         self.repo_user: UserRepository = UserRepository(self.database)
         self.repo_user_login: UserLoginRepository = UserLoginRepository(self.database)
+        self.repo_message: MessageRepository = MessageRepository(self.database)
         self.server_session: ServerSessionModel = self.repo_server.get_session_or_create()
 
     @staticmethod
@@ -135,8 +136,9 @@ class SocketTCPServer(NetworkSocket):
 
     def thread_broadcaster(self) -> None:
         while self.server_listening:
-            # TODO: save message in database! maybe another thread that won't wait!
             message_to_broadcast: ServerMessageModel = self.client_messages.get()   # blocking - t_broadcaster
+            self.repo_message.create_new_message(self.server_session.id, message_to_broadcast)  # TODO: check peformance.
+
             self.broadcast(message_to_broadcast)
             self.client_messages.task_done()
 
