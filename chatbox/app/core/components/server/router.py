@@ -13,9 +13,10 @@ class Router:
 		self.chat: 'tcp.SocketTCPServer' = chat
 
 	def route(self, client_conn: objects.Client, payload: str) -> None:
-		# TODO: move LOGIN inside this logic?
-		_route = _c.code_scan(payload)
+		_route = self.route_check_client_auth(client_conn) or _c.code_scan(payload)
 		match _route:
+			case _c.Codes.LOGIN:
+				AuthUser.auth(self.chat, client_conn, payload)
 			case _c.Codes.LOGOUT:
 				access = AuthUser.logout(self.chat, client_conn, payload)
 				if not access.value:
@@ -23,3 +24,8 @@ class Router:
 
 			case _:
 				self.chat.add_message_to_broadcast(client_conn, payload)
+
+	@staticmethod
+	def route_check_client_auth(client_conn: objects.Client) -> _c.Codes | None:
+		if not client_conn.is_logged():
+			return _c.Codes.LOGIN

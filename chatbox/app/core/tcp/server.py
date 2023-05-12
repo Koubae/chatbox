@@ -102,10 +102,6 @@ class SocketTCPServer(NetworkSocket):
                         message = self.receive(client_conn.connection)  # blocking - t_receiver
                         if not message:
                             break
-                        # TODO: move LOGIN inside this router?
-                        if not client_conn.is_logged():
-                            AuthUser.auth(self, client_conn, message)
-                            continue
 
                         try:
                             self.router.route(client_conn, message)
