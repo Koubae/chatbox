@@ -5,7 +5,7 @@ import queue
 import uuid
 
 from chatbox.app import constants
-from chatbox.app.constants import DIR_DATABASE_SCHEMA_MAIN, DIR_DATABASE_MAIN
+from chatbox.app.constants import DIR_DATABASE_SCHEMA_MAIN, DIR_DATABASE_MAIN, DIR_DATABASE_DATA_MAIN
 from .network_socket import NetworkSocket
 from ..components.server.router import Router, RouterStopRoute
 from ..model.message import MessageDestination, MessageRole, ServerMessageModel
@@ -42,6 +42,8 @@ class SocketTCPServer(NetworkSocket):
         try:
             self.database.__del__()
             del self.database
+        except AttributeError:
+            pass
         except Exception as error:
             _logger.exception(f"An exception occurred while closing connection to database, error {error}", exc_info=error)
 
@@ -55,7 +57,7 @@ class SocketTCPServer(NetworkSocket):
 
     @staticmethod
     def _connect_to_database() -> SQLITEConnection:
-        return SQLITEConnection(DIR_DATABASE_MAIN, schema=DIR_DATABASE_SCHEMA_MAIN)
+        return SQLITEConnection(DIR_DATABASE_MAIN, schema=DIR_DATABASE_SCHEMA_MAIN, data=DIR_DATABASE_DATA_MAIN)
 
     def start(self):
         exception: BaseException | None = None

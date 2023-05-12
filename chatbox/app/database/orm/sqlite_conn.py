@@ -53,7 +53,7 @@ class SQLITEConnectionException(Exception):
 
 class SQLITEConnection(Connector):
 
-	def __init__(self, database: str, schema: t.Optional[str | os.PathLike] = None):
+	def __init__(self, database: str, schema: t.Optional[str | os.PathLike] = None, data: t.Optional[str | os.PathLike] = None):
 		super().__init__()
 		self.database: str = database
 
@@ -66,6 +66,10 @@ class SQLITEConnection(Connector):
 		self.schema: t.Final[str | os.PathLike] = schema
 		if self.schema:
 			self._init_schema()
+		self.data: t.Final[str | os.PathLike] = data
+		if self.data:
+			self._init_data()
+
 
 	def __del__(self):   # pragma: no cover
 		self.connection.close()
@@ -144,3 +148,12 @@ class SQLITEConnection(Connector):
 			raise SQLITEConnectionException(f"{SQLITEConnectionException.ERROR_SCHEMA_INIT_NOT_FOUND % self.schema}, error: {error}") from None
 		else:
 			self._run_query(schema, None, crud_operation=SQLCRUDOperation.CREATE, execution_type=SQLExecution.EXECUTE_SCRIPT)
+
+	def _init_data(self):
+		try:
+			with open(self.data, "r") as file:
+				data = file.read()
+		except FileNotFoundError as error:
+			raise SQLITEConnectionException(f"{SQLITEConnectionException.ERROR_SCHEMA_INIT_NOT_FOUND % self.data}, error: {error}") from None
+		else:
+			self._run_query(data, None, crud_operation=SQLCRUDOperation.CREATE, execution_type=SQLExecution.EXECUTE_SCRIPT)

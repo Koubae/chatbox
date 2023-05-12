@@ -70,10 +70,8 @@ Server
 
 #### User
 
-- create "data_base.sql" sql to populate the database if not exists!
-- create user type super | Add super user on the data.sql
 - create user type admin QST??: how do we create a new "admin" ? <-- I think only 1 Admin can create other admin . so 1 admin should be created on data_base.sql too!
-- 
+
 
 ### Session
 
@@ -122,6 +120,11 @@ Server
 5. ~~Create ORM - Data Mapper ---> SQL implementations~~
 5. ~~Create models | Domain Model --> Business Logic~~
 6. ~~Create DTO | Representation of enties and model . Should it be same as model?~~
+
+#### User
+
+- ~~create "data_base.sql" sql to populate the database if not exists!~~
+- ~~create user type super | Add super user on the data.sql~~
 
 ### Login
 
