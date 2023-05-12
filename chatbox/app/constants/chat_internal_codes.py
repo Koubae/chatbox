@@ -60,6 +60,13 @@ def code_in(code: Codes, message: str) -> Codes | None:
 	return None
 
 
+def code_scan(message: str) -> Codes | None:
+	for code in Codes:
+		has_code: Codes | None = code_in(code, message)
+		if has_code:
+			return has_code
+
+
 def get_message(code: Codes, message: str) -> str | None:
 	_code = code.name
 	if not _code:

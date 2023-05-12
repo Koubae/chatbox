@@ -2,14 +2,15 @@ import logging
 import socket
 import threading
 import time
+import json
 import typing as t
 
 import pytest
 
-from chatbox.app import core
-from chatbox.app import constants
-from chatbox.app.constants import DIR_DATABASE_SCHEMA_MAIN
+from chatbox.app import core, constants
+from chatbox.app.constants import chat_internal_codes as _c, DIR_DATABASE_SCHEMA_MAIN
 from chatbox.app.core.components.server.auth import AuthUser
+from chatbox.app.core.security.objects import Access
 from chatbox.app.database.orm.sqlite_conn import SQLITEConnection
 
 UNITTEST_HOST: str = "127.2.9.123"
@@ -74,6 +75,22 @@ class TCPSocketMock:
 	@staticmethod
 	def socket_receive(_socket: socket.socket) -> str:
 		return core.NetworkSocket.decode_message(_socket.recv(constants.SOCKET_STREAM_LENGTH))
+
+	@staticmethod
+	def login_user(tcp_server, socket_create) -> tuple[core.objects.Client, Access]:
+		_sock: socket.socket = TCPSocketMock.connect_multiple_clients(socket_create, tcp_server.address, total_clients=1)[0]
+		client_conn: core.objects.Client = tcp_server.create_client_object(_sock, core.objects.Address(*_sock.getsockname()))
+		tcp_server.clients_unidentified[client_conn.identifier] = client_conn
+		user_info: core.objects.LoginInfo = {
+			"id": 1,
+			"user_name": "user001",
+			"password": "1234",
+			"user_id": client_conn.user_id
+		}
+		login_request = _c.make_message(_c.Codes.LOGIN, json.dumps(user_info))
+
+		login_success = AuthUser.auth(tcp_server, client_conn=client_conn, payload=login_request)
+		return client_conn, login_success
 
 	# ~~~~~~~~ Mocks ~~~~~~~~ #
 

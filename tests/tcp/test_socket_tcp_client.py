@@ -22,7 +22,7 @@ from tests.conftest import BaseRunner, UNITTEST_HOST, UNITTEST_PORT
 class TestSocketTCPClient(BaseRunner):
 
 	def _get_client_connection_from_server(self) -> core.objects.Client:
-		time.sleep(.8)
+		time.sleep(1)
 		return self.tcp_server.clients_identified[list(self.tcp_server.clients_identified.keys())[0]]
 
 	@pytest.mark.tcp_client

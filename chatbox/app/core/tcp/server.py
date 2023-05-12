@@ -7,6 +7,7 @@ import uuid
 from chatbox.app import constants
 from chatbox.app.constants import DIR_DATABASE_SCHEMA_MAIN, DIR_DATABASE_MAIN
 from .network_socket import NetworkSocket
+from ..components.server.router import Router, RouterStopRoute
 from ..model.server_session import ServerSessionModel
 from . import objects
 from chatbox.app.core.components.server.auth import AuthUser
@@ -28,6 +29,8 @@ class SocketTCPServer(NetworkSocket):
         self.client_messages: queue.Queue[objects.Message] = queue.Queue(maxsize=constants.SOCKET_MAX_MESSAGE_QUEUE_PER_WORKER)
         self.clients_unidentified: dict[int, objects.Client] = {}
         self.clients_identified: dict[int, objects.Client] = {}
+        # Routers
+        self.router: Router = Router(self)
         # metadata
         self.total_client_connected: int = 0
         # DATABASE
@@ -99,17 +102,15 @@ class SocketTCPServer(NetworkSocket):
                         message = self.receive(client_conn.connection)  # blocking - t_receiver
                         if not message:
                             break
-
+                        # TODO: move LOGIN inside this router?
                         if not client_conn.is_logged():
                             AuthUser.auth(self, client_conn, message)
                             continue
 
-                        access = AuthUser.logout(self, client_conn, message)
-                        if not access.value:
+                        try:
+                            self.router.route(client_conn, message)
+                        except RouterStopRoute:
                             break
-
-                        # Add message "Routes" or "Commands" as Commands
-                        self.add_message_to_broadcast(client_conn, message)
 
                     _logger.warning(f"{client_conn} receive a close network socket message, closing socket... ")
                 except (BrokenPipeError, ConnectionResetError, ConnectionRefusedError, ConnectionAbortedError, ConnectionError) as error:
@@ -147,7 +148,7 @@ class SocketTCPServer(NetworkSocket):
             self.client_messages.task_done()
 
     # TODO:
-    # 1. There is somethin a RuntiemError (dictionary change size during iteration)
+    # 1. There is something a RuntimeError (dictionary change size during iteration)
     # 2. Broadcast depending on the command (send to user , global , group or channel)
     def broadcast(self, client_identifier: int, message: str, send_all: bool = False) -> None:
         clients_to_send = self.clients_identified

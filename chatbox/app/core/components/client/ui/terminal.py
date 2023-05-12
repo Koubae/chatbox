@@ -5,7 +5,6 @@ from chatbox.app.core.components.client.auth import AuthUser
 from chatbox.app.core.components.client.commands import Command, Commands
 
 
-# TODO: Improve printing
 class Terminal:
 
 	def __init__(self, chat: 'tcp.SocketTCPClient'):

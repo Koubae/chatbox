@@ -23,6 +23,9 @@ class ServerSessionRepository(RepositoryBase):
 		data["data"] = self._pack_data(data["session_id"], data["data"])
 		return super().create(data)
 
+	def create_new_session(self) -> ServerSessionModel | None:
+		return self.create({"session_id": ServerSessionModel.create_session_id(), "data": ServerSessionModel.create_session_data()})
+
 	def update(self,  _id: int, data: dict) -> ServerSessionModel | None:
 		if "data" in data:
 			data["data"] = self._pack_data(_id, data["data"])
@@ -43,12 +46,12 @@ class ServerSessionRepository(RepositoryBase):
 
 		if not session:
 			_logger.info(f"Session not found, creating new session")
-			session = self.create({"session_id": ServerSessionModel.create_session_id(), "data": ServerSessionModel.create_session_data()})
+			session = self.create_new_session()
 		else:
 			last_session_seconds = int((datetime.utcnow() - session.modified).total_seconds())
 			if last_session_seconds > SERVER_SESSION_TIME_SECONDS:
 				_logger.info(f"Last session has expired {last_session_seconds} seconds ago, creating new session")
-				session = self.create({"session_id": ServerSessionModel.create_session_id(), "data": {}})
+				session = self.create_new_session()
 
 		return session
 

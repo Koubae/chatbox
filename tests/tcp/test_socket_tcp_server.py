@@ -224,18 +224,9 @@ class TestSocketTCPServer(BaseRunner):
 	@pytest.mark.auth
 	@pytest.mark.tcp_server
 	def test_auth_login_request_success(self, socket_create):
-		_sock: socket.socket = TCPSocketMock.connect_multiple_clients(socket_create, self.tcp_server.address, total_clients=1)[0]
-		client_conn: core.objects.Client = self.tcp_server.create_client_object(_sock, core.objects.Address(*_sock.getsockname()))
-		self.tcp_server.clients_unidentified[client_conn.identifier] = client_conn
-		user_info: core.objects.LoginInfo = {
-			"id": 1,
-			"user_name": "user001",
-			"password": "1234",
-			"user_id": client_conn.user_id
-		}
-		login_request = _c.make_message(_c.Codes.LOGIN, json.dumps(user_info))
+		_, login_success = TCPSocketMock.login_user(self.tcp_server, socket_create)
 
-		assert AuthUser.auth(self.tcp_server, client_conn=client_conn, payload=login_request) is Access.GRANTED
+		assert login_success is Access.GRANTED
 
 
 	@pytest.mark.auth_server

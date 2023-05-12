@@ -5,6 +5,8 @@ from chatbox.app.core.components.client.commands import Command, Commands, Codes
 
 class TestCommands:
 	@pytest.mark.clientui
+	@pytest.mark.components_client
+	@pytest.mark.components
 	def test_command_returns_default_command(self):
 		user_message = "Some message"
 
@@ -13,6 +15,8 @@ class TestCommands:
 		assert command is Commands.DEFAULT_COMMAND
 
 	@pytest.mark.clientui
+	@pytest.mark.components_client
+	@pytest.mark.components
 	def test_command_reads_quit(self):
 		user_message = "/quit some no imporant text"
 
@@ -22,6 +26,8 @@ class TestCommands:
 		assert command is expected_command
 
 	@pytest.mark.clientui
+	@pytest.mark.components_client
+	@pytest.mark.components
 	def test_command_is_stripped_and_lowered(self):
 		user_message = " /SeND_to_Channel my_channel"
 
@@ -31,6 +37,8 @@ class TestCommands:
 		assert command is expected_command
 
 	@pytest.mark.clientui
+	@pytest.mark.components_client
+	@pytest.mark.components
 	def test_get_server_code(self):
 		command: Command = Command.QUIT
 
