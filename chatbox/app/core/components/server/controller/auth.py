@@ -3,7 +3,7 @@ import logging
 import typing as t
 
 from chatbox.app.constants import chat_internal_codes as _c
-from chatbox.app.core import tcp
+from chatbox.app.core.components.server.controller.base import BaseController
 from chatbox.app.core.security.objects import Access
 from chatbox.app.core.tcp import objects
 from chatbox.app.core.model.user import UserModel, UserLoginModel
@@ -13,11 +13,8 @@ from chatbox.app.core.security.password import generate_password_hash, check_pas
 _logger = logging.getLogger(__name__)
 
 
-class ControllerAuthUser:
+class ControllerAuthUser(BaseController):
 	REQUEST_PASSWORD_AFTER_USER_CREATION: t.Final[bool] = True
-
-	def __init__(self, chat: 'tcp.SocketTCPServer'):
-		self.chat: 'tcp.SocketTCPServer' = chat
 
 	def auth(self, client_conn: objects.Client, payload: str) -> Access:
 		logging_code_type = _c.code_in(_c.Codes.LOGIN, payload) or _c.code_in(_c.Codes.IDENTIFICATION, payload)
