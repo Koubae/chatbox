@@ -17,6 +17,7 @@ import pytest
 
 from chatbox.app.core.tcp.network_socket import NetworkSocket
 from chatbox.app import constants
+from chatbox.app.core.tcp.objects import MessageDestination
 
 from tests.conftest import TCPSocketMock, lock
 
@@ -108,7 +109,7 @@ class TestNetworkSocket:
         network_socket: NetworkSocket = network_socket
         client_identifier = hash((network_socket.socket.getsockname(), id(network_socket)))
         with pytest.raises(NotImplementedError) as _:
-            network_socket.broadcast(client_identifier, "my-message")
+            network_socket.broadcast(client_identifier, "my-message", send_to={'identifier': -1, 'destination': MessageDestination.ALL})
 
     @pytest.mark.tcp_core
     @pytest.mark.tcp

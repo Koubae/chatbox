@@ -3,6 +3,7 @@ import dataclasses
 import uuid
 import typing as t
 from typing import NamedTuple, ClassVar
+from enum import Enum, auto
 
 from chatbox.app.core.model.user import UserModel
 
@@ -12,7 +13,15 @@ class Address(NamedTuple):
     port: int
 
 
-Message = t.TypedDict('Message', {'identifier': int, 'message': str, 'send_all': bool})
+class MessageDestination(Enum):
+    USER = auto()
+    GROUP = auto()
+    CHANNEL = auto()
+    ALL = auto()
+
+
+SendTo = t.TypedDict("SendTo", {'identifier': int, 'destination': MessageDestination})
+Message = t.TypedDict('Message', {'identifier': int, 'message': str, 'send_to': SendTo})
 LoginInfo = t.TypedDict('LoginInfo', {'id': t.Optional[int], 'user_name': t.Optional[str], 'password': t.Optional[str], 'user_id': t.Optional[str]})
 
 

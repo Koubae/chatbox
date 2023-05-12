@@ -85,7 +85,7 @@ class SocketTCPClient(NetworkSocket):   # noqa
                     break
 
                 _logger.debug(message)
-                self.messages.put({'identifier': -1, 'message': message, 'send_all': False})  # TODO: mmg. identifier and send_all?=
+                self.messages.put({'identifier': -1, 'message': message, 'send_to': False})  # TODO: mmg. identifier and send_to?=
 
             except KeyboardInterrupt as error:
                 _logger.warning(f"(t_receiver) Interrupted by User, reason: {error}")
@@ -135,13 +135,13 @@ class SocketTCPClient(NetworkSocket):   # noqa
 
             client_identifier = message_to_broadcast['identifier']
             message = message_to_broadcast['message']
-            send_all = message_to_broadcast['send_all']
-            self.broadcast(client_identifier, message, send_all=send_all)
+            send_to = message_to_broadcast['send_to']
+            self.broadcast(client_identifier, message, send_to=send_to)
 
             self.messages.task_done()
 
     # TODO: send from to --> user , group , channel
-    def broadcast(self, client_identifier: int, message: str, send_all: bool = False) -> None:
+    def broadcast(self, client_identifier: int, message: str, send_to: bool = False) -> None:
         self.ui.message_echo(message)
 
     def send(self, message: str) -> int:  # noqa

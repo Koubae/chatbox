@@ -6,8 +6,7 @@ import logging
 import time
 
 from chatbox.app import constants
-from .objects import Address
-
+from .objects import Address, SendTo
 
 _logger = logging.getLogger(__name__)
 
@@ -300,7 +299,7 @@ Stack Trace:
         return total_sent
 
     # ^^^^^^^^^ NotImplemented Methods ^^^^^^^^^
-    def broadcast(self, client_identifier: int, message: str, send_all: bool = False) -> None:
+    def broadcast(self, client_identifier: int, message: str, send_to: SendTo) -> None:
         raise NotImplementedError("Method not implemented!")
 
     # --------------------------------------------------

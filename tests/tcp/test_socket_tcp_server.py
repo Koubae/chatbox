@@ -19,6 +19,7 @@ from chatbox.app import core
 from chatbox.app.constants import chat_internal_codes as _c
 from chatbox.app.core.components.server.auth import AuthUser
 from chatbox.app.core.security.objects import Access
+from chatbox.app.core.tcp.objects import MessageDestination
 
 from tests.conftest import BaseRunner, TCPSocketMock, UNITTEST_HOST, UNITTEST_PORT
 
@@ -94,7 +95,7 @@ class TestSocketTCPServer(BaseRunner):
 		total_messages = 10
 		for i in range(total_messages):
 			message = f"message_{i}"
-			self.tcp_server.add_message_to_broadcast(sender_client, message, send_all=True)
+			self.tcp_server.add_message_to_broadcast(sender_client, message, send_to={'identifier': -1, 'destination': MessageDestination.ALL})
 
 		messages = []
 		def receive_thread(_socket_to_listen):

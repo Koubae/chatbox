@@ -7,6 +7,7 @@ import uuid
 from chatbox.app import constants
 from chatbox.app.constants import DIR_DATABASE_SCHEMA_MAIN, DIR_DATABASE_MAIN
 from .network_socket import NetworkSocket
+from .objects import SendTo, MessageDestination
 from ..components.server.router import Router, RouterStopRoute
 from ..model.server_session import ServerSessionModel
 from . import objects
@@ -138,18 +139,25 @@ class SocketTCPServer(NetworkSocket):
             message_to_broadcast: objects.Message = self.client_messages.get()   # blocking - t_broadcaster
             client_identifier = message_to_broadcast['identifier']
             message = message_to_broadcast['message']
-            send_all = message_to_broadcast['send_all']
+            send_to: SendTo = message_to_broadcast['send_to']
             if client_identifier and message:
-                self.broadcast(client_identifier, message, send_all=send_all)
+                self.broadcast(client_identifier, message, send_to=send_to)
+
+            # TODO: save message in database! maybe another thread that won't wait!
+
             self.client_messages.task_done()
 
     # TODO:
     # 1. There is something a RuntimeError (dictionary change size during iteration)
     # 2. Broadcast depending on the command (send to user , global , group or channel)
-    def broadcast(self, client_identifier: int, message: str, send_all: bool = False) -> None:
-        clients_to_send = self.clients_identified
-        if send_all:
-            clients_to_send = {**clients_to_send, **self.clients_unidentified}
+    def broadcast(self, client_identifier: int, message: str, send_to: SendTo) -> None:
+        destination: MessageDestination = send_to["destination"]
+
+        match destination:
+            case MessageDestination.ALL:
+                clients_to_send = {**self.clients_identified, **self.clients_unidentified}
+            case _:
+                clients_to_send = {**self.clients_identified, **self.clients_unidentified}
 
         for identifier in clients_to_send:
             client_conn: objects.Client = clients_to_send[identifier]
@@ -175,11 +183,11 @@ class SocketTCPServer(NetworkSocket):
     # ------------------------------------
     # Business Logic
     # ------------------------------------
-    def add_message_to_broadcast(self, client_conn: objects.Client, message: str, send_all: bool = False) -> None:
+    def add_message_to_broadcast(self, client_conn: objects.Client, message: str, send_to: SendTo) -> None:
         _logger.info(f"[RECEIVED]::({client_conn}) to broadcast >>> {message}")
         message = f'-- {client_conn.user_name} :: {message}'
         # TOOD: make send_to and destination. no like this!
-        self.client_messages.put({'identifier': client_conn.identifier, 'message': message, 'send_all': send_all})
+        self.client_messages.put({'identifier': client_conn.identifier, 'message': message, 'send_to': send_to})
 
     # ------------------------------------
     # Getter and setters

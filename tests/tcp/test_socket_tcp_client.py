@@ -15,6 +15,7 @@ import time
 import pytest
 
 from chatbox.app import core
+from chatbox.app.core.tcp.objects import MessageDestination
 
 from tests.conftest import BaseRunner, UNITTEST_HOST, UNITTEST_PORT
 
@@ -79,7 +80,7 @@ class TestSocketTCPClient(BaseRunner):
 		for i in range(total_messages):
 			message_to_send = f"{message_base} {i}"
 			message_expected.append(message_to_send)
-			self.tcp_server.add_message_to_broadcast(sender_client, message_to_send, send_all=True)
+			self.tcp_server.add_message_to_broadcast(sender_client, message_to_send, send_to={'identifier': -1, 'destination': MessageDestination.ALL})
 			time.sleep(.5)
 
 		assert len(message_received) == total_messages

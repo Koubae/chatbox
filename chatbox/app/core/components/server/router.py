@@ -2,6 +2,7 @@ from chatbox.app.core import tcp
 from chatbox.app.constants import chat_internal_codes as _c
 from chatbox.app.core.components.server.auth import AuthUser
 from chatbox.app.core.tcp import objects
+from chatbox.app.core.tcp.objects import MessageDestination
 
 
 class RouterStopRoute(Exception):
@@ -23,7 +24,7 @@ class Router:
 					raise RouterStopRoute(f"Stop Routing, code {_c.Codes.LOGOUT}")
 
 			case _:
-				self.chat.add_message_to_broadcast(client_conn, payload)
+				self.chat.add_message_to_broadcast(client_conn, payload, {'identifier': -1, 'destination': MessageDestination.ALL})
 
 	@staticmethod
 	def route_check_client_auth(client_conn: objects.Client) -> _c.Codes | None:
