@@ -1,6 +1,7 @@
 from chatbox.app.core import tcp
 from chatbox.app.constants import chat_internal_codes as _c
 from chatbox.app.core.components.server.controller.auth import ControllerAuthUser
+from chatbox.app.core.components.server.controller.send_message import ControllerSendTo
 from chatbox.app.core.model.message import MessageRole, MessageDestination, ServerMessageModel
 from chatbox.app.core.tcp import objects
 
@@ -14,6 +15,7 @@ class Router:
 		self.chat: 'tcp.SocketTCPServer' = chat
 
 		self.controller_auth: ControllerAuthUser = ControllerAuthUser(self.chat)
+		self.controller_send_to: ControllerSendTo = ControllerSendTo(self.chat)
 
 	def route(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
 		_route = self.route_check_client_auth(client_conn) or _c.code_scan(payload.body)
@@ -25,9 +27,10 @@ class Router:
 				if not access.value:
 					raise RouterStopRoute(f"Stop Routing, code {_c.Codes.LOGOUT}")
 
+			case _c.Codes.SEND_TO_ALL:
+				self.controller_send_to.all(client_conn, payload)
 			case _:
-				payload.to = MessageDestination(identifier=payload.owner.identifier, name=payload.owner.name, role=MessageRole.ALL)
-				self.chat.add_message_to_broadcast(client_conn, payload)
+				self.controller_send_to.all(client_conn, payload)
 
 	@staticmethod
 	def route_check_client_auth(client_conn: objects.Client) -> _c.Codes | None:
