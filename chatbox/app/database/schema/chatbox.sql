@@ -65,3 +65,20 @@ CREATE INDEX IF NOT EXISTS `message__from_name` ON `message` (`from_name`);
 CREATE INDEX IF NOT EXISTS `message__from_role` ON `message` (`from_role`);
 CREATE INDEX IF NOT EXISTS `message__to_name` ON `message` (`to_name`);
 CREATE INDEX IF NOT EXISTS `message__to_role` ON `message` (`to_role`);
+
+
+CREATE TABLE IF NOT EXISTS `group` (
+    `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+    `name` TEXT NOT NULL UNIQUE,
+    `owner_id` INTEGER NOT NULL,
+
+    `members` BLOB NOT NULL,  -- list saved as JSON
+
+    `created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `modified` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (`owner_id`) REFERENCES `user`(`id`) ON DELETE CASCADE
+
+);
+
+CREATE INDEX IF NOT EXISTS `group__name` ON `group` (`name`);

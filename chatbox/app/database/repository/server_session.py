@@ -72,11 +72,3 @@ class ServerSessionRepository(RepositoryBase):
 		except json.JSONDecodeError as error:
 			_logger.exception(f"Error while decoding data for creating session {_id}, error {error}", exc_info=error)
 			return None
-
-	@staticmethod
-	def _unpack_data(session_id: str, blob: str) -> dict:
-		try:
-			return json.loads(blob)
-		except (json.JSONDecodeError, TypeError) as error:
-			_logger.exception(f"Error while loading session data for session {session_id}, error {error}", exc_info=error)
-			return {"error": "__ERROR_LOADING_DATA__"}

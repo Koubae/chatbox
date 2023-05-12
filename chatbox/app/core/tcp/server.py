@@ -12,6 +12,7 @@ from ..model.message import MessageDestination, MessageRole, ServerMessageModel
 from ..model.server_session import ServerSessionModel
 from . import objects
 from ...database.orm.sqlite_conn import SQLITEConnection
+from ...database.repository.group import GroupRepository
 from ...database.repository.server_session import ServerSessionRepository
 from ...database.repository.user import UserRepository, UserLoginRepository
 from ...database.repository.message import MessageRepository
@@ -54,6 +55,7 @@ class SocketTCPServer(NetworkSocket):
         self.repo_user: UserRepository = UserRepository(self.database)
         self.repo_user_login: UserLoginRepository = UserLoginRepository(self.database)
         self.repo_message: MessageRepository = MessageRepository(self.database)
+        self.repo_group: GroupRepository = GroupRepository(self.database)
         self.server_session: ServerSessionModel = self.repo_server.get_session_or_create()
 
     @staticmethod
@@ -144,7 +146,6 @@ class SocketTCPServer(NetworkSocket):
 
     # TODO:
     # 1. There is something a RuntimeError (dictionary change size during iteration)
-    # 2. Broadcast depending on the command (send to user , global , group or channel)
     def broadcast(self, message: ServerMessageModel) -> None:
         to: MessageDestination = message.to
 

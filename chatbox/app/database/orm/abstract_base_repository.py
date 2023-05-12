@@ -1,3 +1,4 @@
+import json
 import logging
 import typing as t
 from abc import abstractmethod
@@ -21,12 +22,12 @@ QUERY_REPLACE_KEY_LIKE: t.Final[str] = "__placeholder LIKE __value"
 
 
 class RepositoryBase(Connector):
-	_get_query = "SELECT * FROM __table WHERE id = :id"
-	_get_query_by_name = "SELECT * FROM __table WHERE __name = :__name ORDER BY `created` DESC LIMIT 1"
-	_get_many_query = "SELECT * FROM __table LIMIT :limit OFFSET :offset"
-	_create_query = "INSERT INTO __table (__columns) VALUES (__params)"
-	_update_query = f"UPDATE __table SET {QUERY_REPLACE_KEY_EQUAL} WHERE id = :id"
-	_delete_query = "DELETE FROM __table WHERE id = :id"
+	_get_query = "SELECT * FROM `__table` WHERE id = :id"
+	_get_query_by_name = "SELECT * FROM `__table` WHERE __name = :__name ORDER BY `created` DESC LIMIT 1"
+	_get_many_query = "SELECT * FROM `__table` LIMIT :limit OFFSET :offset"
+	_create_query = "INSERT INTO `__table` (__columns) VALUES (__params)"
+	_update_query = f"UPDATE `__table` SET {QUERY_REPLACE_KEY_EQUAL} WHERE id = :id"
+	_delete_query = "DELETE FROM `__table` WHERE id = :id"
 
 	_operations: tuple[DatabaseOperations] = (
 		DatabaseOperations.READ,
@@ -160,6 +161,13 @@ class RepositoryBase(Connector):
 
 	def _build_objects(self, data: t.Iterable[Item]) -> list:
 		return [item for item in [self._build_object(item_raw) for item_raw in data]]
+
+	def _unpack_data(self, _id: str, blob: str) -> dict:
+		try:
+			return json.loads(blob)
+		except (json.JSONDecodeError, TypeError) as error:
+			_logger.exception(f"Error while loading session data for {self._table} {_id}, error {error}", exc_info=error)
+			return {"error": "__ERROR_LOADING_DATA__"}
 
 	def __query_build(self, query: str, params: t.Optional[dict] = None) -> str:
 		query = self.__inject_table_data(query)

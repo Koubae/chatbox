@@ -55,6 +55,12 @@ Server
     - delete channel
     - join channel
     - add user to channel
+  - messages:
+    - list sent messages : me
+    - list received messages : me
+    - list all messages : group
+    - list all messages : channel
+    - delete message
 
 - send_to:: send to "all" should be restricted to admin or super-user
 
@@ -63,9 +69,9 @@ Server
 - get many by id
 - get many by name
 
-- message [Repository, Model] . moved from object.Message to this new implementation 
+- message 
   - How save message on client side???? shelves??? probably just better create a "memory" mysql or an actualy db... 
-- group [Repository, Model]
+
 - channel [Repository, Model]
 
 #### User
@@ -143,6 +149,14 @@ Server
 - ~~Session should expire~~
 - ~~Save session in db.~~ 
 
+
+### Message
+
+- ~~message [Repository, Model] . moved from object.Message to this new implementation~~
+
+### Group
+
+- ~~group [Repository, Model]~~
 
 Client
 ------

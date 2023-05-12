@@ -25,4 +25,4 @@ class UserLoginRepository(RepositoryBase):
 			DatabaseOperations.WRITE_CREATE,
 			DatabaseOperations.DELETE,
 			DatabaseOperations.DELETE_MANY,
-		)
+	)

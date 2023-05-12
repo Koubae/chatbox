@@ -1,6 +1,7 @@
 from chatbox.app.core import tcp
 from chatbox.app.constants import chat_internal_codes as _c
 from chatbox.app.core.components.server.controller.auth import ControllerAuthUser
+from chatbox.app.core.components.server.controller.group import ControllerGroup
 from chatbox.app.core.components.server.controller.send_message import ControllerSendTo
 from chatbox.app.core.model.message import ServerMessageModel
 from chatbox.app.core.tcp import objects
@@ -16,6 +17,7 @@ class Router:
 
 		self.controller_auth: ControllerAuthUser = ControllerAuthUser(self.chat)
 		self.controller_send_to: ControllerSendTo = ControllerSendTo(self.chat)
+		self.controller_group: ControllerGroup = ControllerGroup(self.chat)
 
 	def route(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
 		_route = self.route_check_client_auth(client_conn) or _c.code_scan(payload.body)
@@ -31,6 +33,10 @@ class Router:
 				self.controller_send_to.user(client_conn, payload)
 			case _c.Codes.SEND_TO_ALL:
 				self.controller_send_to.all(client_conn, payload)
+
+			case _c.Codes.GROUP_CREATE:
+				self.controller_group.create(client_conn, payload)
+
 			case _:
 				self.controller_send_to.all(client_conn, payload)
 
