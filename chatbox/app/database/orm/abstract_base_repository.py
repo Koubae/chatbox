@@ -24,6 +24,7 @@ QUERY_REPLACE_KEY_LIKE: t.Final[str] = "__placeholder LIKE __value"
 class RepositoryBase(Connector):
 	_get_query = "SELECT * FROM `__table` WHERE id = :id"
 	_get_query_by_name = "SELECT * FROM `__table` WHERE __name = :__name ORDER BY `created` DESC LIMIT 1"
+	_get_query_where = "SELECT * FROM `__table` WHERE __where ORDER BY `created` DESC LIMIT :limit OFFSET :offset"
 	_get_many_query = "SELECT * FROM `__table` LIMIT :limit OFFSET :offset"
 	_create_query = "INSERT INTO `__table` (__columns) VALUES (__params)"
 	_update_query = f"UPDATE `__table` SET {QUERY_REPLACE_KEY_EQUAL} WHERE id = :id"
@@ -82,6 +83,17 @@ class RepositoryBase(Connector):
 		except SQLITEConnectionException as error:
 			_logger.exception(f"Error while get {self._table} by name {name}, reason {error}", exc_info=error)
 			return None
+
+	def get_where(self, where: str, params: dict, limit: int = 100, offset: int = 0) -> list[T]:
+		if DatabaseOperations.READ not in self._operations:
+			raise RuntimeError(f"{self._table} cannot {DatabaseOperations.READ.name}!")
+		params.update({"limit": limit, "offset": offset})
+		query = self._get_query_where.replace("__where", where)
+		try:
+			return self._build_objects(self.db.get_many(self.__query_build(query), params))
+		except SQLITEConnectionException as error:
+			_logger.exception(f"Error while get {self._table} using where {where}, reason {error}", exc_info=error)
+			return []
 
 	def get_many(self, limit: int = 100, offset: int = 0) -> list[T]:
 		if DatabaseOperations.READ_MANY not in self._operations:

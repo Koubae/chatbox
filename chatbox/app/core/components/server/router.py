@@ -34,6 +34,8 @@ class Router:
 			case _c.Codes.SEND_TO_ALL:
 				self.controller_send_to.all(client_conn, payload)
 
+			case _c.Codes.GROUP_LIST:
+				self.controller_group.list(client_conn, payload)
 			case _c.Codes.GROUP_CREATE:
 				self.controller_group.create(client_conn, payload)
 

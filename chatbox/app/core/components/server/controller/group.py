@@ -1,7 +1,7 @@
 import logging
 import json
 
-from chatbox.app.core.components.server.controller.base import BaseController
+from chatbox.app.core.components.commons.controller.base import BaseController
 from chatbox.app.constants import chat_internal_codes as _c
 from chatbox.app.core.model.group import GroupModel
 from chatbox.app.core.model.message import ServerMessageModel
@@ -12,6 +12,14 @@ _logger = logging.getLogger(__name__)
 
 
 class ControllerGroup(BaseController):
+
+	def list(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
+		self._remove_chat_code_from_payload(_c.Codes.GROUP_LIST, payload)  # noqa
+
+		groups: list[GroupModel] = self.chat.repo_group.list_user_group(client_conn.user.id)
+
+		group_names = [group.to_json() for group in groups]
+		self.chat.send_to_client(client_conn, _c.make_message(_c.Codes.GROUP_LIST, json.dumps(group_names)))
 
 	def create(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
 		self._remove_chat_code_from_payload(_c.Codes.GROUP_CREATE, payload)  # noqa

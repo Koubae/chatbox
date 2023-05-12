@@ -1,10 +1,10 @@
 import json
 from getpass import getpass
 
-from chatbox.app.core import tcp
 from chatbox.app.constants import chat_internal_codes as _c
 from chatbox.app.core.components.client.auth import AuthUser
 from chatbox.app.core.components.client.commands import Command, Commands
+from chatbox.app.core.components.commons.controller.base import BaseController
 from chatbox.app.core.components.commons.functions import get_command_target
 from chatbox.app.core.model.message import ServerMessageModel, MessageRole
 
@@ -13,28 +13,10 @@ class CommandTerminateException(Exception):
 	pass
 
 
-class Terminal:
-
-	def __init__(self, chat: 'tcp.SocketTCPClient'):
-		self.chat: 'tcp.SocketTCPClient' = chat
-
+class Terminal(BaseController):
 	@staticmethod
 	def message_echo(message: str):
 		print(message)
-
-	def message_display(self, payload: ServerMessageModel): # TODO: send from to --> user , group , channel
-		owner = payload.owner
-		sender = payload.sender
-
-		if sender.role is MessageRole.SERVER:
-			name = f"[SERVER] -->"
-		elif sender.role not in (MessageRole.USER, MessageRole.ALL):
-			name = f"[{sender.name}] $ {owner.name} -->"
-		else:
-			name = f"$ {sender.name} -->"
-
-		message = f'{name} {payload.body}'
-		self.message_echo(message)
 
 	@staticmethod
 	def message_prompt(prompt: str | None = None) -> str:
@@ -81,7 +63,8 @@ class Terminal:
 					...
 
 				case Command.GROUP_LIST:
-					...
+					group_command = _c.make_message(_c.Codes.GROUP_LIST, _c.Codes.GROUP_CREATE.name)
+					self.chat.send_to_server(group_command)
 				case Command.GROUP_CREATE:
 					group_info = get_command_target(user_input)
 					if not group_info:
@@ -129,3 +112,37 @@ class Terminal:
 				return self.chat.ui.message_echo(f"command {command} must contain a target value!")
 			return self.chat.ui.message_echo(str(error))
 
+	def message_display(self, payload: ServerMessageModel) -> None:
+		owner = payload.owner
+		sender = payload.sender
+
+		if sender.role is MessageRole.SERVER:
+			name = f"[SERVER] -->"
+		elif sender.role not in (MessageRole.USER, MessageRole.ALL):
+			name = f"[{sender.name}] $ {owner.name} -->"
+		else:
+			name = f"$ {sender.name} -->"
+
+		message = f'{name} {payload.body}'
+		self.message_echo(message)
+
+	def display_groups(self, payload: ServerMessageModel) -> None:
+		self._remove_chat_code_from_payload(_c.Codes.GROUP_LIST, payload)  # noqa
+
+		groups = json.loads(payload.body)
+		self.message_echo(f"These are groups you own:\n\n")
+		self.print_table(groups)
+		self.message_echo("\n")
+
+	def print_table(self, data):
+		columns = list(data[0].keys() if data else [])
+
+		table = [columns] + [[str(row.get(col, '')) for col in columns] for row in data]
+		column_size = [max(map(len, col)) for col in zip(*table)]
+
+		format_string = ' | '.join(["{{:<{}}}".format(i) for i in column_size])
+
+		header_separator = ['-' * i for i in column_size]
+		table.insert(1, header_separator)  # Header Separators line
+		for item in table:
+			self.message_echo(format_string.format(*item))

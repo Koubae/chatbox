@@ -3,7 +3,7 @@ import logging
 import typing as t
 
 from chatbox.app.constants import chat_internal_codes as _c
-from chatbox.app.core.components.server.controller.base import BaseController
+from chatbox.app.core.components.commons.controller.base import BaseController
 from chatbox.app.core.security.objects import Access
 from chatbox.app.core.tcp import objects
 from chatbox.app.core.model.user import UserModel, UserLoginModel

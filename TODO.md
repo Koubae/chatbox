@@ -39,8 +39,8 @@ Server
       - list users : logged
       - list users : un-logged
   - group:
-    - list groups
-    - create group
+    - ~~list groups~~
+    - ~~create group~~
     - update group
     - leave group
     - delete group

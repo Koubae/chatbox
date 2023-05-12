@@ -81,7 +81,7 @@ class SocketTCPClient(NetworkSocket):   # noqa
         exception: BaseException | None = None
         while self.connected_to_server:
             try:
-                message: MessageModel = self.receive_message(self.socket)
+                message: ServerMessageModel = self.receive_message(self.socket)
                 if not message:
                     break
                 _logger.debug(message.body)
@@ -135,7 +135,12 @@ class SocketTCPClient(NetworkSocket):   # noqa
             self.messages.task_done()
 
     def broadcast(self, payload: ServerMessageModel) -> None:
-        self.ui.message_display(payload)
+        _display_type = _c.code_scan(payload.body)
+        match _display_type:
+            case _c.Codes.GROUP_LIST:
+                self.ui.display_groups(payload)
+            case _:
+                self.ui.message_display(payload)
 
     def receive_message(self, connection: socket.socket, buffer_size: int = constants.SOCKET_STREAM_LENGTH) -> ServerMessageModel | None:
         message: str = self.receive(connection, buffer_size)

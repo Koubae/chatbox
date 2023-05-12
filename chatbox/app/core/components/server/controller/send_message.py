@@ -1,6 +1,6 @@
 import logging
 
-from chatbox.app.core.components.server.controller.base import BaseController
+from chatbox.app.core.components.commons.controller.base import BaseController
 from chatbox.app.constants import chat_internal_codes as _c
 from chatbox.app.core.model.message import MessageDestination, ServerMessageModel, MessageRole
 from chatbox.app.core.model.user import UserModel

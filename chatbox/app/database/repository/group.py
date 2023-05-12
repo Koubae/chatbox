@@ -18,3 +18,10 @@ class GroupRepository(RepositoryBase):
 			return
 		data["members"] = self._unpack_data(data["id"], data["members"])
 		return super()._build_object(data)
+
+	def list_user_group(self, owner_id: id) -> list[GroupModel]:
+		where = f"`owner_id` = :owner_id"
+		params = {"owner_id": owner_id}
+
+		groups = self.get_where(where, params)
+		return groups
