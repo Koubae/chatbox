@@ -40,9 +40,9 @@ Server
       5. On broadcast meth, select - match send_to type first , then select / search targets then send !
       6. This has to be implemented on the nclient as well!" since the message has to go on the correct place (channel or whatever) this will be done on GUI only (terminal is always on the same line! )
         - send to : all
-        - send to : channel
-        - send to : group
         - send to : user 
+        - send to : group
+        - send to : channel
   - users:
     - list users
       - list users : all

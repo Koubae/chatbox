@@ -1,6 +1,6 @@
 from chatbox.app.core import tcp
 from chatbox.app.constants import chat_internal_codes as _c
-from chatbox.app.core.components.server.auth import AuthUser
+from chatbox.app.core.components.server.controller.auth import ControllerAuthUser
 from chatbox.app.core.model.message import MessageRole, MessageDestination, ServerMessageModel
 from chatbox.app.core.tcp import objects
 
@@ -13,13 +13,15 @@ class Router:
 	def __init__(self, chat: 'tcp.SocketTCPServer'):
 		self.chat: 'tcp.SocketTCPServer' = chat
 
+		self.controller_auth: ControllerAuthUser = ControllerAuthUser(self.chat)
+
 	def route(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
 		_route = self.route_check_client_auth(client_conn) or _c.code_scan(payload.body)
 		match _route:
 			case _c.Codes.LOGIN:
-				AuthUser.auth(self.chat, client_conn, payload.body)
+				self.controller_auth.auth(client_conn, payload.body)
 			case _c.Codes.LOGOUT:
-				access = AuthUser.logout(self.chat, client_conn, payload.body)
+				access = self.controller_auth.logout(client_conn, payload.body)
 				if not access.value:
 					raise RouterStopRoute(f"Stop Routing, code {_c.Codes.LOGOUT}")
 

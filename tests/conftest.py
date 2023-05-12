@@ -9,7 +9,7 @@ import pytest
 
 from chatbox.app import core, constants
 from chatbox.app.constants import chat_internal_codes as _c, DIR_DATABASE_SCHEMA_MAIN
-from chatbox.app.core.components.server.auth import AuthUser
+from chatbox.app.core.components.server.controller.auth import ControllerAuthUser
 from chatbox.app.core.security.objects import Access
 from chatbox.app.database.orm.sqlite_conn import SQLITEConnection
 
@@ -89,7 +89,9 @@ class TCPSocketMock:
 		}
 		login_request = _c.make_message(_c.Codes.LOGIN, json.dumps(user_info))
 
-		login_success = AuthUser.auth(tcp_server, client_conn=client_conn, payload=login_request)
+		controller_auth = ControllerAuthUser(tcp_server)
+
+		login_success = controller_auth.auth(client_conn=client_conn, payload=login_request)
 		return client_conn, login_success
 
 	# ~~~~~~~~ Mocks ~~~~~~~~ #
@@ -127,7 +129,7 @@ def create_tcp_server_mock():
 	def set_up() -> core.SocketTCPServer:
 		print("FIXTURE: create_tcp_server_mock -> set_up")
 
-		AuthUser.REQUEST_PASSWORD_AFTER_USER_CREATION = False  # Skip The
+		ControllerAuthUser.REQUEST_PASSWORD_AFTER_USER_CREATION = False  # Skip The
 
 		core.SocketTCPServer._connect_to_database = lambda _: __database_mock
 
