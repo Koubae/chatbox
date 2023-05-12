@@ -3,6 +3,7 @@ from getpass import getpass
 from chatbox.app.core import tcp
 from chatbox.app.core.components.client.auth import AuthUser
 from chatbox.app.core.components.client.commands import Command, Commands
+from chatbox.app.core.components.commons.functions import get_command_target
 from chatbox.app.core.model.message import ServerMessageModel, MessageRole
 
 
@@ -19,7 +20,9 @@ class Terminal:
 		owner = payload.owner
 		sender = payload.sender
 
-		if sender.role not in (MessageRole.USER, MessageRole.ALL):
+		if sender.role is MessageRole.SERVER:
+			name = f"[SERVER] -->"
+		elif sender.role not in (MessageRole.USER, MessageRole.ALL):
 			name = f"[{sender.name}] $ {owner.name} -->"
 		else:
 			name = f"$ {sender.name} -->"
@@ -55,7 +58,11 @@ class Terminal:
 			case Command.SEND_TO_GROUP:
 				...
 			case Command.SEND_TO_USER:
-				...
+				user = get_command_target(user_input)
+				if not user:
+					return self.chat.ui.message_echo(f"command {Command.SEND_TO_USER} must contain user name!")
+				user_input = self.message_prompt(f"@{user} : ")
+				self.chat.send_to_user(user, user_input)
 
 			case Command.USER_LIST_ALL:
 				...
@@ -93,6 +100,6 @@ class Terminal:
 				...
 
 			case Command.ECHO_MESSAGE:
-				return user_input
+				self.chat.send_to_all(user_input)
 			case _:
-				return user_input
+				self.chat.send_to_all(user_input)

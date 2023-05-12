@@ -109,8 +109,7 @@ class SocketTCPClient(NetworkSocket):   # noqa
         exception: BaseException | None = None
         while self.connected_to_server:
             try:
-                message: str = self.ui.next_command()
-                self.send_to_all(message)  # TODO: this should be controlled by the command!
+                self.ui.next_command()
             except KeyboardInterrupt as error:
                 _logger.warning(f"(t_sender) Interrupted by User, reason: {error}")
                 exception = error
@@ -166,6 +165,12 @@ class SocketTCPClient(NetworkSocket):   # noqa
 
         self.send_message(message)
 
+    def send_to_user(self, user: str, payload: str) -> None:
+        sender = MessageDestination(self.id, self.user_name, role=MessageRole.USER)
+        to = MessageDestination(user, user, role=MessageRole.USER)
+        message = MessageModel.new_message(sender, to, _c.make_message(_c.Codes.SEND_TO_USER, payload))
+
+        self.send_message(message)
 
     # ------------------------------------
     # Getter and setters

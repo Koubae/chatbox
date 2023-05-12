@@ -1,7 +1,9 @@
 import logging
 
 from chatbox.app.core.components.server.controller.base import BaseController
+from chatbox.app.constants import chat_internal_codes as _c
 from chatbox.app.core.model.message import MessageDestination, ServerMessageModel, MessageRole
+from chatbox.app.core.model.user import UserModel
 from chatbox.app.core.tcp import objects
 
 
@@ -10,9 +12,20 @@ _logger = logging.getLogger(__name__)
 
 class ControllerSendTo(BaseController):
 
-	def user(self): ...
-	def group(self): ...
-	def channel(self): ...
+	def user(self, client_conn: objects.Client, payload: ServerMessageModel):
+		self._remove_chat_code_from_payload(_c.Codes.SEND_TO_USER, payload)
+
+		destination = payload.to.identifier
+		user: UserModel | None = self.chat.repo_user.get_by_name(destination)
+		if not user:
+			self.chat.send_to_client(client_conn, f"user {destination} does not exist!")
+			return
+
+		payload.to = MessageDestination(identifier=user.id, name=user.username, role=MessageRole.USER)
+		self.chat.add_message_to_broadcast(client_conn, payload)
+
+	def group(self, client_conn: objects.Client, payload: ServerMessageModel): ...
+	def channel(self, client_conn: objects.Client, payload: ServerMessageModel): ...
 
 	def all(self, client_conn: objects.Client, payload: ServerMessageModel):
 		payload.to = MessageDestination(identifier=payload.owner.identifier, name=payload.owner.name, role=MessageRole.ALL)

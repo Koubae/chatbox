@@ -144,8 +144,12 @@ class SocketTCPServer(NetworkSocket):
     def broadcast(self, message: ServerMessageModel) -> None:
         to: MessageDestination = message.to
 
-        # TODO: Route message on destination
         match to.role:
+            case MessageRole.USER:
+                clients_to_send = {}
+                user = next((user for identifier, user in self.clients_identified.items() if identifier == to.identifier), None)
+                if user:
+                    clients_to_send[to.identifier] = user
             case MessageRole.ALL:
                 clients_to_send = {**self.clients_identified, **self.clients_unidentified}
             case _:

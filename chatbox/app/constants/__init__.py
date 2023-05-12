@@ -20,6 +20,8 @@ KILL_APP_AT_SOCKET_TERMINATE: bool = False  # if the socket app (client or serve
 ENCODING: str = "UTF-8"
 DATETIME_DEFAULT: str = "%Y-%m-%d %H:%M:%S"
 
+COMMAND_TOKEN: str = ":"
+
 # ...... SOCKET ......
 SOCKET_HOST_DEFAULT: str = "localIpAddr"
 SOCKET_PORT_DEFAULT: int = 10_000

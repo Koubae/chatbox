@@ -11,10 +11,10 @@ class Codes(Enum):
 	LOGOUT = auto()
 	QUIT = auto()
 
-	SEND_TO_ALL = auto()
-	SEND_TO_CHANNEL = auto()
-	SEND_TO_GROUP = auto()
 	SEND_TO_USER = auto()
+	SEND_TO_GROUP = auto()
+	SEND_TO_CHANNEL = auto()
+	SEND_TO_ALL = auto()
 
 	USER_LIST_ALL = auto()
 	USER_LIST_LOGGED = auto()

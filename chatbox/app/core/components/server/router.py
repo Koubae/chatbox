@@ -2,7 +2,7 @@ from chatbox.app.core import tcp
 from chatbox.app.constants import chat_internal_codes as _c
 from chatbox.app.core.components.server.controller.auth import ControllerAuthUser
 from chatbox.app.core.components.server.controller.send_message import ControllerSendTo
-from chatbox.app.core.model.message import MessageRole, MessageDestination, ServerMessageModel
+from chatbox.app.core.model.message import ServerMessageModel
 from chatbox.app.core.tcp import objects
 
 
@@ -27,6 +27,8 @@ class Router:
 				if not access.value:
 					raise RouterStopRoute(f"Stop Routing, code {_c.Codes.LOGOUT}")
 
+			case _c.Codes.SEND_TO_USER:
+				self.controller_send_to.user(client_conn, payload)
 			case _c.Codes.SEND_TO_ALL:
 				self.controller_send_to.all(client_conn, payload)
 			case _:
