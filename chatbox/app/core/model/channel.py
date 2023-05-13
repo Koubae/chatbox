@@ -13,6 +13,15 @@ class ChannelMemberModel(BaseModel):
 	user_id: int
 	channel_id: int
 
+	def to_json(self) -> dict:
+		return {
+			'id': self.id,
+			'user_id': self.user_id,
+			'channel_id': self.channel_id,
+			'created': self.created.strftime(DATETIME_DEFAULT),
+			'modified': self.modified.strftime(DATETIME_DEFAULT),
+		}
+
 
 @dataclass
 class ChannelModel(BaseModel):
@@ -28,8 +37,7 @@ class ChannelModel(BaseModel):
 			'id': self.id,
 			'name': self.name,
 			'owner_id': self.owner_id,
-			'members': self.members,
+			'members': [member.user_id for member in self.members],
 			'created': self.created.strftime(DATETIME_DEFAULT),
 			'modified': self.modified.strftime(DATETIME_DEFAULT),
 		}
-

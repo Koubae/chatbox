@@ -49,7 +49,7 @@ Server
       - ~~list channels : all~~
       - list channels : joined
       - list channels : un-joined
-    - create channel
+    - ~~create channel~~
     - update channel
     - leave channel
     - delete channel

@@ -12,6 +12,7 @@ class ChannelRepository(RepositoryBase):
 	_table: t.Final[str] = "channel"
 	_name: t.Final[str] = "name"
 	_model: ChannelModel = ChannelModel
+	_dynamic_columns: tuple[str] = ("members", )
 
 	def __init__(self, *args, repo_channel_member: 'ChannelMemberRepository'):
 		super().__init__(*args)

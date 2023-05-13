@@ -40,6 +40,8 @@ class RepositoryBase(Connector):
 		DatabaseOperations.DELETE_MANY,
 	)
 
+	_dynamic_columns: tuple[str] = tuple()
+
 	def __init__(self, database: SQLITEConnection):
 		super().__init__()
 		self.__database: SQLITEConnection = database
@@ -62,7 +64,7 @@ class RepositoryBase(Connector):
 
 	@property
 	def _columns(self):
-		return list(self._model.__annotations__.keys())
+		return [column for column in list(self._model.__annotations__.keys()) if column not in self._dynamic_columns]
 
 	def get(self, _id: int) -> T | None:
 		if DatabaseOperations.READ not in self._operations:

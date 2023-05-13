@@ -3,8 +3,9 @@ import json
 
 from chatbox.app.core.components.commons.controller.base import BaseController
 from chatbox.app.constants import chat_internal_codes as _c
-from chatbox.app.core.model.channel import ChannelModel
+from chatbox.app.core.model.channel import ChannelModel, ChannelMemberModel
 from chatbox.app.core.model.message import ServerMessageModel
+from chatbox.app.core.model.user import UserModel
 from chatbox.app.core.tcp import objects
 
 
@@ -25,18 +26,20 @@ class ControllerChannel(BaseController):
 		_c.remove_chat_code_from_payload(_c.Codes.CHANNEL_CREATE, payload)  # noqa
 
 		owner, info, name = self._get_data(payload)
-		members = self._get_members(client_conn, info)
+		members: list[UserModel] = self._get_members(client_conn, info)
 
 		record: ChannelModel = self.chat.repo_channel.get_by_name(name)
 		if record:
 			self.chat.send_to_client(client_conn, f"Group {name} already exists!")
 			return
-		record: ChannelModel = self.chat.repo_channel.create({"name": name, "owner_id": owner, "members": json.dumps(members)})
+		record: ChannelModel = self.chat.repo_channel.create({"name": name, "owner_id": owner})
 		if not record:
 			self.chat.send_to_client(client_conn, f"Error while creating channel {name}!")
 			return
 
-		_logger.info(f"user {client_conn.user.username} {client_conn.user.id} created new channel --> {record}")
+		self.chat.repo_channel_member.create([{"user_id": user.id, "channel_id": record.id}  for user in members])
+
+		_logger.info(f"user {client_conn.user.username} {client_conn.user.id} created new channel --> {record} with {len(members)} members!")
 		self.chat.send_to_client(client_conn, f"Group {name} created successfully")
 
 	def update(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
@@ -49,7 +52,7 @@ class ControllerChannel(BaseController):
 			self.chat.send_to_client(client_conn, f"Group {name} cannot be created, channel does not exist.")
 			return
 
-		members = self._get_members(client_conn, info)
+		members: list[UserModel] = self._get_members(client_conn, info)
 
 
 		record: ChannelModel = self.chat.repo_channel.update(record.id,
@@ -121,8 +124,14 @@ class ControllerChannel(BaseController):
 		name: str = info["name"]
 		return owner, info, name
 
-	@staticmethod
-	def _get_members(client_conn, info: dict) -> list[str]:
+	def _get_members(self, client_conn, info: dict) -> list[UserModel]:
 		members: list = [member.strip() for member in info["members"]]
 		members.insert(0, client_conn.user.username)
-		return members
+
+		members_result: list[UserModel] = []
+		for member in members:
+			user = self.chat.repo_user.get_by_name(member)
+			if user:
+				members_result.append(user)
+
+		return members_result
