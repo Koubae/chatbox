@@ -20,11 +20,6 @@ Server
 - The object.Message probably will need to be moved into a Model and create a "Message Object!"
 - fix error when multiple message are received in the same time, we need to add separator between messages!
 
-### Controller:
-
-- base Base Cntroller exception (client controller exception must then inherit from it)
-- make in base controller a json converter else, throw controller exception
-
 
 ### Routes
 

@@ -1,13 +1,13 @@
 import logging
 
 from chatbox.app.core import tcp
-from chatbox.app.core.components.commons.controller.base import BaseController
+from chatbox.app.core.components.commons.controller.base import BaseController, BaseControllerException
 
 
 _logger = logging.getLogger(__name__)
 
 
-class ControllerClientException(Exception):
+class ControllerClientException(BaseControllerException):
 	pass
 
 

@@ -13,7 +13,7 @@ _logger = logging.getLogger(__name__)
 
 class ControllerGroup(BaseController):
 
-	def list(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
+	def list_(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
 		_c.remove_chat_code_from_payload(_c.Codes.GROUP_LIST, payload)  # noqa
 
 		groups: list[GroupModel] = self.chat.repo_group.list_user_group(client_conn.user.id)
@@ -24,11 +24,8 @@ class ControllerGroup(BaseController):
 	def create(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
 		_c.remove_chat_code_from_payload(_c.Codes.GROUP_CREATE, payload)  # noqa
 
-		group_owner = payload.owner.identifier
-		group_info: dict = json.loads(payload.body)
-		group_name: str = group_info["name"]
-		group_members: list = [member.strip() for member in group_info["members"]]
-		group_members.insert(0, client_conn.user.username)
+		group_owner, group_info, group_name = self._get_group_data(payload)
+		group_members = self._get_group_members(client_conn, group_info)
 
 		group_exists: GroupModel = self.chat.repo_group.get_by_name(group_name)
 		if group_exists:
@@ -45,17 +42,14 @@ class ControllerGroup(BaseController):
 	def update(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
 		_c.remove_chat_code_from_payload(_c.Codes.GROUP_UPDATE, payload)  # noqa
 
-		group_owner = payload.owner.identifier
-		group_info: dict = json.loads(payload.body)
-		group_name: str = group_info["name"]
+		group_owner, group_info, group_name = self._get_group_data(payload)
 
 		group_exists: GroupModel = self.chat.repo_group.get_by_name(group_name)
 		if not group_exists:
 			self.chat.send_to_client(client_conn, f"Group {group_name} cannot be created, group does not exist.")
 			return
 
-		group_members: list = [member.strip() for member in group_info["members"]]
-		group_members.insert(0, client_conn.user.username)
+		group_members = self._get_group_members(client_conn, group_info)
 
 
 		group: GroupModel = self.chat.repo_group.update(group_exists.id,
@@ -70,9 +64,7 @@ class ControllerGroup(BaseController):
 	def delete(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
 		_c.remove_chat_code_from_payload(_c.Codes.GROUP_DELETE, payload)  # noqa
 
-		group_owner = payload.owner.identifier
-		group_info: dict = json.loads(payload.body)
-		group_name: str = group_info["name"]
+		group_owner, group_info, group_name = self._get_group_data(payload)
 
 		group_exists: GroupModel = self.chat.repo_group.get_by_name(group_name)
 		if not group_exists:
@@ -91,3 +83,15 @@ class ControllerGroup(BaseController):
 		else:
 			_logger.info(f"user {client_conn.user.username} {client_conn.user.id} delete  group {group_exists.name} {group_exists.id}")
 			self.chat.send_to_client(client_conn, f"Group {group_exists.name} {group_exists.id} deleted successfully")
+
+	def _get_group_data(self, payload: ServerMessageModel) -> tuple[str | int, dict, str]:
+		group_owner = payload.owner.identifier
+		group_info: dict = self.json_decode(payload.body)
+		group_name: str = group_info["name"]
+		return group_owner, group_info, group_name
+
+	@staticmethod
+	def _get_group_members(client_conn, group_info: dict) -> list[str]:
+		group_members: list = [member.strip() for member in group_info["members"]]
+		group_members.insert(0, client_conn.user.username)
+		return group_members

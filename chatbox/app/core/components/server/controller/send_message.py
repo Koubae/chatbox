@@ -24,6 +24,11 @@ class ControllerSendTo(BaseController):
 		payload.to = MessageDestination(identifier=user.id, name=user.username, role=MessageRole.USER)
 		self.chat.add_message_to_broadcast(client_conn, payload)
 
+	def user_this(self, client_conn: objects.Client, payload: ServerMessageModel):
+		"""Sends a message to the current client_conn user"""
+		payload.to = MessageDestination(identifier=client_conn.user.id, name=client_conn.user.username, role=MessageRole.USER)
+		self.chat.add_message_to_broadcast(client_conn, payload)
+
 	def group(self, client_conn: objects.Client, payload: ServerMessageModel): ...
 	def channel(self, client_conn: objects.Client, payload: ServerMessageModel): ...
 
