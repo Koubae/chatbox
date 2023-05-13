@@ -30,7 +30,7 @@ class ControllerChannel(BaseController):
 
 		record: ChannelModel = self.chat.repo_channel.get_by_name(name)
 		if record:
-			self.chat.send_to_client(client_conn, f"Group {name} already exists!")
+			self.chat.send_to_client(client_conn, f"Channel {name} already exists!")
 			return
 		record: ChannelModel = self.chat.repo_channel.create({"name": name, "owner_id": owner})
 		if not record:
@@ -40,7 +40,7 @@ class ControllerChannel(BaseController):
 		self.chat.repo_channel_member.create([{"user_id": user.id, "channel_id": record.id}  for user in members])
 
 		_logger.info(f"user {client_conn.user.username} {client_conn.user.id} created new channel --> {record} with {len(members)} members!")
-		self.chat.send_to_client(client_conn, f"Group {name} created successfully")
+		self.chat.send_to_client(client_conn, f"Channel {name} created successfully")
 
 	def update(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
 		_c.remove_chat_code_from_payload(_c.Codes.CHANNEL_UPDATE, payload)  # noqa
@@ -49,20 +49,28 @@ class ControllerChannel(BaseController):
 
 		record: ChannelModel = self.chat.repo_channel.get_by_name(name)
 		if not record:
-			self.chat.send_to_client(client_conn, f"Group {name} cannot be created, channel does not exist.")
+			self.chat.send_to_client(client_conn, f"Channel {name} cannot be created, channel does not exist.")
 			return
 
 		members: list[UserModel] = self._get_members(client_conn, info)
 
+		members_update = [member.id for member in members]
+		members_current = [member.user_id for member in record.members]
+		members_to_delete = set(members_current) - set(members_update)
+		members_to_add = set(members_update) - set(members_current)
 
-		record: ChannelModel = self.chat.repo_channel.update(record.id,
-														{"name": name, "owner_id": owner, "members": json.dumps(members)})
+		for member_delete_id in members_to_delete:  # TODO: implement delete_many!
+			self.chat.repo_channel_member.delete(member_delete_id)
+		if members_to_add:
+			self.chat.repo_channel_member.create([{"user_id": user_id, "channel_id": record.id} for user_id in members_to_add])
+
+		record: ChannelModel = self.chat.repo_channel.update(record.id, {"name": name, "owner_id": owner})
 		if not record:
 			self.chat.send_to_client(client_conn, f"Error while updating channel {name}!")
 			return
 
 		_logger.info(f"user {client_conn.user.username} {client_conn.user.id} updated channel --> {record}")
-		self.chat.send_to_client(client_conn, f"Group {name} updated successfully")
+		self.chat.send_to_client(client_conn, f"Channel {name} updated successfully")
 
 	def delete(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
 		_c.remove_chat_code_from_payload(_c.Codes.CHANNEL_DELETE, payload)  # noqa
@@ -71,21 +79,21 @@ class ControllerChannel(BaseController):
 
 		record: ChannelModel = self.chat.repo_channel.get_by_name(name)
 		if not record:
-			self.chat.send_to_client(client_conn, f"Group {name} cannot be deleted, channel does not exist.")
+			self.chat.send_to_client(client_conn, f"Channel {name} cannot be deleted, channel does not exist.")
 			return
 
 		if record.owner_id != owner:
-			self.chat.send_to_client(client_conn, f"You are not owner of Group {name}!")
+			self.chat.send_to_client(client_conn, f"You are not owner of Channel {name}!")
 			return
 
 		deleted = self.chat.repo_channel.delete(record.id)
 		if not deleted:
 			_logger.info(f"user {client_conn.user.username} {client_conn.user.id} "
 						 f"try to delete  channel {record.name} {record.id} but something went wrong")
-			self.chat.send_to_client(client_conn, f"Group {record.name} {record.id} could not be deleted")
+			self.chat.send_to_client(client_conn, f"Channel {record.name} {record.id} could not be deleted")
 		else:
 			_logger.info(f"user {client_conn.user.username} {client_conn.user.id} delete  channel {record.name} {record.id}")
-			self.chat.send_to_client(client_conn, f"Group {record.name} {record.id} deleted successfully")
+			self.chat.send_to_client(client_conn, f"Channel {record.name} {record.id} deleted successfully")
 
 	def leave(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
 		_c.remove_chat_code_from_payload(_c.Codes.CHANNEL_LEAVE, payload)  # noqa
@@ -94,7 +102,7 @@ class ControllerChannel(BaseController):
 
 		record: ChannelModel = self.chat.repo_channel.get_by_name(name)
 		if not record:
-			self.chat.send_to_client(client_conn, f"You cannot a Group {name}, channel does not exist.")
+			self.chat.send_to_client(client_conn, f"You cannot a Channel {name}, channel does not exist.")
 			return
 
 		if record.owner_id == owner:
@@ -103,7 +111,7 @@ class ControllerChannel(BaseController):
 
 		user_to_remove: str = client_conn.user.username
 		if client_conn.user.username not in record.members:
-			self.chat.send_to_client(client_conn, f"You are not a member of Group {name}!")
+			self.chat.send_to_client(client_conn, f"You are not a member of Channel {name}!")
 			return
 
 		members_current = set(record.members)
@@ -116,7 +124,7 @@ class ControllerChannel(BaseController):
 			return
 
 		_logger.info(f"user {client_conn.user.username} {client_conn.user.id} successfully left channel --> {record}")
-		self.chat.send_to_client(client_conn, f"You left Group {name}")
+		self.chat.send_to_client(client_conn, f"You left Channel {name}")
 
 	def _get_data(self, payload: ServerMessageModel) -> tuple[str | int, dict, str]:
 		owner = payload.owner.identifier

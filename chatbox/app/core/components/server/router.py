@@ -60,7 +60,7 @@ class Router:
 				case _c.Codes.CHANNEL_CREATE:
 					self.controller_channel.create(client_conn, payload)
 				case _c.Codes.CHANNEL_UPDATE:
-					...
+					self.controller_channel.update(client_conn, payload)
 				case _c.Codes.CHANNEL_LEAVE:
 					...
 				case _c.Codes.CHANNEL_ADD:

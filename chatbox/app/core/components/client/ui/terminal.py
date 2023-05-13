@@ -84,7 +84,7 @@ class Terminal:
 				case Command.CHANNEL_CREATE:
 					self.controller_channel.create(user_input)
 				case Command.CHANNEL_UPDATE:
-					...
+					self.controller_channel.update(user_input)
 				case Command.CHANNEL_ADD:
 					...
 				case Command.CHANNEL_JOIN:

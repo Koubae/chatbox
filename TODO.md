@@ -50,7 +50,7 @@ Server
       - list channels : joined
       - list channels : un-joined
     - ~~create channel~~
-    - update channel
+    - ~~update channel~~
     - leave channel
     - delete channel
     - join channel
