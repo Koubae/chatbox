@@ -32,7 +32,7 @@ class ControllerGroupClient(BaseControllerClient):
 		group_name, _ = self._get_group_info(user_input)
 
 		payload = {"name": group_name.strip()}
-		group_command = _c.make_message(_c.Codes.GROUP_DELETE, json.dumps(payload))
+		group_command = _c.make_message(_c.Codes.GROUP_LEAVE, json.dumps(payload))
 		self.chat.send_to_server(group_command)
 
 	def _create_update(self, user_input: str, code: _c.Codes) -> None:

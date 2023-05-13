@@ -58,7 +58,7 @@ class ControllerGroup(BaseController):
 			self.chat.send_to_client(client_conn, f"Error while updating group {group_name}!")
 			return
 
-		_logger.info(f"user {client_conn.user.username} {client_conn.user.id} created new group --> {group}")
+		_logger.info(f"user {client_conn.user.username} {client_conn.user.id} updated group --> {group}")
 		self.chat.send_to_client(client_conn, f"Group {group_name} updated successfully")
 
 	def delete(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
@@ -83,6 +83,37 @@ class ControllerGroup(BaseController):
 		else:
 			_logger.info(f"user {client_conn.user.username} {client_conn.user.id} delete  group {group_exists.name} {group_exists.id}")
 			self.chat.send_to_client(client_conn, f"Group {group_exists.name} {group_exists.id} deleted successfully")
+
+	def leave(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
+		_c.remove_chat_code_from_payload(_c.Codes.GROUP_LEAVE, payload)  # noqa
+
+		group_owner, group_info, group_name = self._get_group_data(payload)
+
+		group_exists: GroupModel = self.chat.repo_group.get_by_name(group_name)
+		if not group_exists:
+			self.chat.send_to_client(client_conn, f"You cannot a Group {group_name}, group does not exist.")
+			return
+
+		if group_exists.owner_id == group_owner:
+			self.chat.send_to_client(client_conn, f"You cannot leave this group {group_name} because you are the owner!")
+			return
+
+		user_to_remove: str = client_conn.user.username
+		if client_conn.user.username not in group_exists.members:
+			self.chat.send_to_client(client_conn, f"You are not a member of Group {group_name}!")
+			return
+
+		members_current = set(group_exists.members)
+		member_to_remove = {user_to_remove}
+		members_updated = members_current - member_to_remove
+
+		group: GroupModel = self.chat.repo_group.update(group_exists.id,{"members": json.dumps(list(members_updated))})
+		if not group:
+			self.chat.send_to_client(client_conn, f"Error while leaving group {group_name}!")
+			return
+
+		_logger.info(f"user {client_conn.user.username} {client_conn.user.id} successfully left group --> {group}")
+		self.chat.send_to_client(client_conn, f"You left Group {group_name}")
 
 	def _get_group_data(self, payload: ServerMessageModel) -> tuple[str | int, dict, str]:
 		group_owner = payload.owner.identifier

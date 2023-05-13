@@ -63,15 +63,15 @@ class Terminal:
 					...
 
 				case Command.GROUP_LIST:
-					self.controller_group.list()
+					self.controller_group.list_()
 				case Command.GROUP_CREATE:
 					self.controller_group.create(user_input)
 				case Command.GROUP_UPDATE:
 					self.controller_group.update(user_input)
-				case Command.GROUP_LEAVE:
-					...
 				case Command.GROUP_DELETE:
 					self.controller_group.delete(user_input)
+				case Command.GROUP_LEAVE:
+					self.controller_group.leave(user_input)
 
 				case Command.CHANNEL_LIST_ALL:
 					...

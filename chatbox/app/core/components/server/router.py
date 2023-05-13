@@ -44,6 +44,8 @@ class Router:
 					self.controller_group.update(client_conn, payload)
 				case _c.Codes.GROUP_DELETE:
 					self.controller_group.delete(client_conn, payload)
+				case _c.Codes.GROUP_LEAVE:
+					self.controller_group.leave(client_conn, payload)
 
 				case _:
 					self.controller_send_to.all(client_conn, payload)
