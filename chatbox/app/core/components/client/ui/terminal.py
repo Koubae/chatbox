@@ -1,4 +1,3 @@
-import json
 from getpass import getpass
 
 from chatbox.app.core import tcp
@@ -6,8 +5,10 @@ from chatbox.app.constants import chat_internal_codes as _c
 from chatbox.app.core.components.client.auth import AuthUser
 from chatbox.app.core.components.client.commands import Command, Commands
 from chatbox.app.core.components.client.controller.base import ControllerClientException
+from chatbox.app.core.components.client.controller.channel import ControllerChannelClient
 from chatbox.app.core.components.client.controller.group import ControllerGroupClient
 from chatbox.app.core.components.client.controller.send_message import ControllerSendToClient
+from chatbox.app.core.components.commons.controller.base import BaseController, BaseControllerException
 from chatbox.app.core.model.message import ServerMessageModel, MessageRole
 
 
@@ -18,6 +19,7 @@ class Terminal:
 
 		self.controller_send_to: ControllerSendToClient = ControllerSendToClient(self.chat, self)
 		self.controller_group: ControllerGroupClient = ControllerGroupClient(self.chat, self)
+		self.controller_channel: ControllerChannelClient = ControllerChannelClient(self.chat, self)
 
 	@staticmethod
 	def message_echo(message: str):
@@ -74,7 +76,7 @@ class Terminal:
 					self.controller_group.leave(user_input)
 
 				case Command.CHANNEL_LIST_ALL:
-					...
+					self.controller_channel.list_all()
 				case Command.CHANNEL_LIST_JOINED:
 					...
 				case Command.CHANNEL_LIST_UN_JOINED:
@@ -119,13 +121,30 @@ class Terminal:
 
 	def display_groups(self, payload: ServerMessageModel) -> None:
 		_c.remove_chat_code_from_payload(_c.Codes.GROUP_LIST, payload)  # noqa
+		self._display_channels_or_groups("groups", payload)
 
-		groups = json.loads(payload.body)
-		self.message_echo(f"These are groups you own:\n\n")
-		for group in groups:
-			group['members'] = group['members'][:10]  # Hack in terminal ui, print_table don't look nice when there is too much data in one cell
-		self.print_table(groups)
-		self.message_echo("\n")
+	def display_channels(self, code: _c.Codes, payload: ServerMessageModel) -> None:
+		_c.remove_chat_code_from_payload(code, payload)  # noqa
+		self._display_channels_or_groups("channels", payload)
+
+	def _display_channels_or_groups(self, _type: str, payload: ServerMessageModel) -> None:
+		if not payload.body:
+			self.message_echo(f"No {_type} to display")
+			return
+
+		try:
+			items = BaseController.json_decode(payload.body)
+		except BaseControllerException as error:
+			self.message_echo(f"Error while decoding Server response, reason : {error}")
+		else:
+			if not items:
+				self.message_echo(f"No {_type} to display")
+				return
+			self.message_echo(f"These are {_type} you own:\n\n")
+			for item in items:
+				item['members'] = item['members'][:10]  # Hack in terminal ui, print_table don't look nice when there is too much data in one cell
+			self.print_table(items)
+			self.message_echo("\n")
 
 	def print_table(self, data):
 		columns = list(data[0].keys() if data else [])

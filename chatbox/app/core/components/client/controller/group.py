@@ -12,7 +12,7 @@ _logger = logging.getLogger(__name__)
 class ControllerGroupClient(BaseControllerClient):
 
 	def list_(self) -> None:
-		group_command = _c.make_message(_c.Codes.GROUP_LIST, _c.Codes.GROUP_CREATE.name)
+		group_command = _c.make_message(_c.Codes.GROUP_LIST, _c.Codes.GROUP_LIST.name)
 		self.chat.send_to_server(group_command)
 
 	def create(self, user_input: str) -> None:

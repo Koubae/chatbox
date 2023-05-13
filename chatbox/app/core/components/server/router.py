@@ -2,6 +2,7 @@ from chatbox.app.core import tcp
 from chatbox.app.constants import chat_internal_codes as _c
 from chatbox.app.core.components.commons.controller.base import BaseControllerException
 from chatbox.app.core.components.server.controller.auth import ControllerAuthUser
+from chatbox.app.core.components.server.controller.channel import ControllerChannel
 from chatbox.app.core.components.server.controller.group import ControllerGroup
 from chatbox.app.core.components.server.controller.send_message import ControllerSendTo
 from chatbox.app.core.model.message import ServerMessageModel
@@ -19,6 +20,7 @@ class Router:
 		self.controller_auth: ControllerAuthUser = ControllerAuthUser(self.chat)
 		self.controller_send_to: ControllerSendTo = ControllerSendTo(self.chat)
 		self.controller_group: ControllerGroup = ControllerGroup(self.chat)
+		self.controller_channel: ControllerChannel = ControllerChannel(self.chat)
 
 	def route(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
 		_route = self.route_check_client_auth(client_conn) or _c.code_scan(payload.body)
@@ -48,6 +50,25 @@ class Router:
 					self.controller_group.delete(client_conn, payload)
 				case _c.Codes.GROUP_LEAVE:
 					self.controller_group.leave(client_conn, payload)
+
+				case _c.Codes.CHANNEL_LIST_ALL:
+					self.controller_channel.list_all(client_conn, payload)
+				case _c.Codes.CHANNEL_LIST_JOINED:
+					...
+				case _c.Codes.CHANNEL_LIST_UN_JOINED:
+					...
+				case _c.Codes.CHANNEL_CREATE:
+					...
+				case _c.Codes.CHANNEL_UPDATE:
+					...
+				case _c.Codes.CHANNEL_LEAVE:
+					...
+				case _c.Codes.CHANNEL_ADD:
+					...
+				case _c.Codes.CHANNEL_JOIN:
+					...
+				case _c.Codes.CHANNEL_DELETE:
+					...
 
 				case _:
 					self.controller_send_to.all(client_conn, payload)

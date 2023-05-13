@@ -82,3 +82,36 @@ CREATE TABLE IF NOT EXISTS `group` (
 );
 
 CREATE INDEX IF NOT EXISTS `group__name` ON `group` (`name`);
+
+
+CREATE TABLE IF NOT EXISTS `channel` (
+    `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+    `name` TEXT NOT NULL UNIQUE,
+    `owner_id` INTEGER NOT NULL,
+
+    `created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `modified` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (`owner_id`) REFERENCES `user`(`id`) ON DELETE CASCADE
+
+);
+
+CREATE INDEX IF NOT EXISTS `channel__name` ON `channel` (`name`);
+
+
+CREATE TABLE IF NOT EXISTS `channel_member` (
+    `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+    `user_id` INTEGER NOT NULL,
+    `channel_id` INTEGER NOT NULL,
+
+    `created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `modified` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY ('channel_id') REFERENCES `channel`(`id`) ON DELETE CASCADE,
+
+     UNIQUE (`user_id`, `channel_id`)
+
+);
+
+CREATE INDEX IF NOT EXISTS `channel_member__channel_id` ON `channel_member` (`channel_id`);

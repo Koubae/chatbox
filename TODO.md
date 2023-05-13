@@ -10,6 +10,7 @@ Main
 - Add & search other similar projects, chats open-source/not open_source, tcp apps, etc..
 - fix log & prints in terminal: add log error color 
 - create bots test
+- Fix imports, should be absolute as ->  'chatbox' ... 
 
 
 Server
@@ -30,7 +31,7 @@ Server
   - send to
         ~~- send to : all~~
         ~~- send to : user~~ 
-        - send to : group
+        - ~~send to : group~~
         - send to : channel
   - users:
     - list users
@@ -45,7 +46,7 @@ Server
     - ~~delete group~~
   - channel:
     - list channels
-      - list channels : all
+      - ~~list channels : all~~
       - list channels : joined
       - list channels : un-joined
     - create channel

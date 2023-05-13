@@ -12,6 +12,7 @@ from ..model.message import MessageDestination, MessageRole, ServerMessageModel
 from ..model.server_session import ServerSessionModel
 from . import objects
 from ...database.orm.sqlite_conn import SQLITEConnection
+from ...database.repository.channel import ChannelRepository, ChannelMemberRepository
 from ...database.repository.group import GroupRepository
 from ...database.repository.server_session import ServerSessionRepository
 from ...database.repository.user import UserRepository, UserLoginRepository
@@ -56,6 +57,8 @@ class SocketTCPServer(NetworkSocket):
         self.repo_user_login: UserLoginRepository = UserLoginRepository(self.database)
         self.repo_message: MessageRepository = MessageRepository(self.database)
         self.repo_group: GroupRepository = GroupRepository(self.database)
+        self.repo_channel_member: ChannelMemberRepository = ChannelMemberRepository(self.database)
+        self.repo_channel: ChannelRepository = ChannelRepository(self.database, repo_channel_member=self.repo_channel_member)
         self.server_session: ServerSessionModel = self.repo_server.get_session_or_create()
 
     @staticmethod
@@ -155,7 +158,7 @@ class SocketTCPServer(NetworkSocket):
                 user = next((user for identifier, user in self.clients_identified.items() if identifier == to.identifier), None)
                 if user:
                     clients_to_send[to.identifier] = user
-            case MessageRole.GROUP:
+            case MessageRole.GROUP | MessageRole.CHANNEL:
                 members = to.users
                 clients_to_send = {identifier: user for identifier, user in self.clients_identified.items() if user.user_name in members}
 
