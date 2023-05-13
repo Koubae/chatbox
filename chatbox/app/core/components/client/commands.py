@@ -26,8 +26,8 @@ class Command(Enum):
 	GROUP_LIST = auto()
 	GROUP_CREATE = auto()
 	GROUP_UPDATE = auto()
-	GROUP_LEAVE = auto()
 	GROUP_DELETE = auto()
+	GROUP_LEAVE = auto()
 
 	CHANNEL_LIST_ALL = auto()
 	CHANNEL_LIST_JOINED = auto()
