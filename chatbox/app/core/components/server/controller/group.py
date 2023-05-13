@@ -14,7 +14,7 @@ _logger = logging.getLogger(__name__)
 class ControllerGroup(BaseController):
 
 	def list(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
-		self._remove_chat_code_from_payload(_c.Codes.GROUP_LIST, payload)  # noqa
+		_c.remove_chat_code_from_payload(_c.Codes.GROUP_LIST, payload)  # noqa
 
 		groups: list[GroupModel] = self.chat.repo_group.list_user_group(client_conn.user.id)
 
@@ -22,7 +22,7 @@ class ControllerGroup(BaseController):
 		self.chat.send_to_client(client_conn, _c.make_message(_c.Codes.GROUP_LIST, json.dumps(group_names)))
 
 	def create(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
-		self._remove_chat_code_from_payload(_c.Codes.GROUP_CREATE, payload)  # noqa
+		_c.remove_chat_code_from_payload(_c.Codes.GROUP_CREATE, payload)  # noqa
 
 		group_owner = payload.owner.identifier
 		group_info: dict = json.loads(payload.body)
@@ -43,7 +43,7 @@ class ControllerGroup(BaseController):
 		self.chat.send_to_client(client_conn, f"Group {group_name} created successfully")
 
 	def update(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
-		self._remove_chat_code_from_payload(_c.Codes.GROUP_UPDATE, payload)  # noqa
+		_c.remove_chat_code_from_payload(_c.Codes.GROUP_UPDATE, payload)  # noqa
 
 		group_owner = payload.owner.identifier
 		group_info: dict = json.loads(payload.body)

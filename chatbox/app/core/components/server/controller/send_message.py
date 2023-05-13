@@ -13,7 +13,7 @@ _logger = logging.getLogger(__name__)
 class ControllerSendTo(BaseController):
 
 	def user(self, client_conn: objects.Client, payload: ServerMessageModel):
-		self._remove_chat_code_from_payload(_c.Codes.SEND_TO_USER, payload)
+		_c.remove_chat_code_from_payload(_c.Codes.SEND_TO_USER, payload)
 
 		destination = payload.to.identifier
 		user: UserModel | None = self.chat.repo_user.get_by_name(destination)

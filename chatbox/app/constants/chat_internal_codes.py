@@ -1,5 +1,6 @@
 from enum import Enum, auto
 
+from chatbox.app.core.model import message
 
 class Codes(Enum):
 	LOGIN = auto()
@@ -78,3 +79,11 @@ def make_message(code: Codes, message: str) -> str:
 	_code = code.name
 	code_build = full_code(_code)
 	return f"{code_build}{message}"
+
+
+def remove_chat_code_from_payload(code: Codes, payload: 'message.ServerMessageModel') -> None:
+	body = get_message(code, payload.body)
+	if not body:
+		return
+
+	payload.body = body

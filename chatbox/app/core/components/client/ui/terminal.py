@@ -1,10 +1,10 @@
 import json
 from getpass import getpass
 
+from chatbox.app.core import tcp
 from chatbox.app.constants import chat_internal_codes as _c
 from chatbox.app.core.components.client.auth import AuthUser
 from chatbox.app.core.components.client.commands import Command, Commands
-from chatbox.app.core.components.commons.controller.base import BaseController
 from chatbox.app.core.components.commons.functions import get_command_target
 from chatbox.app.core.model.message import ServerMessageModel, MessageRole
 
@@ -13,7 +13,11 @@ class CommandTerminateException(Exception):
 	pass
 
 
-class Terminal(BaseController):
+class Terminal:
+
+	def __init__(self, chat: 'tcp.SocketTCPClient'):
+		self.chat: 'tcp.SocketTCPClient' = chat
+
 	@staticmethod
 	def message_echo(message: str):
 		print(message)
@@ -131,7 +135,7 @@ class Terminal(BaseController):
 		self.message_echo(message)
 
 	def display_groups(self, payload: ServerMessageModel) -> None:
-		self._remove_chat_code_from_payload(_c.Codes.GROUP_LIST, payload)  # noqa
+		_c.remove_chat_code_from_payload(_c.Codes.GROUP_LIST, payload)  # noqa
 
 		groups = json.loads(payload.body)
 		self.message_echo(f"These are groups you own:\n\n")
