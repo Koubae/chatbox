@@ -59,7 +59,6 @@ class MessageModel(BaseModel):
 		try:
 			message_loaded = json.loads(payload)
 		except (json.JSONDecodeError, ValueError, TypeError) as error:
-
 			_logger.exception(f"Error while loadin json message {payload[:255]}, reason {error}", exc_info=error)
 			return None
 		else:

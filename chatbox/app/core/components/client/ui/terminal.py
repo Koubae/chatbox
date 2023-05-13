@@ -65,7 +65,7 @@ class Terminal(BaseController):
 				case Command.GROUP_LIST:
 					group_command = _c.make_message(_c.Codes.GROUP_LIST, _c.Codes.GROUP_CREATE.name)
 					self.chat.send_to_server(group_command)
-				case Command.GROUP_CREATE:
+				case Command.GROUP_CREATE | Command.GROUP_UPDATE:
 					group_info = get_command_target(user_input)
 					if not group_info:
 						raise CommandTerminateException("Command target missing")
@@ -75,11 +75,15 @@ class Terminal(BaseController):
 					if not group_members:
 						raise CommandTerminateException("Groups members are required when creating a new group")
 
+					if command == Command.GROUP_CREATE:
+						code = _c.Codes.GROUP_CREATE
+					else:
+						code = _c.Codes.GROUP_UPDATE
+
 					payload = {"name": group_name, "members": group_members}
-					group_command = _c.make_message(_c.Codes.GROUP_CREATE, json.dumps(payload))
+					group_command = _c.make_message(code, json.dumps(payload))
 					self.chat.send_to_server(group_command)
-				case Command.GROUP_UPDATE:
-					...
+
 				case Command.GROUP_LEAVE:
 					...
 				case Command.GROUP_DELETE:
@@ -131,6 +135,8 @@ class Terminal(BaseController):
 
 		groups = json.loads(payload.body)
 		self.message_echo(f"These are groups you own:\n\n")
+		for group in groups:
+			group['members'] = group['members'][:10]  # Hack in terminal ui, print_table don't look nice when there is too much data in one cell
 		self.print_table(groups)
 		self.message_echo("\n")
 

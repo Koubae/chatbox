@@ -41,7 +41,7 @@ Server
   - group:
     - ~~list groups~~
     - ~~create group~~
-    - update group
+    - ~~update group~~ 
     - leave group
     - delete group
   - channel:

@@ -27,7 +27,7 @@ class ControllerGroup(BaseController):
 		group_owner = payload.owner.identifier
 		group_info: dict = json.loads(payload.body)
 		group_name: str = group_info["name"]
-		group_members: list = group_info["members"]
+		group_members: list = [member.strip() for member in group_info["members"]]
 		group_members.insert(0, client_conn.user.username)
 
 		group_exists = self.chat.repo_group.get_by_name(group_name)
@@ -41,3 +41,28 @@ class ControllerGroup(BaseController):
 
 		_logger.info(f"user {client_conn.user.username} {client_conn.user.id} created new group --> {group}")
 		self.chat.send_to_client(client_conn, f"Group {group_name} created successfully")
+
+	def update(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
+		self._remove_chat_code_from_payload(_c.Codes.GROUP_UPDATE, payload)  # noqa
+
+		group_owner = payload.owner.identifier
+		group_info: dict = json.loads(payload.body)
+		group_name: str = group_info["name"]
+
+		group_exists = self.chat.repo_group.get_by_name(group_name)
+		if not group_exists:
+			self.chat.send_to_client(client_conn, f"Group {group_name} cannot be created, group does not exist.")
+			return
+
+		group_members: list = [member.strip() for member in group_info["members"]]
+		group_members.insert(0, client_conn.user.username)
+
+
+		group: GroupModel = self.chat.repo_group.update(group_exists.id,
+														{"name": group_name, "owner_id": group_owner, "members": json.dumps(group_members)})
+		if not group:
+			self.chat.send_to_client(client_conn, f"Error while updating group {group_name}!")
+			return
+
+		_logger.info(f"user {client_conn.user.username} {client_conn.user.id} created new group --> {group}")
+		self.chat.send_to_client(client_conn, f"Group {group_name} updated successfully")
