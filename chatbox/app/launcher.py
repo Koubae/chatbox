@@ -7,7 +7,7 @@ from types import MappingProxyType
 from . import constants
 from . import settings
 from . import logger
-from chatbox.app.constants import chat_internal_codes as _c
+
 
 def run(argv: tuple[str, ...] = tuple(), cli: bool = True) -> None:  # noqa:C901
     # TODO: use better cli lib
@@ -30,6 +30,7 @@ def run(argv: tuple[str, ...] = tuple(), cli: bool = True) -> None:  # noqa:C901
     from .core import NetworkSocket
     from .core import SocketTCPClient
     from .core import SocketTCPServer
+    from chatbox.app.constants import chat_internal_codes as _c
 
     app_supported = NetworkSocket.SOCKET_TYPES
     if tcp_app_type not in app_supported:

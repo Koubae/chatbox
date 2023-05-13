@@ -5,18 +5,19 @@ from chatbox.app.core import tcp
 from chatbox.app.constants import chat_internal_codes as _c
 from chatbox.app.core.components.client.auth import AuthUser
 from chatbox.app.core.components.client.commands import Command, Commands
-from chatbox.app.core.components.commons.functions import get_command_target
+from chatbox.app.core.components.client.controller.base import ControllerClientException
+from chatbox.app.core.components.client.controller.group import ControllerGroupClient
+from chatbox.app.core.components.client.controller.send_message import ControllerSendToClient
 from chatbox.app.core.model.message import ServerMessageModel, MessageRole
-
-
-class CommandTerminateException(Exception):
-	pass
 
 
 class Terminal:
 
 	def __init__(self, chat: 'tcp.SocketTCPClient'):
 		self.chat: 'tcp.SocketTCPClient' = chat
+
+		self.controller_send_to: ControllerSendToClient = ControllerSendToClient(self.chat, self)
+		self.controller_group: ControllerGroupClient = ControllerGroupClient(self.chat, self)
 
 	@staticmethod
 	def message_echo(message: str):
@@ -45,20 +46,15 @@ class Terminal:
 					self.chat.quit()
 				case Command.LOGOUT:
 					AuthUser.logout(self.chat)
+
 				case Command.SEND_TO_ALL:
-					...
+					self.controller_send_to.all()
 				case Command.SEND_TO_CHANNEL:
 					...
 				case Command.SEND_TO_GROUP:
 					...
 				case Command.SEND_TO_USER:
-					user = get_command_target(user_input)
-					if not user:
-						raise CommandTerminateException("Command target missing")
-
-					user_input = self.message_prompt(f"@{user} : ")
-					self.chat.send_to_user(user, user_input)
-
+					self.controller_send_to.user(user_input)
 				case Command.USER_LIST_ALL:
 					...
 				case Command.USER_LIST_LOGGED:
@@ -67,27 +63,11 @@ class Terminal:
 					...
 
 				case Command.GROUP_LIST:
-					group_command = _c.make_message(_c.Codes.GROUP_LIST, _c.Codes.GROUP_CREATE.name)
-					self.chat.send_to_server(group_command)
-				case Command.GROUP_CREATE | Command.GROUP_UPDATE:
-					group_info = get_command_target(user_input)
-					if not group_info:
-						raise CommandTerminateException("Command target missing")
-
-					group_name, *group_members = group_info.split(" ")
-					group_members = list(set(group_members) - {self.chat.user_name})
-					if not group_members:
-						raise CommandTerminateException("Groups members are required when creating a new group")
-
-					if command == Command.GROUP_CREATE:
-						code = _c.Codes.GROUP_CREATE
-					else:
-						code = _c.Codes.GROUP_UPDATE
-
-					payload = {"name": group_name, "members": group_members}
-					group_command = _c.make_message(code, json.dumps(payload))
-					self.chat.send_to_server(group_command)
-
+					self.controller_group.list()
+				case Command.GROUP_CREATE:
+					self.controller_group.create(user_input)
+				case Command.GROUP_UPDATE:
+					self.controller_group.update(user_input)
 				case Command.GROUP_LEAVE:
 					...
 				case Command.GROUP_DELETE:
@@ -111,11 +91,11 @@ class Terminal:
 					...
 
 				case Command.ECHO_MESSAGE:
-					self.chat.send_to_all(user_input)
+					self.controller_send_to.all(user_input)
 				case _:
-					self.chat.send_to_all(user_input)
+					self.controller_send_to.all(user_input)
 
-		except CommandTerminateException as error:
+		except ControllerClientException as error:
 			if str(error) == "Command target missing":
 				return self.chat.ui.message_echo(f"command {command} must contain a target value!")
 			return self.chat.ui.message_echo(str(error))
