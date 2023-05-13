@@ -155,6 +155,10 @@ class SocketTCPServer(NetworkSocket):
                 user = next((user for identifier, user in self.clients_identified.items() if identifier == to.identifier), None)
                 if user:
                     clients_to_send[to.identifier] = user
+            case MessageRole.GROUP:
+                members = to.users
+                clients_to_send = {identifier: user for identifier, user in self.clients_identified.items() if user.user_name in members}
+
             case MessageRole.ALL:
                 clients_to_send = {**self.clients_identified, **self.clients_unidentified}
             case _:

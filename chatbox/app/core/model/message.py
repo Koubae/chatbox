@@ -23,6 +23,8 @@ class MessageDestination(t.NamedTuple):
 	name: str
 	role: MessageRole
 
+	users: list[str] = []
+
 
 @dataclass
 class MessageModel(BaseModel):

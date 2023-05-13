@@ -14,10 +14,14 @@ class ControllerSendToClient(BaseControllerClient):
 	def user(self, user_input: str) -> None:
 		user = self.get_command_args(user_input)
 
-		user_input = self.ui.message_prompt(f"@{user} : ")
-		self.chat.send_to_user(user, user_input)
+		message = self.ui.message_prompt(f"@{user} : ")
+		self.chat.send_to_user(user, message)
 
-	def group(self, client_conn: objects.Client, payload: ServerMessageModel) -> None: ...
+	def group(self, user_input: str) -> None:
+		group = self.get_command_args(user_input)
+
+		message = self.ui.message_prompt(f"@[GROUP::{group}] : ")
+		self.chat.send_to_group(group, message)
 
 	def channel(self, client_conn: objects.Client, payload: ServerMessageModel) -> None: ...
 

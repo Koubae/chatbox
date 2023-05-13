@@ -52,7 +52,7 @@ class Terminal:
 				case Command.SEND_TO_CHANNEL:
 					...
 				case Command.SEND_TO_GROUP:
-					...
+					self.controller_send_to.group(user_input)
 				case Command.SEND_TO_USER:
 					self.controller_send_to.user(user_input)
 				case Command.USER_LIST_ALL:
@@ -104,12 +104,15 @@ class Terminal:
 		owner = payload.owner
 		sender = payload.sender
 
-		if sender.role is MessageRole.SERVER:
-			name = f"[SERVER] -->"
-		elif sender.role not in (MessageRole.USER, MessageRole.ALL):
-			name = f"[{sender.name}] $ {owner.name} -->"
-		else:
-			name = f"$ {sender.name} -->"
+		match sender.role:
+			case MessageRole.SERVER:
+				name = f"[SERVER] -->"
+			case MessageRole.GROUP:
+				name = f"[{sender.name}] $ {owner.name} -->"
+			case MessageRole.CHANNEL:
+				name = f"[{sender.name}] $ {owner.name} -->"
+			case MessageRole.ALL | _:
+				name = f"$ {sender.name} -->"
 
 		message = f'{name} {payload.body}'
 		self.message_echo(message)
