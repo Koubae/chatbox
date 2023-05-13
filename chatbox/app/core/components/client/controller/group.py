@@ -22,6 +22,17 @@ class ControllerGroupClient(BaseControllerClient):
 	def update(self, user_input: str) -> None:
 		return self._create_update(user_input, _c.Codes.GROUP_UPDATE)
 
+	def delete(self, user_input: str) -> None:
+		group_info = get_command_target(user_input)
+		if not group_info:
+			raise ControllerClientException("Command target missing")
+
+		group_name, *_ = group_info.split(" ")
+
+		payload = {"name": group_name.strip()}
+		group_command = _c.make_message(_c.Codes.GROUP_DELETE, json.dumps(payload))
+		self.chat.send_to_server(group_command)
+
 	def _create_update(self, user_input: str, code: _c.Codes) -> None:
 		group_info = get_command_target(user_input)
 		if not group_info:

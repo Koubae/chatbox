@@ -30,7 +30,7 @@ class ControllerGroup(BaseController):
 		group_members: list = [member.strip() for member in group_info["members"]]
 		group_members.insert(0, client_conn.user.username)
 
-		group_exists = self.chat.repo_group.get_by_name(group_name)
+		group_exists: GroupModel = self.chat.repo_group.get_by_name(group_name)
 		if group_exists:
 			self.chat.send_to_client(client_conn, f"Group {group_name} already exists!")
 			return
@@ -49,7 +49,7 @@ class ControllerGroup(BaseController):
 		group_info: dict = json.loads(payload.body)
 		group_name: str = group_info["name"]
 
-		group_exists = self.chat.repo_group.get_by_name(group_name)
+		group_exists: GroupModel = self.chat.repo_group.get_by_name(group_name)
 		if not group_exists:
 			self.chat.send_to_client(client_conn, f"Group {group_name} cannot be created, group does not exist.")
 			return
@@ -66,3 +66,28 @@ class ControllerGroup(BaseController):
 
 		_logger.info(f"user {client_conn.user.username} {client_conn.user.id} created new group --> {group}")
 		self.chat.send_to_client(client_conn, f"Group {group_name} updated successfully")
+
+	def delete(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
+		_c.remove_chat_code_from_payload(_c.Codes.GROUP_DELETE, payload)  # noqa
+
+		group_owner = payload.owner.identifier
+		group_info: dict = json.loads(payload.body)
+		group_name: str = group_info["name"]
+
+		group_exists: GroupModel = self.chat.repo_group.get_by_name(group_name)
+		if not group_exists:
+			self.chat.send_to_client(client_conn, f"Group {group_name} cannot be deleted, group does not exist.")
+			return
+
+		if group_exists.owner_id != group_owner:
+			self.chat.send_to_client(client_conn, f"You are not owner of Group {group_name}!")
+			return
+
+		deleted = self.chat.repo_group.delete(group_exists.id)
+		if not deleted:
+			_logger.info(f"user {client_conn.user.username} {client_conn.user.id} "
+						 f"try to delete  group {group_exists.name} {group_exists.id} but something went wrong")
+			self.chat.send_to_client(client_conn, f"Group {group_exists.name} {group_exists.id} could not be deleted")
+		else:
+			_logger.info(f"user {client_conn.user.username} {client_conn.user.id} delete  group {group_exists.name} {group_exists.id}")
+			self.chat.send_to_client(client_conn, f"Group {group_exists.name} {group_exists.id} deleted successfully")
