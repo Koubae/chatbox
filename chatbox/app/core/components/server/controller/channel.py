@@ -104,6 +104,33 @@ class ControllerChannel(BaseController):
 			_logger.info(f"user {client_conn.user.username} {client_conn.user.id} delete  channel {record.name} {record.id}")
 			self.chat.send_to_client(client_conn, f"Channel {record.name} {record.id} deleted successfully")
 
+	# ---------------------
+	# Channel Member Management
+	# ---------------------
+
+	def join(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
+		_c.remove_chat_code_from_payload(_c.Codes.CHANNEL_JOIN, payload)  # noqa
+
+		owner, info, name = self._get_data(payload)
+
+		record: ChannelModel = self.chat.repo_channel.get_by_name(name)
+		if not record:
+			self.chat.send_to_client(client_conn, f"You cannot leave Channel {name}, channel does not exist.")
+			return
+		elif not record.members:
+			self.chat.send_to_client(client_conn, f"You cannot leave this channel {name} because channel doesn't have members!")
+			return
+
+		for member in record.members:
+			if member.user_name == client_conn.user.username:
+				self.chat.send_to_client(client_conn, f"You are already a member of Channel {name}!")
+				return
+
+		self.chat.repo_channel_member.create({"user_id": owner, "channel_id": record.id})
+
+		_logger.info(f"user {client_conn.user.username} {client_conn.user.id} successfully join channel --> {record}")
+		self.chat.send_to_client(client_conn, f"You join Channel {name}")
+
 	def leave(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
 		_c.remove_chat_code_from_payload(_c.Codes.CHANNEL_LEAVE, payload)  # noqa
 

@@ -59,8 +59,8 @@ Model
     - ~~create channel~~
     - ~~update channel~~
     - ~~delete channel~~
-    - leave channel
-    - join channel
+    - ~~leave channel~~
+    - ~~join channel~~
     - add user to channel
   - messages:
     - list sent messages : me
