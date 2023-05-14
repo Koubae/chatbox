@@ -56,6 +56,34 @@ class ControllerMessage(BaseController):
 	def delete(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
 		_c.remove_chat_code_from_payload(_c.Codes.MESSAGE_DELETE, payload)  # noqa
 
+		data: dict = self.json_decode(payload.body)
+		message_id: int = data["message_id"]
+		if not message_id:
+			self.chat.send_to_client(client_conn, f"Message id not supplied!")
+			return
+
+		try:
+			message_id = int(message_id)
+		except ValueError:
+			self.chat.send_to_client(client_conn, f"Invalid message_id {message_id}, is not a valid integer")
+			return
+
+		message: ServerInternalMessageModel | None = self.chat.repo_message.get(message_id)
+		if not message:
+			self.chat.send_to_client(client_conn, f"Message {message_id} doesn't exist!")
+			return
+		if message.owner.identifier != client_conn.user.id:
+			self.chat.send_to_client(client_conn, f"Message {message_id} cannot be deleted by you, only the owner can.")
+			return
+
+		deleted = self.chat.repo_message.delete(message_id)
+		if deleted:
+			_logger.info(f"user {client_conn.user.username} {client_conn.user.id} deleted message {message_id}")
+			self.chat.send_to_client(client_conn, f"Message {message_id} deleted successfully")
+		else:
+			_logger.info(f"user {client_conn.user.username} {client_conn.user.id} could not deleted message {message_id}")
+			self.chat.send_to_client(client_conn, f"Message {message_id} was not deleted!")
+
 	def _get_item_name(self, payload: ServerMessageModel) -> str:
 		data: dict = self.json_decode(payload.body)
 		name: str = data["name"]
