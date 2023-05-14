@@ -56,9 +56,9 @@ Client
 
 ### UI
 
-- Create a "ui" interface 
-  - Terminal - terminal ui 
-  - GUI - tkinter ui 
+- GUI - tkinter ui 
+
+
 
 Projects ideas
 --------------
@@ -180,4 +180,7 @@ Client
 ### UI
 
 - ~~fix print when chat usage in cli, when writing and receiving a message and receive after wards. the receiving one is in the same line :/~~
-- 
+
+
+- ~~Create a "ui" interface~~ 
+  - ~~Terminal - terminal ui~~
