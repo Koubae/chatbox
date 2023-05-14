@@ -35,11 +35,11 @@ Model
   ~~- quit~~ 
   ~~- login (half done, need to create in separate loop so that, if logout, it goes inside the login again!)~~
   ~~- logout~~ 
-  - send to
+  - ~~send to~~
         ~~- send to : all~~
         ~~- send to : user~~ 
         - ~~send to : group~~
-        - send to : channel
+        - ~~send to : channel~~
   - users:
     - list users
       - list users : all
@@ -80,8 +80,6 @@ Model
 
 - message 
   - How save message on client side???? shelves??? probably just better create a "memory" mysql or an actualy db... 
-
-- channel [Repository, Model]
 
 #### User
 
@@ -166,6 +164,10 @@ Server
 ### Group
 
 - ~~group [Repository, Model]~~
+
+### Channel 
+
+- ~~channel [Repository, Model]~~
 
 Client
 ------

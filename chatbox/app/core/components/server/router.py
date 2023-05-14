@@ -37,6 +37,8 @@ class Router:
 					self.controller_send_to.user(client_conn, payload)
 				case _c.Codes.SEND_TO_GROUP:
 					self.controller_send_to.group(client_conn, payload)
+				case _c.Codes.SEND_TO_CHANNEL:
+					self.controller_send_to.channel(client_conn, payload)
 				case _c.Codes.SEND_TO_ALL:
 					self.controller_send_to.all(client_conn, payload)
 

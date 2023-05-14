@@ -54,11 +54,12 @@ class Terminal:
 				case Command.SEND_TO_ALL:
 					self.controller_send_to.all()
 				case Command.SEND_TO_CHANNEL:
-					...
+					self.controller_send_to.channel(user_input)
 				case Command.SEND_TO_GROUP:
 					self.controller_send_to.group(user_input)
 				case Command.SEND_TO_USER:
 					self.controller_send_to.user(user_input)
+
 				case Command.USER_LIST_ALL:
 					...
 				case Command.USER_LIST_LOGGED:

@@ -23,7 +23,11 @@ class ControllerSendToClient(BaseControllerClient):
 		message = self.ui.message_prompt(f"@[GROUP::{group}] : ")
 		self.chat.send_to_group(group, message)
 
-	def channel(self, client_conn: objects.Client, payload: ServerMessageModel) -> None: ...
+	def channel(self, user_input: str) -> None:
+		channel = self.get_command_args(user_input)
+
+		message = self.ui.message_prompt(f"@[CHANNEL::{channel}] : ")
+		self.chat.send_to_channel(channel, message)
 
 	def all(self, user_input: t.Optional[str] = None) -> None:
 		if user_input is None:

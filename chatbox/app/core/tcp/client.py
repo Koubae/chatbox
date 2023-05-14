@@ -179,6 +179,13 @@ class SocketTCPClient(NetworkSocket):   # noqa
 
         self.send_message(message)
 
+    def send_to_channel(self, channel: str, payload: str) -> None:
+        sender = MessageDestination(self.id, self.user_name, role=MessageRole.USER)
+        to = MessageDestination(channel, channel, role=MessageRole.CHANNEL)
+        message = MessageModel.new_message(sender, to, _c.make_message(_c.Codes.SEND_TO_CHANNEL, payload))
+
+        self.send_message(message)
+
     def send_to_user(self, user: str, payload: str) -> None:
         sender = MessageDestination(self.id, self.user_name, role=MessageRole.USER)
         to = MessageDestination(user, user, role=MessageRole.USER)
