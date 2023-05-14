@@ -45,18 +45,18 @@ Model
       - list users : all
       - list users : logged
       - list users : un-logged
-  - group:
+  - ~~group:~~
     - ~~list groups~~
     - ~~create group~~
     - ~~update group~~ 
     - ~~leave group~~ 
     - ~~delete group~~
-  - channel:
-    - list channels
+  - ~~channel:~~
+    - list channels~~
       - ~~list channels : all~~
       - ~~list channels : owned~~
-      - list channels : joined
-      - list channels : un-joined
+      - ~~list channels : joined~~
+      - ~~list channels : un-joined~~
     - ~~create channel~~
     - ~~update channel~~
     - ~~delete channel~~

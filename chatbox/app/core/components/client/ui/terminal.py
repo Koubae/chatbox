@@ -77,13 +77,8 @@ class Terminal:
 				case Command.GROUP_LEAVE:
 					self.controller_group.leave(user_input)
 
-				case Command.CHANNEL_LIST_ALL | Command.CHANNEL_LIST_OWNED:
+				case Command.CHANNEL_LIST_ALL | Command.CHANNEL_LIST_OWNED | Command.CHANNEL_LIST_JOINED | Command.CHANNEL_LIST_UN_JOINED:
 					self.controller_channel.list_(command)
-
-				case Command.CHANNEL_LIST_JOINED:
-					...
-				case Command.CHANNEL_LIST_UN_JOINED:
-					...
 				case Command.CHANNEL_CREATE:
 					self.controller_channel.create(user_input)
 				case Command.CHANNEL_UPDATE:
@@ -143,7 +138,7 @@ class Terminal:
 			if not items:
 				self.message_echo(f"No {_type} to display")
 				return
-			self.message_echo(f"These are {_type} you own:\n\n")
+			self.message_echo(f"These are {_type}:\n\n")
 			for item in items:
 				item['members'] = item['members'][:10]  # Hack in terminal ui, print_table don't look nice when there is too much data in one cell
 			self.print_table(items)
@@ -162,7 +157,7 @@ class Terminal:
 			if not items:
 				self.message_echo(f"No {_type} to display")
 				return
-			self.message_echo(f"These are {_type} you own:\n\n")
+			self.message_echo(f"These are {_type}:\n\n")
 			self.print_box(items)
 			self.message_echo("\n")
 

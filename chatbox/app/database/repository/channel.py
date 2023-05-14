@@ -34,6 +34,18 @@ class ChannelRepository(RepositoryBase):
 		items = self.get_where(where, params)
 		return items
 
+	def list_user_joined(self, user_id: id) -> list[ChannelModel]:
+		query = "SELECT * FROM channel WHERE id IN (SELECT member.channel_id FROM channel_member member  WHERE member.user_id = :user_id)"
+
+		items = self.get_many_raw(query, {"user_id": user_id})
+		return items
+
+	def list_user_un_joined(self, user_id: id) -> list[ChannelModel]:
+		query = "SELECT * FROM channel WHERE id NOT IN (SELECT member.channel_id FROM channel_member member  WHERE member.user_id = :user_id)"
+
+		items = self.get_many_raw(query, {"user_id": user_id})
+		return items
+
 
 class ChannelMemberRepository(RepositoryBase):
 	_table: t.Final[str] = "channel_member"

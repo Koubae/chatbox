@@ -44,9 +44,18 @@ class RepositoryBase(Connector):
 
 	_dynamic_columns: tuple[str] = tuple()
 
+	__raw_query: str | None = None
+
 	def __init__(self, database: SQLITEConnection):
 		super().__init__()
 		self.__database: SQLITEConnection = database
+
+	def __enter__(self, raw_query: str):
+		self.__raw_query = raw_query
+		return self
+
+	def __exit__(self, _, __, ___):
+		self.__raw_query = None
 
 	@property
 	def db(self) -> SQLITEConnection:
@@ -115,6 +124,16 @@ class RepositoryBase(Connector):
 			return self._build_objects(self.db.get_many(self.__query_build(self._get_many_query), {"limit": limit, "offset": offset}))
 		except SQLITEConnectionException as error:
 			_logger.exception(f"Error while get-many {self._table}, limit = {limit}, offset = {offset}, reason {error}", exc_info=error)
+			return []
+
+	def get_many_raw(self, query: str, params: dict) -> list[T]:
+		if DatabaseOperations.READ_MANY not in self._operations:
+			raise RuntimeError(f"{self._table} cannot {DatabaseOperations.READ_MANY.name}!")
+
+		try:
+			return self._build_objects(self.db.get_many(query, params))
+		except SQLITEConnectionException as error:
+			_logger.exception(f"Error while get-many-raw {self._table}, reason {error}", exc_info=error)
 			return []
 
 	def create(self, data: t.Iterable[dict] | dict) -> T | None:
@@ -194,6 +213,9 @@ class RepositoryBase(Connector):
 			return {"error": "__ERROR_LOADING_DATA__"}
 
 	def __query_build(self, query: str, params: t.Optional[dict] = None) -> str:
+		if self.__raw_query is not None and isinstance(self.__raw_query, str):
+			return self.__raw_query
+
 		query = self.__inject_table_data(query)
 		query = self.__inject_parameters(params, query)
 
