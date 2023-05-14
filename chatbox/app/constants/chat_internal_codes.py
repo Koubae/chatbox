@@ -62,9 +62,10 @@ full_code = lambda _code: f"{CODE_IDENTIFIER_LEFT}{_code}{CODE_IDENTIFIER_RIGHT}
 
 def code_in(code: Codes, message: str) -> Codes | None:
 	_code = code.name
+	max_message_scan = 100
 	if not _code:
 		return None
-	if f"{full_code(_code)}" in message:
+	if f"{full_code(_code)}" in message[:max_message_scan]:
 		return code
 	return None
 

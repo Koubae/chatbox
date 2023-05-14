@@ -60,3 +60,9 @@ class MessageRepository(RepositoryBase):
 		data["sender"] = self._unpack_data(data["id"], data["sender"])
 		data["to"] = self._unpack_data(data["id"], data["to"])
 		return super()._build_object(data)
+
+	def get_many_received(self, username: str, limit: int = 100, offset: int = 0) -> list[ServerInternalMessageModel]:
+		query = f"SELECT * FROM message WHERE to_name = :to_name OR (to_name = 'ALL' AND to_role = 'ALL') ORDER BY ID DESC LIMIT :limit OFFSET :offset"
+
+		items = self.get_many_raw(query, {"to_name": username, "limit": limit, "offset": offset})
+		return items

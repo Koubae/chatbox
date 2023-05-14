@@ -4,6 +4,7 @@ import logging
 from dataclasses import dataclass, field
 from enum import Enum, auto
 
+from chatbox.app.constants import DATETIME_DEFAULT
 from chatbox.app.core.model.abstract_base_model import BaseModel
 
 
@@ -61,7 +62,7 @@ class MessageModel(BaseModel):
 		try:
 			message_loaded = json.loads(payload)
 		except (json.JSONDecodeError, ValueError, TypeError) as error:
-			_logger.exception(f"Error while loadin json message {payload[:255]}, reason {error}", exc_info=error)
+			_logger.exception(f"Error while loadin json message {payload[:255*100]}, reason {error}", exc_info=error)
 			return None
 		else:
 			return cls(**message_loaded)
@@ -168,8 +169,8 @@ class ServerInternalMessageModel(BaseModel):
 	def get_struct(self) -> dict:
 		return {
 			"id": self.id,
-			"created": self.created,
-			"modified": self.modified,
+			"created": self.created.strftime(DATETIME_DEFAULT),
+			"modified": self.modified.strftime(DATETIME_DEFAULT),
 
 			"session_id": self.session_id,
 			"owner_name": self.owner_name,
@@ -201,7 +202,7 @@ class ServerInternalMessageModel(BaseModel):
 	def to_json_small(self) -> dict:
 		return {
 			"id": self.id,
-			"created": self.created,
+			"created": self.created.strftime(DATETIME_DEFAULT),
 			"session_id": self.session_id,
 			"owner_name": self.owner_name,
 			"from_name": self.from_name,

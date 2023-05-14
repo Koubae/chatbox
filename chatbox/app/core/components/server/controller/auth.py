@@ -36,7 +36,7 @@ class ControllerAuthUser(BaseController):
 			return Access.DENIED
 
 		payload = {"id": client_conn.user.id, "session_id": self.chat.server_session.session_id}
-		self.chat.send_to_client(client_conn,_c.make_message(_c.Codes.LOGIN_SUCCESS, json.dumps(payload)))
+		self.chat.send_to_client(client_conn, _c.make_message(_c.Codes.LOGIN_SUCCESS, json.dumps(payload)))
 		return Access.GRANTED
 
 	def logout(self, client_conn: objects.Client, payload: str) -> Access:

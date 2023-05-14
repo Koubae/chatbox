@@ -1,3 +1,4 @@
+import time
 import typing as t
 
 from getpass import getpass
@@ -50,6 +51,10 @@ class Terminal:
 
 		try:
 			match command:
+				case Command.LOGIN | Command.IDENTIFICATION | Command.IDENTIFICATION_REQUIRED | Command.LOGIN_SUCCESS | Command.LOGIN_CREATED:
+					self.chat.ui.message_echo("Waiting logging in, please wait...")  # <-- Must not perform any action!
+					time.sleep(1)
+					return
 				case Command.QUIT:
 					self.chat.quit()
 				case Command.LOGOUT:
@@ -91,16 +96,10 @@ class Terminal:
 				case Command.CHANNEL_JOIN | Command.CHANNEL_LEAVE:
 					self.controller_channel.member_request(user_input, command)
 
-				case Command.MESSAGE_LIST_SENT:
-					...
-				case Command.MESSAGE_LIST_RECEIVED:
-					...
-				case Command.MESSAGE_LIST_GROUP:
-					...
-				case Command.MESSAGE_LIST_CHANNEL:
-					...
+				case Command.MESSAGE_LIST_SENT | Command.MESSAGE_LIST_RECEIVED | Command.MESSAGE_LIST_GROUP | Command.MESSAGE_LIST_CHANNEL:
+					self.controller_message.list_(command)
 				case Command.MESSAGE_DELETE:
-					...
+					self.controller_message.delete(user_input)
 
 				case Command.ECHO_MESSAGE:
 					self.controller_send_to.all(user_input)
@@ -140,6 +139,10 @@ class Terminal:
 	def display_channels(self, code: _c.Codes, payload: ServerMessageModel) -> None:
 		_c.remove_chat_code_from_payload(code, payload)  # noqa
 		self._display_table_box_type("channels", payload)
+
+	def display_messages(self, code: _c.Codes, payload: ServerMessageModel) -> None:
+		_c.remove_chat_code_from_payload(code, payload)  # noqa
+		self._display_table_csv_type("messages", payload)
 
 	def _display_table_csv_type(self, _type: str, payload: ServerMessageModel, add_members: bool = False) -> None:
 		if not payload.body:

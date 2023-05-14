@@ -4,6 +4,7 @@ from chatbox.app.core.components.commons.controller.base import BaseControllerEx
 from chatbox.app.core.components.server.controller.auth import ControllerAuthUser
 from chatbox.app.core.components.server.controller.channel import ControllerChannel
 from chatbox.app.core.components.server.controller.group import ControllerGroup
+from chatbox.app.core.components.server.controller.message import ControllerMessage
 from chatbox.app.core.components.server.controller.send_message import ControllerSendTo
 from chatbox.app.core.components.server.controller.user import ControllerUsers
 from chatbox.app.core.model.message import ServerMessageModel
@@ -23,18 +24,22 @@ class Router:
 		self.controller_group: ControllerGroup = ControllerGroup(self.chat)
 		self.controller_client: ControllerUsers = ControllerUsers(self.chat)
 		self.controller_channel: ControllerChannel = ControllerChannel(self.chat)
+		self.controller_message: ControllerMessage = ControllerMessage(self.chat)
 
 	def route(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
 		_route = self.route_check_client_auth(client_conn) or _c.code_scan(payload.body)
 		try:
 			match _route:
+				case _c.Codes.IDENTIFICATION | _c.Codes.IDENTIFICATION_REQUIRED | _c.Codes.LOGIN_SUCCESS |  _c.Codes.LOGIN_CREATED:
+					return
 				case _c.Codes.LOGIN:
 					self.controller_auth.auth(client_conn, payload.body)
+					return
 				case _c.Codes.LOGOUT:
 					access = self.controller_auth.logout(client_conn, payload.body)
 					if not access.value:
 						raise RouterStopRoute(f"Stop Routing, code {_c.Codes.LOGOUT}")
-
+					return
 				case _c.Codes.SEND_TO_USER:
 					self.controller_send_to.user(client_conn, payload)
 				case _c.Codes.SEND_TO_GROUP:
@@ -81,16 +86,10 @@ class Router:
 				case _c.Codes.CHANNEL_LEAVE:
 					self.controller_channel.leave(client_conn, payload)
 
-				case _c.Codes.MESSAGE_LIST_SENT:
-					...
-				case _c.Codes.MESSAGE_LIST_RECEIVED:
-					...
-				case _c.Codes.MESSAGE_LIST_GROUP:
-					...
-				case _c.Codes.MESSAGE_LIST_CHANNEL:
-					...
+				case _c.Codes.MESSAGE_LIST_SENT | _c.Codes.MESSAGE_LIST_RECEIVED | _c.Codes.MESSAGE_LIST_GROUP | _c.Codes.MESSAGE_LIST_CHANNEL:
+					self.controller_message.list_(client_conn, payload, _route)
 				case _c.Codes.MESSAGE_DELETE:
-					...
+					self.controller_message.delete(client_conn, payload)
 
 				case _:
 					self.controller_send_to.all(client_conn, payload)

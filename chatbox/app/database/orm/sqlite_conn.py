@@ -80,15 +80,18 @@ class SQLITEConnection(Connector):
 		execution_type: SQLExecution = SQLExecution.EXECUTE_ONE
 	) -> t.Self:
 
-		match execution_type:
-			case SQLExecution.EXECUTE_ONE:
-				self.cursor.execute(query, parameters or {})
-			case SQLExecution.EXECUTE_MANY:
-				self.cursor.executemany(query, parameters or [{}, ])
-			case SQLExecution.EXECUTE_SCRIPT:
-				self.cursor.executescript(query)
-			case _:
-				raise SQLITEConnectionException(f"{SQLITEConnectionException.ERROR_RUNTIME} - execution {execution_type} is not supported.")
+		try:
+			match execution_type:
+				case SQLExecution.EXECUTE_ONE:
+					self.cursor.execute(query, parameters or {})
+				case SQLExecution.EXECUTE_MANY:
+					self.cursor.executemany(query, parameters or [{}, ])
+				case SQLExecution.EXECUTE_SCRIPT:
+					self.cursor.executescript(query)
+				case _:
+					raise SQLITEConnectionException(f"{SQLITEConnectionException.ERROR_RUNTIME} - execution {execution_type} is not supported.")
+		except UnicodeEncodeError as error:
+			_logger.exception(f"Error while performing SQL operation {execution_type.name}, query {query}, params {parameters}, reason : {error}", exc_info=error)
 		return self
 
 	def get(self, query: str, parameters: SQLParams = None) -> Item | None:

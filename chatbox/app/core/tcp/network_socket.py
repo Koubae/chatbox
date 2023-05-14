@@ -8,9 +8,11 @@ import time
 from chatbox.app import constants
 from .objects import Address
 from ..model.message import MessageModel
+from ...constants import SOCKET_MESSAGE_DELIMITER
+
 
 _logger = logging.getLogger(__name__)
-
+lock = threading.Lock()
 
 class NetworkSocketException(Exception):
     pass
@@ -48,6 +50,9 @@ class NetworkSocket:
         self.socket_closed: threading.Event = threading.Event()        # socket is closed
         self.socket_wait_forever: threading.Event = threading.Event()  # socket is waiting forever.
         self.sys_error = None
+
+        self.buffer: bytes = b''
+
 
     def __del__(self):
         self.terminate()
@@ -277,7 +282,15 @@ Stack Trace:
     # ······························
     def receive(self, connection: socket.socket, buffer_size: int = constants.SOCKET_STREAM_LENGTH) -> str | None:
         try:
-            message: bytes = connection.recv(buffer_size)
+            while SOCKET_MESSAGE_DELIMITER not in self.buffer:
+                data: bytes = connection.recv(buffer_size)
+                if not data:
+                    break
+                self.buffer += data
+
+            message, separator, data_next = self.buffer.partition(SOCKET_MESSAGE_DELIMITER)
+            self.buffer = data_next
+
         except socket.error as error:
             _logger.exception(f"{self} - Socket error on receive handler, reason: {error}", exc_info=error)
         except Exception as error:
@@ -289,7 +302,7 @@ Stack Trace:
 
     def send(self, connection: socket.socket, message: str) -> int:
         try:
-            total_sent = connection.send(self.encode_message(message))
+            total_sent = connection.send(self.encode_message(message) + SOCKET_MESSAGE_DELIMITER)
         except socket.error as error:
             _logger.exception(f"{self} - Socket error on send handler, reason: {error}", exc_info=error)
             total_sent = -1

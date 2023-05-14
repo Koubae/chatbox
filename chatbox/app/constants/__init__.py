@@ -29,7 +29,7 @@ SOCKET_MAX_CONNECTIONS: int = 5
 SOCKET_MAX_MESSAGE_QUEUE_PER_WORKER: int = 1000
 SOCKET_MAX_TCP_KEEPCNT: int = 127
 SOCKET_STREAM_LENGTH: int = 1024 * 4
-
+SOCKET_MESSAGE_DELIMITER = b'~~@$%&\r\n~~@$%&\r\n'
 
 # --------------------
 # Configurations
@@ -56,6 +56,3 @@ DIR_DATABASE_DATA_MAIN =  os.path.join(DIR_APP, "database", "schema", "data.sql"
 
 DIR_CONFIG: str = os.path.join(DIR_ROOT, "../config")
 CONFIG_DIRECTORY_RELATIVE_APP: str = "../../../config"
-
-
-

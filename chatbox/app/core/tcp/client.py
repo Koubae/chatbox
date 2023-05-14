@@ -3,6 +3,7 @@ import logging
 import socket
 import threading
 import queue
+import time
 
 from chatbox.app import constants
 from chatbox.app.constants import chat_internal_codes as _c
@@ -53,6 +54,7 @@ class SocketTCPClient(NetworkSocket):   # noqa
         self.send_to_server(_c.make_message(_c.Codes.LOGIN, json.dumps(self.login_info)))
 
         AuthUser.login(self)
+        time.sleep(1)  # Hold threads start here, avoid possibly receiving and sending login information from buffer
 
         # TODO: refactor this!
         t_receiver = threading.Thread(target=self.thread_receiver, daemon=True)
@@ -143,6 +145,8 @@ class SocketTCPClient(NetworkSocket):   # noqa
                 self.ui.display_groups(payload)
             case _c.Codes.CHANNEL_LIST_ALL | _c.Codes.CHANNEL_LIST_OWNED | _c.Codes.CHANNEL_LIST_JOINED | _c.Codes.CHANNEL_LIST_UN_JOINED:
                 self.ui.display_channels(_display_type, payload)
+            case _c.Codes.MESSAGE_LIST_SENT | _c.Codes.MESSAGE_LIST_RECEIVED | _c.Codes.MESSAGE_LIST_GROUP | _c.Codes.MESSAGE_LIST_CHANNEL:
+                self.ui.display_messages(_display_type, payload)
             case _:
                 self.ui.message_display(payload)
 

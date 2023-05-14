@@ -8,7 +8,7 @@ import typing as t
 import pytest
 
 from chatbox.app import core, constants
-from chatbox.app.constants import chat_internal_codes as _c, DIR_DATABASE_SCHEMA_MAIN
+from chatbox.app.constants import chat_internal_codes as _c, DIR_DATABASE_SCHEMA_MAIN, SOCKET_MESSAGE_DELIMITER
 from chatbox.app.core.components.server.controller.auth import ControllerAuthUser
 from chatbox.app.core.security.objects import Access
 from chatbox.app.database.orm.sqlite_conn import SQLITEConnection
@@ -70,7 +70,7 @@ class TCPSocketMock:
 
 	@staticmethod
 	def socket_send(_socket: socket.socket, msg: str) -> None:
-		_socket.send(core.NetworkSocket.encode_message(msg))
+		_socket.send(core.NetworkSocket.encode_message(msg) + SOCKET_MESSAGE_DELIMITER)
 
 	@staticmethod
 	def socket_receive(_socket: socket.socket) -> str:
@@ -117,7 +117,8 @@ class TCPSocketMock:
 			data = _socket.recv(1024)
 			if data:
 				with lock:
-					output["data"] = data.decode('utf-8')
+					message, _, __ = data.partition(SOCKET_MESSAGE_DELIMITER)
+					output["data"] = message.decode('utf-8')
 					break
 
 
@@ -235,9 +236,12 @@ class BaseRunner:
 
 	@pytest.fixture(scope="function", autouse=True)
 	def tear_down_db(self):
-		self.db.cursor.execute("DELETE FROM user_login")
-		self.db.cursor.execute("DELETE FROM user")
-		self.db.cursor.execute("DELETE FROM server_session")
+		with lock:
+			with self.db.connection:
+				cursor = self.db.connection.cursor()
+				cursor.execute("DELETE FROM user_login")
+				cursor.execute("DELETE FROM user")
+				cursor.execute("DELETE FROM server_session")
 
 	def _print_message_mock(self, message: str) -> None:
 		pass
