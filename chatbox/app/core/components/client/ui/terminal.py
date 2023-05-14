@@ -10,6 +10,7 @@ from chatbox.app.core.components.client.controller.base import ControllerClientE
 from chatbox.app.core.components.client.controller.channel import ControllerChannelClient
 from chatbox.app.core.components.client.controller.group import ControllerGroupClient
 from chatbox.app.core.components.client.controller.send_message import ControllerSendToClient
+from chatbox.app.core.components.client.controller.users import ControllerUsersClient
 from chatbox.app.core.components.commons.controller.base import BaseController, BaseControllerException
 from chatbox.app.core.model.message import ServerMessageModel, MessageRole
 
@@ -20,6 +21,7 @@ class Terminal:
 		self.chat: 'tcp.SocketTCPClient' = chat
 
 		self.controller_send_to: ControllerSendToClient = ControllerSendToClient(self.chat, self)
+		self.controller_user: ControllerUsersClient = ControllerUsersClient(self.chat, self)
 		self.controller_group: ControllerGroupClient = ControllerGroupClient(self.chat, self)
 		self.controller_channel: ControllerChannelClient = ControllerChannelClient(self.chat, self)
 
@@ -60,12 +62,8 @@ class Terminal:
 				case Command.SEND_TO_USER:
 					self.controller_send_to.user(user_input)
 
-				case Command.USER_LIST_ALL:
-					...
-				case Command.USER_LIST_LOGGED:
-					...
-				case Command.USER_LIST_UN_LOGGED:
-					...
+				case Command.USER_LIST_ALL | Command.USER_LIST_LOGGED | Command.USER_LIST_UN_LOGGED:
+					self.controller_user.list_(command)
 
 				case Command.GROUP_LIST:
 					self.controller_group.list_()
@@ -118,15 +116,19 @@ class Terminal:
 		message = f'{name} {payload.body}'
 		self.message_echo(message)
 
+	def display_users(self, code: _c.Codes, payload: ServerMessageModel) -> None:
+		_c.remove_chat_code_from_payload(code, payload)  # noqa
+		self._display_table_csv_type("users", payload)
+
 	def display_groups(self, payload: ServerMessageModel) -> None:
 		_c.remove_chat_code_from_payload(_c.Codes.GROUP_LIST, payload)  # noqa
-		self._display_table_csv_type("groups", payload)
+		self._display_table_csv_type("groups", payload, add_members=True)
 
 	def display_channels(self, code: _c.Codes, payload: ServerMessageModel) -> None:
 		_c.remove_chat_code_from_payload(code, payload)  # noqa
 		self._display_table_box_type("channels", payload)
 
-	def _display_table_csv_type(self, _type: str, payload: ServerMessageModel) -> None:
+	def _display_table_csv_type(self, _type: str, payload: ServerMessageModel, add_members: bool = False) -> None:
 		if not payload.body:
 			self.message_echo(f"No {_type} to display")
 			return
@@ -140,8 +142,9 @@ class Terminal:
 				self.message_echo(f"No {_type} to display")
 				return
 			self.message_echo(f"These are {_type}:\n\n")
-			for item in items:
-				item['members'] = item['members'][:10]  # Hack in terminal ui, print_table don't look nice when there is too much data in one cell
+			if add_members:
+				for item in items:
+					item['members'] = item['members'][:10]  # Hack in terminal ui, print_table don't look nice when there is too much data in one cell
 			self.print_table(items)
 			self.message_echo("\n")
 

@@ -41,10 +41,10 @@ Model
         - ~~send to : group~~
         - ~~send to : channel~~
   - users:
-    - list users
-      - list users : all
-      - list users : logged
-      - list users : un-logged
+    - ~~list users~~
+      - ~~list users : all~~
+      - ~~list users : logged~~
+      - ~~list users : un-logged~~
   - ~~group:~~
     - ~~list groups~~
     - ~~create group~~
@@ -52,7 +52,7 @@ Model
     - ~~leave group~~ 
     - ~~delete group~~
   - ~~channel:~~
-    - list channels~~
+    - ~~list channels~~
       - ~~list channels : all~~
       - ~~list channels : owned~~
       - ~~list channels : joined~~

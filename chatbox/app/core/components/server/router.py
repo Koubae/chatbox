@@ -5,6 +5,7 @@ from chatbox.app.core.components.server.controller.auth import ControllerAuthUse
 from chatbox.app.core.components.server.controller.channel import ControllerChannel
 from chatbox.app.core.components.server.controller.group import ControllerGroup
 from chatbox.app.core.components.server.controller.send_message import ControllerSendTo
+from chatbox.app.core.components.server.controller.user import ControllerUsers
 from chatbox.app.core.model.message import ServerMessageModel
 from chatbox.app.core.tcp import objects
 
@@ -20,6 +21,7 @@ class Router:
 		self.controller_auth: ControllerAuthUser = ControllerAuthUser(self.chat)
 		self.controller_send_to: ControllerSendTo = ControllerSendTo(self.chat)
 		self.controller_group: ControllerGroup = ControllerGroup(self.chat)
+		self.controller_client: ControllerUsers = ControllerUsers(self.chat)
 		self.controller_channel: ControllerChannel = ControllerChannel(self.chat)
 
 	def route(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
@@ -41,6 +43,9 @@ class Router:
 					self.controller_send_to.channel(client_conn, payload)
 				case _c.Codes.SEND_TO_ALL:
 					self.controller_send_to.all(client_conn, payload)
+
+				case _c.Codes.USER_LIST_ALL | _c.Codes.USER_LIST_LOGGED | _c.Codes.USER_LIST_UN_LOGGED:
+					self.controller_client.list_(client_conn, payload, _route)
 
 				case _c.Codes.GROUP_LIST:
 					self.controller_group.list_(client_conn, payload)

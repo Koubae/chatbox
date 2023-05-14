@@ -13,6 +13,18 @@ class UserRepository(RepositoryBase):
 	_name: t.Final[str] = "username"
 	_model: UserModel = UserModel
 
+	def users_logged(self, user_ids: list[int]) -> list[UserModel]:
+		query = f"SELECT * FROM user WHERE id IN ({', '.join(['?'] * len(user_ids))})"
+
+		items = self.get_many_raw(query, user_ids)
+		return items
+
+	def users_un_logged(self, user_ids: list[int]) -> list[UserModel]:
+		query = f"SELECT * FROM user WHERE id NOT IN ({', '.join(['?'] * len(user_ids))})"
+
+		items = self.get_many_raw(query, user_ids)
+		return items
+
 
 class UserLoginRepository(RepositoryBase):
 	_table: t.Final[str] = "user_login"

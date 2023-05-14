@@ -137,6 +137,8 @@ class SocketTCPClient(NetworkSocket):   # noqa
     def broadcast(self, payload: ServerMessageModel) -> None:
         _display_type = _c.code_scan(payload.body)
         match _display_type:
+            case _c.Codes.USER_LIST_ALL | _c.Codes.USER_LIST_LOGGED | _c.Codes.USER_LIST_UN_LOGGED:
+                self.ui.display_users(_display_type, payload)
             case _c.Codes.GROUP_LIST:
                 self.ui.display_groups(payload)
             case _c.Codes.CHANNEL_LIST_ALL | _c.Codes.CHANNEL_LIST_OWNED | _c.Codes.CHANNEL_LIST_JOINED | _c.Codes.CHANNEL_LIST_UN_JOINED:

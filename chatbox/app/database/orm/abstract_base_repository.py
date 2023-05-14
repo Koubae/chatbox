@@ -126,7 +126,7 @@ class RepositoryBase(Connector):
 			_logger.exception(f"Error while get-many {self._table}, limit = {limit}, offset = {offset}, reason {error}", exc_info=error)
 			return []
 
-	def get_many_raw(self, query: str, params: dict) -> list[T]:
+	def get_many_raw(self, query: str, params: dict | tuple | list) -> list[T]:
 		if DatabaseOperations.READ_MANY not in self._operations:
 			raise RuntimeError(f"{self._table} cannot {DatabaseOperations.READ_MANY.name}!")
 
