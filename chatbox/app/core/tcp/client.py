@@ -139,7 +139,7 @@ class SocketTCPClient(NetworkSocket):   # noqa
         match _display_type:
             case _c.Codes.GROUP_LIST:
                 self.ui.display_groups(payload)
-            case _c.Codes.CHANNEL_LIST_ALL | _c.Codes.CHANNEL_LIST_JOINED | _c.Codes.CHANNEL_LIST_UN_JOINED:
+            case _c.Codes.CHANNEL_LIST_ALL | _c.Codes.CHANNEL_LIST_OWNED | _c.Codes.CHANNEL_LIST_JOINED | _c.Codes.CHANNEL_LIST_UN_JOINED:
                 self.ui.display_channels(_display_type, payload)
             case _:
                 self.ui.message_display(payload)

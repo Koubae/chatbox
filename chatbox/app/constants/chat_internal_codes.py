@@ -28,6 +28,7 @@ class Codes(Enum):
 	GROUP_LEAVE = auto()
 
 	CHANNEL_LIST_ALL = auto()
+	CHANNEL_LIST_OWNED = auto()
 	CHANNEL_LIST_JOINED = auto()
 	CHANNEL_LIST_UN_JOINED = auto()
 	CHANNEL_CREATE = auto()

@@ -76,7 +76,9 @@ class Terminal:
 					self.controller_group.leave(user_input)
 
 				case Command.CHANNEL_LIST_ALL:
-					self.controller_channel.list_all()
+					...
+				case Command.CHANNEL_LIST_OWNED:
+					self.controller_channel.list_owned()
 				case Command.CHANNEL_LIST_JOINED:
 					...
 				case Command.CHANNEL_LIST_UN_JOINED:

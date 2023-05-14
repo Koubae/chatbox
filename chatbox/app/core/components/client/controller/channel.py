@@ -15,6 +15,10 @@ class ControllerChannelClient(BaseControllerClient):
 		command = _c.make_message(_c.Codes.CHANNEL_LIST_ALL, _c.Codes.CHANNEL_LIST_ALL.name)
 		self.chat.send_to_server(command)
 
+	def list_owned(self) -> None:
+		command = _c.make_message(_c.Codes.CHANNEL_LIST_OWNED, _c.Codes.CHANNEL_LIST_OWNED.name)
+		self.chat.send_to_server(command)
+
 	def create(self, user_input: str) -> None:
 		return self._create_update(user_input, _c.Codes.CHANNEL_CREATE)
 

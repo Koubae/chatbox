@@ -22,6 +22,13 @@ Server
 - fix error when multiple message are received in the same time, we need to add separator between messages!
 
 
+Model 
+-----
+
+- BaseModel should implement to_json and to_jsona_related, but better, find better names and definitions with defaults from sub-class 
+  on how to build the json
+
+
 ### Routes
 
 - Create list of commands

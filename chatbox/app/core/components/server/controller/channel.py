@@ -17,10 +17,19 @@ class ControllerChannel(BaseController):
 	def list_all(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
 		_c.remove_chat_code_from_payload(_c.Codes.CHANNEL_LIST_ALL, payload)  # noqa
 
+		# todo
 		channels: list[ChannelModel] = self.chat.repo_channel.list_user_channel(client_conn.user.id)
 
 		items = [item.to_json() for item in channels]
 		self.chat.send_to_client(client_conn, _c.make_message(_c.Codes.CHANNEL_LIST_ALL, json.dumps(items)))
+
+	def list_owned(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
+		_c.remove_chat_code_from_payload(_c.Codes.CHANNEL_LIST_OWNED, payload)  # noqa
+
+		channels: list[ChannelModel] = self.chat.repo_channel.list_user_channel(client_conn.user.id)
+
+		items = [item.to_json() for item in channels]
+		self.chat.send_to_client(client_conn, _c.make_message(_c.Codes.CHANNEL_LIST_OWNED, json.dumps(items)))
 
 	def create(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
 		_c.remove_chat_code_from_payload(_c.Codes.CHANNEL_CREATE, payload)  # noqa

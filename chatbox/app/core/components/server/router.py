@@ -53,6 +53,8 @@ class Router:
 
 				case _c.Codes.CHANNEL_LIST_ALL:
 					self.controller_channel.list_all(client_conn, payload)
+				case _c.Codes.CHANNEL_LIST_OWNED:
+					self.controller_channel.list_owned(client_conn, payload)
 				case _c.Codes.CHANNEL_LIST_JOINED:
 					...
 				case _c.Codes.CHANNEL_LIST_UN_JOINED:

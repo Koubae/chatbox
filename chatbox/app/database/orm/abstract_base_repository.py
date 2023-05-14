@@ -12,6 +12,8 @@ from chatbox.app.database.orm.types import Item, T, DatabaseOperations
 _logger = logging.getLogger(__name__)
 QUERY_REPLACE_KEYS: t.Final[frozenset] = frozenset({
 	"__table",
+	"__join",
+	"__jn_cols",
 	"__name",
 	"__columns",
 	"__params",
@@ -22,10 +24,10 @@ QUERY_REPLACE_KEY_LIKE: t.Final[str] = "__placeholder LIKE __value"
 
 
 class RepositoryBase(Connector):
-	_get_query = "SELECT * FROM `__table` WHERE id = :id"
-	_get_query_by_name = "SELECT * FROM `__table` WHERE __name = :__name ORDER BY `created` DESC LIMIT 1"
-	_get_query_where = "SELECT * FROM `__table` WHERE __where ORDER BY `created` DESC LIMIT :limit OFFSET :offset"
-	_get_many_query = "SELECT * FROM `__table` LIMIT :limit OFFSET :offset"
+	_get_query = "SELECT `__table`.* __jn_cols FROM `__table` __join WHERE id = :id"
+	_get_query_by_name = "SELECT `__table`.* __jn_cols FROM `__table` __join WHERE __name = :__name ORDER BY `created` DESC LIMIT 1"
+	_get_query_where = "SELECT `__table`.* __jn_cols FROM `__table` __join WHERE __where ORDER BY `created` DESC LIMIT :limit OFFSET :offset"
+	_get_many_query = "SELECT `__table`.* __jn_cols FROM `__table` __join LIMIT :limit OFFSET :offset"
 	_create_query = "INSERT INTO `__table` (__columns) VALUES (__params)"
 	_update_query = f"UPDATE `__table` SET {QUERY_REPLACE_KEY_EQUAL} WHERE id = :id"
 	_delete_query = "DELETE FROM `__table` WHERE id = :id"
@@ -55,6 +57,10 @@ class RepositoryBase(Connector):
 	def _table(self) -> str: ...
 
 	@property
+	def _join(self) -> str:
+		return ""
+
+	@property
 	@abstractmethod
 	def _name(self) -> str: ...
 
@@ -63,8 +69,12 @@ class RepositoryBase(Connector):
 	def _model(self) -> T: ...
 
 	@property
-	def _columns(self):
+	def _columns(self) -> list[str]:
 		return [column for column in list(self._model.__annotations__.keys()) if column not in self._dynamic_columns]
+
+	@property
+	def _jn_cols(self) -> str:
+		return ""
 
 	def get(self, _id: int) -> T | None:
 		if DatabaseOperations.READ not in self._operations:
@@ -201,6 +211,9 @@ class RepositoryBase(Connector):
 			value = getattr(self, key[1:])
 			if key == "__columns":
 				value = ", ".join([f'`{f}`' for f in value])
+			elif key == "__jn_cols" and value:
+				value = ", " + value
+
 			query = query.replace(key, value)
 		return query
 

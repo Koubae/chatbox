@@ -39,6 +39,8 @@ class ChannelMemberRepository(RepositoryBase):
 	_table: t.Final[str] = "channel_member"
 	_name: t.Final[int] = "user_id"
 	_model: ChannelMemberModel = ChannelMemberModel
+	_join: str = "LEFT JOIN user ON channel_member.user_id = user.id"
+	_jn_cols: str = "user.username AS user_name"
 
 	_operations: tuple[DatabaseOperations] = (
 			DatabaseOperations.READ,
