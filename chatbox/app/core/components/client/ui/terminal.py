@@ -9,6 +9,7 @@ from chatbox.app.core.components.client.commands import Command, Commands
 from chatbox.app.core.components.client.controller.base import ControllerClientException
 from chatbox.app.core.components.client.controller.channel import ControllerChannelClient
 from chatbox.app.core.components.client.controller.group import ControllerGroupClient
+from chatbox.app.core.components.client.controller.message import ControllerMessageClient
 from chatbox.app.core.components.client.controller.send_message import ControllerSendToClient
 from chatbox.app.core.components.client.controller.users import ControllerUsersClient
 from chatbox.app.core.components.commons.controller.base import BaseController, BaseControllerException
@@ -24,6 +25,7 @@ class Terminal:
 		self.controller_user: ControllerUsersClient = ControllerUsersClient(self.chat, self)
 		self.controller_group: ControllerGroupClient = ControllerGroupClient(self.chat, self)
 		self.controller_channel: ControllerChannelClient = ControllerChannelClient(self.chat, self)
+		self.controller_message: ControllerMessageClient = ControllerMessageClient(self.chat, self)
 
 	@staticmethod
 	def message_echo(message: str):
@@ -88,6 +90,17 @@ class Terminal:
 					self.controller_channel.member_management(user_input, command)
 				case Command.CHANNEL_JOIN | Command.CHANNEL_LEAVE:
 					self.controller_channel.member_request(user_input, command)
+
+				case Command.MESSAGE_LIST_SENT:
+					...
+				case Command.MESSAGE_LIST_RECEIVED:
+					...
+				case Command.MESSAGE_LIST_GROUP:
+					...
+				case Command.MESSAGE_LIST_CHANNEL:
+					...
+				case Command.MESSAGE_DELETE:
+					...
 
 				case Command.ECHO_MESSAGE:
 					self.controller_send_to.all(user_input)

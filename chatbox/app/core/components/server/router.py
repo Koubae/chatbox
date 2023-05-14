@@ -81,6 +81,17 @@ class Router:
 				case _c.Codes.CHANNEL_LEAVE:
 					self.controller_channel.leave(client_conn, payload)
 
+				case _c.Codes.MESSAGE_LIST_SENT:
+					...
+				case _c.Codes.MESSAGE_LIST_RECEIVED:
+					...
+				case _c.Codes.MESSAGE_LIST_GROUP:
+					...
+				case _c.Codes.MESSAGE_LIST_CHANNEL:
+					...
+				case _c.Codes.MESSAGE_DELETE:
+					...
+
 				case _:
 					self.controller_send_to.all(client_conn, payload)
 

@@ -41,6 +41,12 @@ class Command(Enum):
 	CHANNEL_JOIN = auto()
 	CHANNEL_LEAVE = auto()
 
+	MESSAGE_LIST_SENT = auto()
+	MESSAGE_LIST_RECEIVED = auto()
+	MESSAGE_LIST_GROUP = auto()
+	MESSAGE_LIST_CHANNEL = auto()
+	MESSAGE_DELETE = auto()
+
 	def __str__(self):
 		return f"{COMMAND_PREFIX}{self.name.lower()}"
 
@@ -82,6 +88,12 @@ class Commands:
 		Command.CHANNEL_REMOVE: Codes.CHANNEL_REMOVE,
 		Command.CHANNEL_JOIN: Codes.CHANNEL_JOIN,
 		Command.CHANNEL_LEAVE: Codes.CHANNEL_LEAVE,
+
+		Command.MESSAGE_LIST_SENT: Codes.MESSAGE_LIST_SENT,
+		Command.MESSAGE_LIST_RECEIVED: Codes.MESSAGE_LIST_RECEIVED,
+		Command.MESSAGE_LIST_GROUP: Codes.MESSAGE_LIST_GROUP,
+		Command.MESSAGE_LIST_CHANNEL: Codes.MESSAGE_LIST_CHANNEL,
+		Command.MESSAGE_DELETE: Codes.MESSAGE_DELETE,
 
 	})
 

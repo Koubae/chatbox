@@ -39,6 +39,12 @@ class Codes(Enum):
 	CHANNEL_JOIN = auto()
 	CHANNEL_DELETE = auto()
 
+	MESSAGE_LIST_SENT = auto()
+	MESSAGE_LIST_RECEIVED = auto()
+	MESSAGE_LIST_GROUP = auto()
+	MESSAGE_LIST_CHANNEL = auto()
+	MESSAGE_DELETE = auto()
+
 	def __str__(self):
 		return f'{self.name}'
 

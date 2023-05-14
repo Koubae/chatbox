@@ -164,3 +164,48 @@ class ServerInternalMessageModel(BaseModel):
 			self.to = MessageDestination(self.to.identifier, self.to.name, MessageRole[self.to.role])  # noqa
 		if not isinstance(self.owner.role, MessageRole):
 			self.owner = MessageDestination(self.owner.identifier, self.owner.name, MessageRole[self.owner.role])  # noqa
+
+	def get_struct(self) -> dict:
+		return {
+			"id": self.id,
+			"created": self.created,
+			"modified": self.modified,
+
+			"session_id": self.session_id,
+			"owner_name": self.owner_name,
+			"from_name": self.from_name,
+			"to_name": self.to_name,
+			"to_role": self.to_role,
+
+			"body": self.body,
+			"owner": {
+				"identifier": self.owner.identifier,
+				"name": self.owner.name,
+				"role": self.owner.role.name,
+			},
+			"sender": {
+				"identifier": self.sender.identifier,
+				"name": self.sender.name,
+				"role": self.sender.role.name,
+			},
+			"to": {
+				"identifier": self.to.identifier,
+				"name": self.to.name,
+				"role": self.to.role.name,
+			},
+		}
+
+	def to_json(self) -> str:
+		return json.dumps(self.get_struct())
+
+	def to_json_small(self) -> dict:
+		return {
+			"id": self.id,
+			"created": self.created,
+			"session_id": self.session_id,
+			"owner_name": self.owner_name,
+			"from_name": self.from_name,
+			"to_name": self.to_name,
+			"to_role": self.to_role,
+			"body": self.body,
+		}
