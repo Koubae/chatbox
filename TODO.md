@@ -62,7 +62,7 @@ Model
     - ~~leave channel~~
     - ~~join channel~~
     - ~~add user to channel~~
-    - remove user to channel
+    - ~~remove user to channel~~
   - messages:
     - list sent messages : me
     - list received messages : me
