@@ -41,6 +41,7 @@ class ChannelMemberRepository(RepositoryBase):
 	_model: ChannelMemberModel = ChannelMemberModel
 	_join: str = "LEFT JOIN user ON channel_member.user_id = user.id"
 	_jn_cols: str = "user.username AS user_name"
+	_dynamic_columns: tuple[str] = ("user_name",)
 
 	_operations: tuple[DatabaseOperations] = (
 			DatabaseOperations.READ,

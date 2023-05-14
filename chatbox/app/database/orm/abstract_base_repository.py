@@ -24,9 +24,9 @@ QUERY_REPLACE_KEY_LIKE: t.Final[str] = "__placeholder LIKE __value"
 
 
 class RepositoryBase(Connector):
-	_get_query = "SELECT `__table`.* __jn_cols FROM `__table` __join WHERE id = :id"
-	_get_query_by_name = "SELECT `__table`.* __jn_cols FROM `__table` __join WHERE __name = :__name ORDER BY `created` DESC LIMIT 1"
-	_get_query_where = "SELECT `__table`.* __jn_cols FROM `__table` __join WHERE __where ORDER BY `created` DESC LIMIT :limit OFFSET :offset"
+	_get_query = "SELECT `__table`.* __jn_cols FROM `__table` __join WHERE `__table`.id = :id"
+	_get_query_by_name = "SELECT `__table`.* __jn_cols FROM `__table` __join WHERE `__table`.__name = :__name ORDER BY `__table`.`created` DESC LIMIT 1"
+	_get_query_where = "SELECT `__table`.* __jn_cols FROM `__table` __join WHERE __where ORDER BY `__table`.`created` DESC LIMIT :limit OFFSET :offset"
 	_get_many_query = "SELECT `__table`.* __jn_cols FROM `__table` __join LIMIT :limit OFFSET :offset"
 	_create_query = "INSERT INTO `__table` (__columns) VALUES (__params)"
 	_update_query = f"UPDATE `__table` SET {QUERY_REPLACE_KEY_EQUAL} WHERE id = :id"

@@ -58,8 +58,8 @@ Model
       - list channels : un-joined
     - ~~create channel~~
     - ~~update channel~~
+    - ~~delete channel~~
     - leave channel
-    - delete channel
     - join channel
     - add user to channel
   - messages:

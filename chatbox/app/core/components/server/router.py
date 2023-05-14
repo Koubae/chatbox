@@ -63,13 +63,13 @@ class Router:
 					self.controller_channel.create(client_conn, payload)
 				case _c.Codes.CHANNEL_UPDATE:
 					self.controller_channel.update(client_conn, payload)
-				case _c.Codes.CHANNEL_LEAVE:
-					...
+				case _c.Codes.CHANNEL_DELETE:
+					self.controller_channel.delete(client_conn, payload)
 				case _c.Codes.CHANNEL_ADD:
 					...
 				case _c.Codes.CHANNEL_JOIN:
 					...
-				case _c.Codes.CHANNEL_DELETE:
+				case _c.Codes.CHANNEL_LEAVE:
 					...
 
 				case _:

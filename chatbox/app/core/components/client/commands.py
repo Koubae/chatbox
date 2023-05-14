@@ -35,10 +35,10 @@ class Command(Enum):
 	CHANNEL_LIST_UN_JOINED = auto()
 	CHANNEL_CREATE = auto()
 	CHANNEL_UPDATE = auto()
-	CHANNEL_LEAVE = auto()
+	CHANNEL_DELETE = auto()
 	CHANNEL_ADD = auto()
 	CHANNEL_JOIN = auto()
-	CHANNEL_DELETE = auto()
+	CHANNEL_LEAVE = auto()
 
 	def __str__(self):
 		return f"{COMMAND_PREFIX}{self.name.lower()}"
@@ -76,10 +76,10 @@ class Commands:
 		Command.CHANNEL_LIST_UN_JOINED: Codes.CHANNEL_LIST_UN_JOINED,
 		Command.CHANNEL_CREATE: Codes.CHANNEL_CREATE,
 		Command.CHANNEL_UPDATE: Codes.CHANNEL_UPDATE,
-		Command.CHANNEL_LEAVE: Codes.CHANNEL_LEAVE,
+		Command.CHANNEL_DELETE: Codes.CHANNEL_DELETE,
 		Command.CHANNEL_ADD: Codes.CHANNEL_ADD,
 		Command.CHANNEL_JOIN: Codes.CHANNEL_JOIN,
-		Command.CHANNEL_DELETE: Codes.CHANNEL_DELETE,
+		Command.CHANNEL_LEAVE: Codes.CHANNEL_LEAVE,
 
 	})
 
