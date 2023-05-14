@@ -23,7 +23,7 @@ class ControllerMessage(BaseController):
 			case _c.Codes.MESSAGE_LIST_CHANNEL:
 				items: list[ServerInternalMessageModel] = self.chat.repo_message
 			case _c.Codes.MESSAGE_LIST_SENT | _:
-				items: list[ServerInternalMessageModel] = self.chat.repo_message
+				items: list[ServerInternalMessageModel] = self.chat.repo_message.get_many_sent(client_conn.user.username)
 
 		group_names = [item.to_json_small() for item in items]
 		self.chat.send_to_client(client_conn, _c.make_message(action, json.dumps(group_names)))
