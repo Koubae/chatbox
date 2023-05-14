@@ -1,3 +1,5 @@
+import typing as t
+
 from getpass import getpass
 
 from chatbox.app.core import tcp
@@ -123,13 +125,13 @@ class Terminal:
 
 	def display_groups(self, payload: ServerMessageModel) -> None:
 		_c.remove_chat_code_from_payload(_c.Codes.GROUP_LIST, payload)  # noqa
-		self._display_channels_or_groups("groups", payload)
+		self._display_table_csv_type("groups", payload)
 
 	def display_channels(self, code: _c.Codes, payload: ServerMessageModel) -> None:
 		_c.remove_chat_code_from_payload(code, payload)  # noqa
-		self._display_channels_or_groups("channels", payload)
+		self._display_table_box_type("channels", payload)
 
-	def _display_channels_or_groups(self, _type: str, payload: ServerMessageModel) -> None:
+	def _display_table_csv_type(self, _type: str, payload: ServerMessageModel) -> None:
 		if not payload.body:
 			self.message_echo(f"No {_type} to display")
 			return
@@ -148,7 +150,24 @@ class Terminal:
 			self.print_table(items)
 			self.message_echo("\n")
 
-	def print_table(self, data):
+	def _display_table_box_type(self, _type: str, payload: ServerMessageModel) -> None:
+		if not payload.body:
+			self.message_echo(f"No {_type} to display")
+			return
+
+		try:
+			items = BaseController.json_decode(payload.body)
+		except BaseControllerException as error:
+			self.message_echo(f"Error while decoding Server response, reason : {error}")
+		else:
+			if not items:
+				self.message_echo(f"No {_type} to display")
+				return
+			self.message_echo(f"These are {_type} you own:\n\n")
+			self.print_box(items)
+			self.message_echo("\n")
+
+	def print_table(self, data) -> None:
 		columns = list(data[0].keys() if data else [])
 
 		table = [columns] + [[str(row.get(col, '')) for col in columns] for row in data]
@@ -160,3 +179,29 @@ class Terminal:
 		table.insert(1, header_separator)  # Header Separators line
 		for item in table:
 			self.message_echo(format_string.format(*item))
+
+	def print_box(self, items: list[dict]) -> None:
+		spacing = 30
+
+		self.message_echo("")
+		for item in items:
+			list_objects: list[tuple[str, t.Iterable[dict]]] = []
+			name = item.get("name", None)
+			if name:
+				self.message_echo("-" * spacing)
+				self.message_echo(f"{name:>{int(spacing / 2)}}")
+				self.message_echo("-" * spacing)
+			self.message_echo("")
+			for key, value in item.items():
+				if isinstance(value, (list, tuple, set)):
+					list_objects.append((key, value))
+					continue
+				self.message_echo(f"- {key}: {value}")
+
+			for key, value in list_objects:
+				self.message_echo(f"- {key}: ")
+				for entry in value:
+					data = [str(value) for value in entry.values()]
+					self.message_echo(f"\t- {', '.join(data)}")
+
+			self.message_echo("\n" + "=" * (spacing * 2) + "\n")
