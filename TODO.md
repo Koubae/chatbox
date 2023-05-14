@@ -18,9 +18,6 @@ Server
 ------
 
 - Add colorama print (especially for cli usage)
-- Create BroadCaster : should be a separate socket - class ? 
-- The object.Message probably will need to be moved into a Model and create a "Message Object!"
-- fix error when multiple message are received in the same time, we need to add separator between messages!
 
 
 Model 
@@ -32,7 +29,66 @@ Model
 
 ### Routes
 
-- Create list of commands
+
+- send_to:: send to "all" should be restricted to admin or super-user
+
+### Database 
+
+
+- message 
+  - How save message on client side???? shelves??? probably just better create a "memory" mysql or an actualy db... 
+
+#### User
+
+- create user type admin QST??: how do we create a new "admin" ? <-- I think only 1 Admin can create other admin . so 1 admin should be created on data_base.sql too!
+
+
+### Session
+
+- Session Data can be pickled object using shelf? | still not even sure what we want to safe?
+
+Client
+------
+
+- Make client input ">>>" as so, but will disappear and won't be printed in the terminal history
+- When login for the first time (so basically when creating the user for the first time), change the text when re-quest
+- change text shown when user logs in for the first time to something like 'new user created, please enter password again'
+
+### UI
+
+- Create a "ui" interface 
+  - Terminal - terminal ui 
+  - GUI - tkinter ui 
+
+Projects ideas
+--------------
+
+- echo server
+- ping server
+- heart beat server
+- sniffer
+- browser like server
+- TCP chat 
+- Send Database stuff via TCP server - client architecture
+- CAN Network
+
+
+Done
+====
+
+
+Server
+------
+
+
+- ~~Create BroadCaster : should be a separate socket - class ?~~
+- ~~The object.Message probably will need to be moved into a Model and create a "Message Object!"~~
+- ~~fix error when multiple message are received in the same time, we need to add separator between messages!~~
+
+
+### Routes
+
+- ~~Create list of commands~~
   ~~- quit~~ 
   ~~- login (half done, need to create in separate loop so that, if logout, it goes inside the login again!)~~
   ~~- logout~~ 
@@ -65,67 +121,12 @@ Model
     - ~~join channel~~
     - ~~add user to channel~~
     - ~~remove user to channel~~
-  - messages:
+  - ~~messages:~~
     - ~~list sent messages : me~~
     - ~~list received messages : me~~
     - ~~list all messages : group~~
     - ~~list all messages : channel~~
-    - delete message
-
-- send_to:: send to "all" should be restricted to admin or super-user
-
-### Database 
-
-- get many by id
-- get many by name
-
-- message 
-  - How save message on client side???? shelves??? probably just better create a "memory" mysql or an actualy db... 
-
-#### User
-
-- create user type admin QST??: how do we create a new "admin" ? <-- I think only 1 Admin can create other admin . so 1 admin should be created on data_base.sql too!
-
-
-### Session
-
-- Session Data can be pickled object using shelf? | still not even sure what we want to safe?
-
-
-Client
-------
-
-- Make client input ">>>" as so, but will disappear and won't be printed in the terminal history
-- Save session sent by server and save it somewhere; when client re-starts checks is current session. if still the same then can log in already
-- When login for the first time (so basically when creating the user for the first time), change the text when re-quest
-- chenge text shown when user logs in for the first time to something like 'new user created, please enter password again'
-
-### UI
-
-- Create a "ui" interface 
-  - Terminal - terminal ui 
-  - GUI - tkinter ui 
-
-Projects ideas
---------------
-
-- echo server
-- ping server
-- heart beat server
-- sniffer
-- browser like server
-- TCP chat 
-- Send Database stuff via TCP server - client architecture
-- CAN Network
-
-
-Done
-====
-
-
-Server
-------
-
+    - ~~delete message~~
 
 ### Database
 
@@ -173,6 +174,10 @@ Server
 Client
 ------
 
+- ~~Save session sent by server and save it somewhere; when client re-starts checks is current session. if still the same then can log in already~~
+
+
 ### UI
 
 - ~~fix print when chat usage in cli, when writing and receiving a message and receive after wards. the receiving one is in the same line :/~~
+- 
