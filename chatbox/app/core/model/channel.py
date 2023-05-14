@@ -49,3 +49,9 @@ class ChannelModel(BaseModel):
 			'created': self.created.strftime(DATETIME_DEFAULT),
 			'modified': self.modified.strftime(DATETIME_DEFAULT),
 		}
+
+	def is_member(self, user_id: int) -> bool:
+		for member in self.members:
+			if member.user_id == user_id:
+				return True
+		return False

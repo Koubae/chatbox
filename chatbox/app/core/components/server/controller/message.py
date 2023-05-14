@@ -3,6 +3,8 @@ import json
 
 from chatbox.app.core.components.commons.controller.base import BaseController
 from chatbox.app.constants import chat_internal_codes as _c
+from chatbox.app.core.model.channel import ChannelModel
+from chatbox.app.core.model.group import GroupModel
 from chatbox.app.core.model.message import ServerMessageModel, ServerInternalMessageModel
 from chatbox.app.core.tcp import objects
 
@@ -19,11 +21,32 @@ class ControllerMessage(BaseController):
 			case _c.Codes.MESSAGE_LIST_RECEIVED:
 				items: list[ServerInternalMessageModel] = self.chat.repo_message.get_many_received(client_conn.user.username)
 			case _c.Codes.MESSAGE_LIST_GROUP:
-				group_name: str = self._get_item_name(payload)
-				items: list[ServerInternalMessageModel] = self.chat.repo_message.get_many_group(group_name)
+				name: str = self._get_item_name(payload)
+
+				record: GroupModel = self.chat.repo_group.get_by_name(name)
+				if not record:
+					self.chat.send_to_client(client_conn, f"You cannot list messages to Group {name}, channel does not exist.")
+					return
+				is_member = record.is_member(client_conn.user.username)
+				if not is_member:
+					self.chat.send_to_client(client_conn, f"You cannot list messages to Group {name}, your are not a member")
+					return
+
+				items: list[ServerInternalMessageModel] = self.chat.repo_message.get_many_group(name)
 			case _c.Codes.MESSAGE_LIST_CHANNEL:
-				group_name: str = self._get_item_name(payload)
-				items: list[ServerInternalMessageModel] = self.chat.repo_message
+				name: str = self._get_item_name(payload)
+
+				record: ChannelModel = self.chat.repo_channel.get_by_name(name)
+				if not record:
+					self.chat.send_to_client(client_conn, f"You cannot list messages to Channel {name}, channel does not exist.")
+					return
+				is_member = record.is_member(client_conn.user.id)
+				if not is_member:
+					self.chat.send_to_client(client_conn, f"You cannot list messages to Channel {name}, your are not a member")
+					return
+
+				items: list[ServerInternalMessageModel] = self.chat.repo_message.get_many_channel(name)
+
 			case _c.Codes.MESSAGE_LIST_SENT | _:
 				items: list[ServerInternalMessageModel] = self.chat.repo_message.get_many_sent(client_conn.user.username)
 

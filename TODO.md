@@ -11,7 +11,8 @@ Main
 - fix log & prints in terminal: add log error color 
 - create bots test
 - Fix imports, should be absolute as ->  'chatbox' ... 
-
+- Check what '\udcc' char is as it gives 'UnicodeEncodeError: 'utf-8' codec can't encode character '\udcc3' in position 0: surrogates not allowed'
+  (both in logger and sqlite3) "unassigned-0DCC" ??
 
 Server
 ------
@@ -65,10 +66,10 @@ Model
     - ~~add user to channel~~
     - ~~remove user to channel~~
   - messages:
-    - list sent messages : me
-    - list received messages : me
-    - list all messages : group
-    - list all messages : channel
+    - ~~list sent messages : me~~
+    - ~~list received messages : me~~
+    - ~~list all messages : group~~
+    - ~~list all messages : channel~~
     - delete message
 
 - send_to:: send to "all" should be restricted to admin or super-user

@@ -26,3 +26,9 @@ class GroupModel(BaseModel):
 			'created': self.created.strftime(DATETIME_DEFAULT),
 			'modified': self.modified.strftime(DATETIME_DEFAULT),
 		}
+
+	def is_member(self, user_name: str) -> bool:
+		for name in self.members:
+			if name == user_name:
+				return True
+		return False
