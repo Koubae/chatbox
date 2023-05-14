@@ -111,26 +111,25 @@ class ControllerChannel(BaseController):
 
 		record: ChannelModel = self.chat.repo_channel.get_by_name(name)
 		if not record:
-			self.chat.send_to_client(client_conn, f"You cannot a Channel {name}, channel does not exist.")
+			self.chat.send_to_client(client_conn, f"You cannot leave Channel {name}, channel does not exist.")
 			return
 
 		if record.owner_id == owner:
 			self.chat.send_to_client(client_conn, f"You cannot leave this channel {name} because you are the owner!")
 			return
+		elif not record.members:
+			self.chat.send_to_client(client_conn, f"You cannot leave this channel {name} because channel doesn't have members!")
+			return
 
-		user_to_remove: str = client_conn.user.username
-		if client_conn.user.username not in record.members:
+		for member in record.members:
+			if member.user_name == client_conn.user.username:
+				member_delete_id = member.id
+				break
+		else:
 			self.chat.send_to_client(client_conn, f"You are not a member of Channel {name}!")
 			return
 
-		members_current = set(record.members)
-		member_to_remove = {user_to_remove}
-		members_updated = members_current - member_to_remove
-
-		record: ChannelModel = self.chat.repo_channel.update(record.id,{"members": json.dumps(list(members_updated))})
-		if not record:
-			self.chat.send_to_client(client_conn, f"Error while leaving channel {name}!")
-			return
+		self.chat.repo_channel_member.delete(member_delete_id)
 
 		_logger.info(f"user {client_conn.user.username} {client_conn.user.id} successfully left channel --> {record}")
 		self.chat.send_to_client(client_conn, f"You left Channel {name}")

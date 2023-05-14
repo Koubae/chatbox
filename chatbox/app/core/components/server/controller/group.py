@@ -91,7 +91,7 @@ class ControllerGroup(BaseController):
 
 		group_exists: GroupModel = self.chat.repo_group.get_by_name(group_name)
 		if not group_exists:
-			self.chat.send_to_client(client_conn, f"You cannot a Group {group_name}, group does not exist.")
+			self.chat.send_to_client(client_conn, f"You cannot leave Group {group_name}, group does not exist.")
 			return
 
 		if group_exists.owner_id == group_owner:

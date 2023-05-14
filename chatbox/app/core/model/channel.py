@@ -27,6 +27,8 @@ class ChannelMemberModel(BaseModel):
 	def to_json_related(self) -> dict:
 		return {
 			'user_name': self.user_name,
+			'id': self.id,
+			'user_id': self.user_id,
 		}
 
 @dataclass

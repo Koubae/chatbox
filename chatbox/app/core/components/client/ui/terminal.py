@@ -96,7 +96,7 @@ class Terminal:
 				case Command.CHANNEL_JOIN:
 					...
 				case Command.CHANNEL_LEAVE:
-					...
+					self.controller_channel.leave(user_input)
 
 				case Command.ECHO_MESSAGE:
 					self.controller_send_to.all(user_input)

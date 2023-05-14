@@ -70,7 +70,7 @@ class Router:
 				case _c.Codes.CHANNEL_JOIN:
 					...
 				case _c.Codes.CHANNEL_LEAVE:
-					...
+					self.controller_channel.leave(client_conn, payload)
 
 				case _:
 					self.controller_send_to.all(client_conn, payload)
