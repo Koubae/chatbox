@@ -19,8 +19,10 @@ class ControllerMessage(BaseController):
 			case _c.Codes.MESSAGE_LIST_RECEIVED:
 				items: list[ServerInternalMessageModel] = self.chat.repo_message.get_many_received(client_conn.user.username)
 			case _c.Codes.MESSAGE_LIST_GROUP:
-				items: list[ServerInternalMessageModel] = self.chat.repo_message
+				group_name: str = self._get_item_name(payload)
+				items: list[ServerInternalMessageModel] = self.chat.repo_message.get_many_group(group_name)
 			case _c.Codes.MESSAGE_LIST_CHANNEL:
+				group_name: str = self._get_item_name(payload)
 				items: list[ServerInternalMessageModel] = self.chat.repo_message
 			case _c.Codes.MESSAGE_LIST_SENT | _:
 				items: list[ServerInternalMessageModel] = self.chat.repo_message.get_many_sent(client_conn.user.username)
@@ -30,3 +32,8 @@ class ControllerMessage(BaseController):
 
 	def delete(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
 		_c.remove_chat_code_from_payload(_c.Codes.MESSAGE_DELETE, payload)  # noqa
+
+	def _get_item_name(self, payload: ServerMessageModel) -> str:
+		data: dict = self.json_decode(payload.body)
+		name: str = data["name"]
+		return name

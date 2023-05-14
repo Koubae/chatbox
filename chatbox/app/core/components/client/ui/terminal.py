@@ -96,8 +96,10 @@ class Terminal:
 				case Command.CHANNEL_JOIN | Command.CHANNEL_LEAVE:
 					self.controller_channel.member_request(user_input, command)
 
-				case Command.MESSAGE_LIST_SENT | Command.MESSAGE_LIST_RECEIVED | Command.MESSAGE_LIST_GROUP | Command.MESSAGE_LIST_CHANNEL:
-					self.controller_message.list_(command)
+				case Command.MESSAGE_LIST_SENT | Command.MESSAGE_LIST_RECEIVED:
+					self.controller_message.list_user(command)
+				case Command.MESSAGE_LIST_GROUP | Command.MESSAGE_LIST_CHANNEL:
+					self.controller_message.list_group_or_channel(command, user_input)
 				case Command.MESSAGE_DELETE:
 					self.controller_message.delete(user_input)
 

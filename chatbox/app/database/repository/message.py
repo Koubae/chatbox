@@ -73,3 +73,9 @@ class MessageRepository(RepositoryBase):
 
 		items = self.get_many_raw(query, {"owner_name": username, "limit": limit, "offset": offset})
 		return items
+
+	def get_many_group(self, name: str, limit: int = 100, offset: int = 0) -> list[ServerInternalMessageModel]:
+		query = f"SELECT * FROM message WHERE from_role = 'GROUP' AND from_name = :name ORDER BY ID DESC LIMIT :limit OFFSET :offset"
+
+		items = self.get_many_raw(query, {"name": name, "limit": limit, "offset": offset})
+		return items
