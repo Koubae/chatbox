@@ -12,12 +12,9 @@ _logger = logging.getLogger(__name__)
 
 class ControllerChannelClient(BaseControllerClient):
 
-	def list_all(self) -> None:
-		command = _c.make_message(_c.Codes.CHANNEL_LIST_ALL, _c.Codes.CHANNEL_LIST_ALL.name)
-		self.chat.send_to_server(command)
-
-	def list_owned(self) -> None:
-		command = _c.make_message(_c.Codes.CHANNEL_LIST_OWNED, _c.Codes.CHANNEL_LIST_OWNED.name)
+	def list_(self, action: Command) -> None:
+		code = _c.Codes[action.name]
+		command = _c.make_message(code, code.name)
 		self.chat.send_to_server(command)
 
 	def create(self, user_input: str) -> None:

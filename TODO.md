@@ -54,6 +54,7 @@ Model
   - channel:
     - list channels
       - ~~list channels : all~~
+      - ~~list channels : owned~~
       - list channels : joined
       - list channels : un-joined
     - ~~create channel~~
