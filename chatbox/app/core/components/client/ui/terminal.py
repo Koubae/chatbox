@@ -91,8 +91,10 @@ class Terminal:
 					self.controller_channel.update(user_input)
 				case Command.CHANNEL_DELETE:
 					self.controller_channel.delete(user_input)
-				case Command.CHANNEL_ADD | Command.CHANNEL_JOIN | Command.CHANNEL_LEAVE:
-					self.controller_channel.member_action(user_input, command)
+				case Command.CHANNEL_ADD | Command.CHANNEL_REMOVE:
+					self.controller_channel.member_management(user_input, command)
+				case Command.CHANNEL_JOIN | Command.CHANNEL_LEAVE:
+					self.controller_channel.member_request(user_input, command)
 
 				case Command.ECHO_MESSAGE:
 					self.controller_send_to.all(user_input)

@@ -232,7 +232,7 @@ def tcp_accept(client):
             groups[groupname].connect(username, client)
             client.send(b"/ready")
         else:
-            groups[groupname].join_request(client, username)
+            groups[groupname].member_request(client, username)
             client.send(b"/wait")
 
     else:

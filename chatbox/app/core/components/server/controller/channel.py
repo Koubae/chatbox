@@ -61,6 +61,10 @@ class ControllerChannel(BaseController):
 			self.chat.send_to_client(client_conn, f"Channel {name} cannot be created, channel does not exist.")
 			return
 
+		if record.owner_id != owner:
+			self.chat.send_to_client(client_conn, f"You are not owner of Channel {name}!")
+			return
+
 		members: list[UserModel] = self._get_members(client_conn, info)
 
 		members_update = [member.id for member in members]
@@ -107,6 +111,40 @@ class ControllerChannel(BaseController):
 	# ---------------------
 	# Channel Member Management
 	# ---------------------
+	def add(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
+		_c.remove_chat_code_from_payload(_c.Codes.CHANNEL_ADD, payload)  # noqa
+
+		owner, info, name = self._get_data(payload)
+
+		record: ChannelModel = self.chat.repo_channel.get_by_name(name)
+		if not record:
+			self.chat.send_to_client(client_conn, f"You cannot leave Channel {name}, channel does not exist.")
+			return
+		if record.owner_id != owner:
+			self.chat.send_to_client(client_conn, f"You are not owner of Channel {name}!")
+			return
+		if not record.members:
+			self.chat.send_to_client(client_conn, f"You cannot leave this channel {name} because channel doesn't have members!")
+			return
+
+		users_to_add: list[UserModel] = self._get_members(client_conn, info, add_current_user=False)
+		if not users_to_add:
+			self.chat.send_to_client(client_conn, f"No members to add supplied for Channel {name}")
+			return
+
+		users_to_add_ids = [user.id for user in users_to_add]
+		users_current = [member.user_id for member in record.members]
+		users_to_add_filtered = set(users_to_add_ids) - set(users_current)
+
+		if not users_to_add_filtered:
+			self.chat.send_to_client(client_conn, f"All requested members of Channel {name} are already subscribed")
+			return
+
+		self.chat.repo_channel_member.create([{"user_id": user_id, "channel_id": record.id} for user_id in users_to_add_filtered])
+
+		message = f"{len(users_to_add_filtered)} new users joined Channel {name}"
+		_logger.info(message)
+		self.chat.send_to_client(client_conn, message)
 
 	def join(self, client_conn: objects.Client, payload: ServerMessageModel) -> None:
 		_c.remove_chat_code_from_payload(_c.Codes.CHANNEL_JOIN, payload)  # noqa
@@ -167,9 +205,10 @@ class ControllerChannel(BaseController):
 		name: str = info["name"]
 		return owner, info, name
 
-	def _get_members(self, client_conn, info: dict) -> list[UserModel]:
+	def _get_members(self, client_conn, info: dict, add_current_user: bool = True) -> list[UserModel]:
 		members: list = [member.strip() for member in info["members"]]
-		members.insert(0, client_conn.user.username)
+		if add_current_user:
+			members.insert(0, client_conn.user.username)
 
 		members_result: list[UserModel] = []
 		for member in members:

@@ -49,6 +49,10 @@ class ControllerGroup(BaseController):
 			self.chat.send_to_client(client_conn, f"Group {group_name} cannot be created, group does not exist.")
 			return
 
+		if group_exists.owner_id != group_owner:
+			self.chat.send_to_client(client_conn, f"You are not owner of Group {group_name}!")
+			return
+
 		group_members = self._get_group_members(client_conn, group_info)
 
 

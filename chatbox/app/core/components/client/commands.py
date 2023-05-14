@@ -37,6 +37,7 @@ class Command(Enum):
 	CHANNEL_UPDATE = auto()
 	CHANNEL_DELETE = auto()
 	CHANNEL_ADD = auto()
+	CHANNEL_REMOVE = auto()
 	CHANNEL_JOIN = auto()
 	CHANNEL_LEAVE = auto()
 
@@ -78,6 +79,7 @@ class Commands:
 		Command.CHANNEL_UPDATE: Codes.CHANNEL_UPDATE,
 		Command.CHANNEL_DELETE: Codes.CHANNEL_DELETE,
 		Command.CHANNEL_ADD: Codes.CHANNEL_ADD,
+		Command.CHANNEL_REMOVE: Codes.CHANNEL_REMOVE,
 		Command.CHANNEL_JOIN: Codes.CHANNEL_JOIN,
 		Command.CHANNEL_LEAVE: Codes.CHANNEL_LEAVE,
 

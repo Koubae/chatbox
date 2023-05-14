@@ -35,6 +35,7 @@ class Codes(Enum):
 	CHANNEL_UPDATE = auto()
 	CHANNEL_LEAVE = auto()
 	CHANNEL_ADD = auto()
+	CHANNEL_REMOVE = auto()
 	CHANNEL_JOIN = auto()
 	CHANNEL_DELETE = auto()
 
