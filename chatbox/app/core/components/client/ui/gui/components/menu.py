@@ -41,27 +41,26 @@ class MenuEdit(MenuBase):
 	def __init__(self, window: 'ui.gui.app.Window', cnf=None, **kw):
 		super().__init__(window, cnf or {}, **kw)
 
-		self.chatbox_multiline = tk.BooleanVar()
-		self.chatbox_multiline.set(False)
-		self.chatbox_multiline.trace("w", self.on_chatbox_multiline)
+
+		self.window.chatbox_multiline.trace("w", self.on_chatbox_multiline)
 		self._menu_chatbox_multiline = tk.Menu(self)
 		self._menu_chatbox_multiline.add_radiobutton(
 			label="Yes",
 			value=True,
-			variable=self.chatbox_multiline)
+			variable=self.window.chatbox_multiline)
 		self._menu_chatbox_multiline.add_radiobutton(
 			label="No",
 			value=False,
-			variable=self.chatbox_multiline)
+			variable=self.window.chatbox_multiline)
 
 		self.add_cascade(label="Chat multiline", menu=self._menu_chatbox_multiline)
 
 	def on_chatbox_multiline(self, *_):
-		value = self.chatbox_multiline.get()
-		if value:
-			self.window.chat_types.config(style="Default2.TFrame")
+		self.window.message_text.destroy()
+		if self.window.chatbox_multiline.get():
+			self.window.message_text = self.window.message_text_create_entity()
 		else:
-			self.window.chat_types.config(style="Primary.TFrame")
+			self.window.message_text = self.window.message_text_create_entity()
 
 class MenuMain(MenuBase):
 	def __init__(self, window: 'ui.gui.app.Window', cnf=None, **kw):

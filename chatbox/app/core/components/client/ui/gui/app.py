@@ -60,6 +60,8 @@ class Window(ttk.Frame):
 		self.style.configure("Treeview", background=COLOR_SECONDARY_9, foreground='white')
 		self.style.configure("Treeview.Heading", background=COLOR_PRIMARY_9, foreground='white')
 
+		self.style.configure('TEntry', font=('Times New Roman', 14, 'italic'), fieldbackground="white", foreground='black', width=20, height=5, borderwidth=3, focusthickness=3, focuscolor='none')
+		self.style.configure("Chat.TEntry", fieldbackground=COLOR_SECONDARY_9, foreground="white")
 
 
 		self.config(style='Main.TFrame')
@@ -68,6 +70,15 @@ class Window(ttk.Frame):
 		self.grid_columnconfigure(2, weight=2)
 		self.grid_rowconfigure(0, weight=1)
 
+		# ----------------------
+		# Components
+		# ----------------------
+		# chat
+
+		self.chatbox_multiline = tk.BooleanVar()
+		self.chatbox_multiline.set(False)
+
+		# menu
 		self.menu: MenuMain = MenuMain(self)
 
 		# ----------------------
@@ -154,11 +165,7 @@ class Window(ttk.Frame):
 		self.message_container.rowconfigure(0, weight=1)
 		self.message_container.columnconfigure(0, weight=1)
 
-		self.message_text = scrolledtext.ScrolledText(self.message_container, width=40, height=5, font=('Times New Roman', 14, 'italic'),
-													  background=COLOR_SECONDARY_9, foreground="white")
-		# self.message_text_entry = Entry(self.message_container, width=40,  font=('Times New Roman', 14, 'italic'), background=COLOR_SECONDARY_9, foreground="white")
-		self.message_text.focus()
-		self.message_text.grid(row=0, column=0, sticky=tk.E + tk.W + tk.N + tk.S)
+		self.message_text = self.message_text_create_entity()
 
 		self.button_message_submit = ttk.Button(self.message_container, width=10, text="Send", command=lambda: self.message_submit())
 		self.button_message_submit.grid(column=1, rows=1)
@@ -166,27 +173,24 @@ class Window(ttk.Frame):
 		self.button_message_clear = ttk.Button(self.message_container, width=10, text="Clear", style='Danger.TButton', command=lambda: self.message_clear())
 		self.button_message_clear.grid(column=1, rows=1)
 
-		message_chat_type = "scroll"
-		if message_chat_type == "entry":
-			self.message_text.bind("<Return>", lambda _: self.message_submit())
-
-	def message_submit(self, _type = "scroll") -> str:
-		if _type == "entry":
-			message = self.message_text.get()  # noqa
-		else:
+	def message_submit(self) -> str:
+		if self.chatbox_multiline.get():
 			message = self.message_text.get("1.0", tk.END)
-		if "\n" == message[0]: # Remove first char if is empty space
-			message = message[1:]
+			if "\n" == message[0]:  # Remove first char if is empty space
+				message = message[1:]
+		else:
+			message = self.message_text.get()  # noqa
+
 		message_removed_last_char = message
 		print(message_removed_last_char)
 		self.message_clear()
 		return message_removed_last_char
 
-	def message_clear(self, _type = "scroll") -> None:
-		if _type == "entry":
-			self.message_text.delete('0', tk.END)
-		else:
+	def message_clear(self) -> None:
+		if self.chatbox_multiline.get():
 			self.message_text.delete('1.0', tk.END)
+		else:
+			self.message_text.delete('0', tk.END)
 
 	def on_close_app(self):
 		response = messagebox._show(  # noqa
@@ -198,6 +202,24 @@ class Window(ttk.Frame):
 		if response == "yes":
 			self.master.destroy()
 
+	def message_text_create_entity(self) -> ttk.Entry | scrolledtext.ScrolledText:
+		if self.chatbox_multiline.get():
+			message_text = self._create_message_text_multi_line()
+		else:
+			message_text = self._create_message_text_single_line()
+			message_text.bind("<Return>", lambda _: self.message_submit())
+
+		message_text.focus()
+		message_text.grid(row=0, column=0, sticky=tk.E + tk.W + tk.N + tk.S)
+
+		return message_text
+
+	def _create_message_text_single_line(self) -> ttk.Entry:
+		return ttk.Entry(self.message_container, style="Chat.TEntry", width=45, font=('Times New Roman', 14, 'italic'))
+
+	def _create_message_text_multi_line(self) -> scrolledtext.ScrolledText:
+		return scrolledtext.ScrolledText(self.message_container, width=40, height=5, font=('Times New Roman', 14, 'italic'),
+										 background=COLOR_SECONDARY_9, foreground="white")
 
 class App(tk.Tk):
 	def __init__(self):
