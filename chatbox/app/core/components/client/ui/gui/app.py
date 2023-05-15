@@ -131,7 +131,7 @@ class MainWindow(ttk.Frame):
 
 		# add data to the treeview
 		for contact in contacts:
-			tree.insert('', END, values=contact)
+			tree.insert('', 0, values=contact)
 
 		def item_selected(event):
 			for selected_item in tree.selection():
@@ -146,7 +146,6 @@ class MainWindow(ttk.Frame):
 		scrollbar = ttk.Scrollbar(self.chat, orient=VERTICAL, command=tree.yview)
 		tree.configure(yscroll=scrollbar.set)
 		scrollbar.grid(row=0, column=2, rowspan=2, sticky=N + S)
-		tree.yview_scroll(1, "units")
 
 		self.message_container = ttk.Frame(self.chat, style="Secondary2.TFrame")
 		self.message_container.grid(row=2, column=0, columnspan=3, pady=0, sticky=E + W + N + S)
@@ -197,39 +196,39 @@ class MainWindow(ttk.Frame):
 			self.master.destroy()
 
 
-class App:
+class App(Tk):
 	def __init__(self):
+		super().__init__()
+
 		self.state = False
 
-		self.root = Tk()
+		self.grid_columnconfigure(0, weight=1)
+		self.grid_rowconfigure(0, weight=1)
 
-		self.root.grid_columnconfigure(0, weight=1)
-		self.root.grid_rowconfigure(0, weight=1)
+		self.attributes('-zoomed', True)
+		self.attributes('-topmost', 1)
 
-		self.root.attributes('-zoomed', True)
-		self.root.attributes('-topmost', 1)
+		self.window_width = self.winfo_screenwidth()
+		self.window_height = self.winfo_screenheight()
 
-		self.window_width = self.root.winfo_screenwidth()
-		self.window_height = self.root.winfo_screenheight()
+		self.bind("<F11>", self.action_full_screen)
+		self.bind("<Escape>", self.action_full_screen_out)
 
-		self.root.bind("<F11>", self.action_full_screen)
-		self.root.bind("<Escape>", self.action_full_screen_out)
+		self.title(f'{APP_NAME_CLIENT} - v{__version__.__version__} {__version__.__build__}')
+		self.configure(background=COLOR_PRIMARY_9)
 
-		self.root.title(f'{APP_NAME_CLIENT} - v{__version__.__version__} {__version__.__build__}')
-		self.root.configure(background=COLOR_PRIMARY_9)
-
-		self.window_main = MainWindow(self.root)
+		self.window_main = MainWindow(self)
 
 	def __call__(self) -> None:
-		self.root.mainloop()
+		self.mainloop()
 
 	def action_full_screen(self, _=None):
 		self.state = not self.state
-		self.root.attributes("-fullscreen", self.state)
+		self.attributes("-fullscreen", self.state)
 
 	def action_full_screen_out(self, _=None):
 		self.state = False
-		self.root.attributes("-fullscreen", False)
+		self.attributes("-fullscreen", False)
 
 if __name__ == '__main__':
 	app = App()
