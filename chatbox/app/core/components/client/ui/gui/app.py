@@ -1,10 +1,11 @@
 import os
 
-from tkinter import *
+import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk  # new widget ui
 from tkinter import scrolledtext
 from chatbox import __version__
+from chatbox.app.core.components.client.ui.gui.components.menu import MenuMain
 
 try:
 	# windows text blur
@@ -30,10 +31,10 @@ COLOR_SECONDARY = "#25217b"
 COLOR_SECONDARY_9 = "#050317"
 
 
-class MainWindow(ttk.Frame):
-	def __init__(self, master: Tk):
+class Window(ttk.Frame):
+	def __init__(self, master: 'App'):
 		super().__init__()
-		self.root: Tk = master
+		self.app: 'App' = master
 
 		# create a new style
 		self.style = ttk.Style()
@@ -60,24 +61,25 @@ class MainWindow(ttk.Frame):
 		self.style.configure("Treeview.Heading", background=COLOR_PRIMARY_9, foreground='white')
 
 
+
 		self.config(style='Main.TFrame')
-		self.grid(column=0, row=0, sticky=N +W + E + S)
+		self.grid(column=0, row=0, sticky=tk.N + tk.W + tk.E + tk.S)
 
 		self.grid_columnconfigure(2, weight=2)
 		self.grid_rowconfigure(0, weight=1)
+
+		self.menu: MenuMain = MenuMain(self)
 
 		# ----------------------
 		# CHAT TYPES
 		# ----------------------
 
 		self.chat_types = ttk.Frame(self, style='Secondary.TFrame', padding="15 10")
-		self.chat_types.grid(row=0, column=0, sticky=N + S, padx=1, pady=1)
+		self.chat_types.grid(row=0, column=0, sticky=tk.N + tk.S, padx=1, pady=1)
 
-		ttk.Button(self.chat_types, text="X", command=self.on_close_app, style='Danger.TButton', width=5).grid(row=0, column=0, pady=2, sticky=W)
-
-		ttk.Button(self.chat_types, text="Channels", style='Secondary.TButton', width=10).grid(row=2, column=0, pady=10, sticky=W)
-		ttk.Button(self.chat_types, text="Groups", style='Secondary.TButton', width=10).grid(row=3, column=0, pady=10, sticky=W)
-		ttk.Button(self.chat_types, text="Users", style='Secondary.TButton', width=10).grid(row=4, column=0, pady=10, sticky=W)
+		ttk.Button(self.chat_types, text="Channels", style='Secondary.TButton', width=10).grid(row=2, column=0, pady=10, sticky=tk.W)
+		ttk.Button(self.chat_types, text="Groups", style='Secondary.TButton', width=10).grid(row=3, column=0, pady=10, sticky=tk.W)
+		ttk.Button(self.chat_types, text="Users", style='Secondary.TButton', width=10).grid(row=4, column=0, pady=10, sticky=tk.W)
 
 		self.chat_types.grid_rowconfigure(0, weight=0)
 		self.chat_types.grid_rowconfigure(1, weight=2)
@@ -93,7 +95,7 @@ class MainWindow(ttk.Frame):
 		# ----------------------
 
 		self.chat_stack = ttk.Frame(self, style='Secondary2.TFrame', padding="2 10")
-		self.chat_stack.grid(row=0, column=1, sticky=N + S, padx=10, pady=1)
+		self.chat_stack.grid(row=0, column=1, sticky=tk.N + tk.S, padx=10, pady=1)
 
 		for i in range(2, 3+2):
 			ttk.Button(self.chat_stack, text=f"Button {i}").grid(row=i+2, column=0, pady=3)
@@ -141,21 +143,22 @@ class MainWindow(ttk.Frame):
 				messagebox.showinfo(title='Information', message=','.join(record))
 
 		tree.bind('<<TreeviewSelect>>', item_selected)
-		tree.grid(row=0, column=0, rowspan=2, columnspan=3, sticky=E + W + N + S)
+		tree.grid(row=0, column=0, rowspan=2, columnspan=3, sticky=tk.E + tk.W + tk.N + tk.S)
 		# add a scrollbar
-		scrollbar = ttk.Scrollbar(self.chat, orient=VERTICAL, command=tree.yview)
+		scrollbar = ttk.Scrollbar(self.chat, orient=tk.VERTICAL, command=tree.yview)
 		tree.configure(yscroll=scrollbar.set)
-		scrollbar.grid(row=0, column=2, rowspan=2, sticky=N + S)
+		scrollbar.grid(row=0, column=2, rowspan=2, sticky=tk.N + tk.S)
 
 		self.message_container = ttk.Frame(self.chat, style="Secondary2.TFrame")
-		self.message_container.grid(row=2, column=0, columnspan=3, pady=0, sticky=E + W + N + S)
+		self.message_container.grid(row=2, column=0, columnspan=3, pady=0, sticky=tk.E + tk.W + tk.N + tk.S)
 		self.message_container.rowconfigure(0, weight=1)
 		self.message_container.columnconfigure(0, weight=1)
 
 		self.message_text = scrolledtext.ScrolledText(self.message_container, width=40, height=5, font=('Times New Roman', 14, 'italic'),
 													  background=COLOR_SECONDARY_9, foreground="white")
 		# self.message_text_entry = Entry(self.message_container, width=40,  font=('Times New Roman', 14, 'italic'), background=COLOR_SECONDARY_9, foreground="white")
-		self.message_text.grid(row=0, column=0, sticky=E + W + N + S)
+		self.message_text.focus()
+		self.message_text.grid(row=0, column=0, sticky=tk.E + tk.W + tk.N + tk.S)
 
 		self.button_message_submit = ttk.Button(self.message_container, width=10, text="Send", command=lambda: self.message_submit())
 		self.button_message_submit.grid(column=1, rows=1)
@@ -169,9 +172,9 @@ class MainWindow(ttk.Frame):
 
 	def message_submit(self, _type = "scroll") -> str:
 		if _type == "entry":
-			message = self.message_text.get()
+			message = self.message_text.get()  # noqa
 		else:
-			message = self.message_text.get("1.0", END)
+			message = self.message_text.get("1.0", tk.END)
 		if "\n" == message[0]: # Remove first char if is empty space
 			message = message[1:]
 		message_removed_last_char = message
@@ -181,12 +184,12 @@ class MainWindow(ttk.Frame):
 
 	def message_clear(self, _type = "scroll") -> None:
 		if _type == "entry":
-			self.message_text.delete('0', END)
+			self.message_text.delete('0', tk.END)
 		else:
-			self.message_text.delete('1.0', END)
+			self.message_text.delete('1.0', tk.END)
 
 	def on_close_app(self):
-		response = messagebox._show(
+		response = messagebox._show(  # noqa
 			"Warning",
 			f"You are about to close {APP_NAME_CLIENT}, are you sure?",
 			messagebox.WARNING,
@@ -196,28 +199,18 @@ class MainWindow(ttk.Frame):
 			self.master.destroy()
 
 
-class App(Tk):
+class App(tk.Tk):
 	def __init__(self):
 		super().__init__()
 
 		self.state = False
-
-		self.grid_columnconfigure(0, weight=1)
-		self.grid_rowconfigure(0, weight=1)
-
-		self.attributes('-zoomed', True)
-		self.attributes('-topmost', 1)
-
 		self.window_width = self.winfo_screenwidth()
 		self.window_height = self.winfo_screenheight()
 
-		self.bind("<F11>", self.action_full_screen)
-		self.bind("<Escape>", self.action_full_screen_out)
+		self.__configure_app()
+		self.__register_events()
 
-		self.title(f'{APP_NAME_CLIENT} - v{__version__.__version__} {__version__.__build__}')
-		self.configure(background=COLOR_PRIMARY_9)
-
-		self.window_main = MainWindow(self)
+		self.window: Window = Window(self)
 
 	def __call__(self) -> None:
 		self.mainloop()
@@ -229,6 +222,25 @@ class App(Tk):
 	def action_full_screen_out(self, _=None):
 		self.state = False
 		self.attributes("-fullscreen", False)
+
+	def __configure_app(self):
+		self.title(f'{APP_NAME_CLIENT} - v{__version__.__version__} {__version__.__build__}')
+
+		self.grid_columnconfigure(0, weight=1)
+		self.grid_rowconfigure(0, weight=1)
+
+		self.attributes('-zoomed', True)
+		self.attributes('-topmost', 1)
+
+		self.configure(background=COLOR_PRIMARY_9)
+		self.option_add('*Dialog.msg.width', 150)
+		self.option_add('*Dialog.msg.height', 80)
+		self.option_add("*Dialog.msg.wrapLength", "18i")
+
+	def __register_events(self):
+		self.bind("<F11>", self.action_full_screen)
+		self.bind("<Escape>", self.action_full_screen_out)
+
 
 if __name__ == '__main__':
 	app = App()
