@@ -9,7 +9,7 @@ from chatbox.app.core.components.client import ui
 class ChatPane(ttk.Notebook):
 	def __init__(self, window: 'ui.gui.app.Window'):
 		super().__init__(window, style='TNotebook')
-		self.app: 'ui.gui.app.App' = window.app
+		self.app: 'ui.gui.app.Gui' = window.app
 		self.window: 'ui.gui.app.Window' = window
 
 		self.__configure_style()

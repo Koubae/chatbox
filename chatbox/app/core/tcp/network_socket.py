@@ -54,8 +54,10 @@ class NetworkSocket:
         self.buffer: bytes = b''
 
 
-    def __del__(self):
+    def __del__(self, kill: bool = False):
         self.terminate()
+        if kill:
+            sys.exit(0)
 
     def __str__(self):
         return f"{self.__class__.__name__}::{self.SOCKET_TYPE} {self.name or f'@<{self.address}>'}"

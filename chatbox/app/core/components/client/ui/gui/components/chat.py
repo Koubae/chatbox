@@ -12,12 +12,15 @@ from chatbox.app.core.components.client.ui.gui.components.chat_messages import C
 class Chat(ttk.Frame):
 	def __init__(self, window: 'ui.gui.app.Window'):
 		super().__init__(window, style='Chat.TFrame')
-		self.app: 'ui.gui.app.App' = window.app
+		self.app: 'ui.gui.app.Gui' = window.app
 		self.window: 'ui.gui.app.Window' = window
 		self.__configure_style()
 
 		self.chatbox_multiline = tk.BooleanVar()
 		self.chatbox_multiline.set(settings.CHAT_MULTILINE_ENABLED)
+
+		self.submitted_switch = tk.BooleanVar()
+		self.submitted_switch.set(False)
 
 		self.messages = ChatMessages(self.window, self)
 
@@ -38,10 +41,15 @@ class Chat(ttk.Frame):
 											   command=lambda: self.message_clear())
 		self.button_message_clear.grid(column=3, row=0, padx=0)
 
+		self.current_prompt = ""
+
+
 	# --------------------------
 	# EVENTS: Button Callbacks
 	# --------------------------
 	def message_submit(self) -> str:
+		self.submitted_switch.set(not self.submitted_switch.get())
+
 		if self.chatbox_multiline.get():
 			message = self.message_text.get("1.0", tk.END)
 			if "\n" == message[0]:  # Remove first char if is empty space
@@ -51,10 +59,8 @@ class Chat(ttk.Frame):
 
 		message_removed_last_char = message
 
-		# TODO: add user name!
-		self.messages.add_message("me", message_removed_last_char)
-
 		self.message_clear()
+		self.current_prompt = message_removed_last_char
 		return message_removed_last_char
 
 	def message_clear(self) -> None:

@@ -1,4 +1,5 @@
 import os
+import sys
 
 import tkinter as tk
 from tkinter import messagebox
@@ -8,14 +9,16 @@ from chatbox.app.constants import APP_NAME_CLIENT
 from chatbox.app.core.components.client import ui
 from chatbox.app.core.components.client.ui.gui.components.chat import Chat
 from chatbox.app.core.components.client.ui.gui.components.chat_pane import ChatPane
+from chatbox.app.core.components.client.ui.gui.components.logger import Logger
+from chatbox.app.core.components.client.ui.gui.components.login import Login
 from chatbox.app.core.components.client.ui.gui.components.menu import MenuMain
 from chatbox.app.core.components.client.ui.gui import settings
-
+from chatbox.app.core.tcp import objects
 
 class Window(ttk.Frame):
-	def __init__(self, master: 'ui.gui.app.App'):
+	def __init__(self, master: 'ui.gui.app.Gui'):
 		super().__init__()
-		self.app: 'ui.gui.app.App' = master
+		self.app: 'ui.gui.app.Gui' = master
 		self.window_width = self.app.winfo_screenwidth()
 		self.window_height = self.app.winfo_screenheight()
 		self.window_fullscreen: bool = False
@@ -27,10 +30,20 @@ class Window(ttk.Frame):
 		# ----------------------
 		# Components
 		# ----------------------
+		self.logger: Logger = Logger(self)
+
+		self.chat_pane: ChatPane | None = None
+		self.chat: Chat | None = None
+		self.menu: MenuMain | None = None
+
+		self.login = Login(self)
+
+	def enter_chat(self):
+		self.style.configure('TLabel', background=settings.DEFAULT_2, fieldbackground=settings.DEFAULT_2, foreground='black')
 		self.chat_pane = ChatPane(self)
 		self.chat = Chat(self)
-
 		self.menu: MenuMain = MenuMain(self)
+		self.login.destroy()
 
 	# --------------------------
 	# EVENTS: Hotkeys
@@ -57,7 +70,12 @@ class Window(ttk.Frame):
 			messagebox.YESNOCANCEL,
 		)
 		if response == "yes":
-			self.master.destroy()
+			if self.app.chat:
+				self.app.chat.__del__()
+				self.app.chatbox_t.join()
+
+			self.app.destroy()
+			sys.exit(0)
 
 	def __register_events_hotkeys(self):
 		self.app.bind("<F1>", self.action_show_on_help)
@@ -89,8 +107,12 @@ class Window(ttk.Frame):
 		self.style.configure("Treeview", background=settings.COLOR_SECONDARY_9, fieldbackground=settings.COLOR_SECONDARY_9, foreground='white')
 		self.style.configure("Treeview.Heading", background=settings.COLOR_PRIMARY_9, foreground='white')
 
-		self.style.configure('TEntry', font=('Times New Roman', 14, 'italic'),
-							 fieldbackground="white", foreground='black', width=20, height=5, borderwidth=3, focusthickness=3, focuscolor='none')
+		self.style.configure('TLabel', background=settings.COLOR_SECONDARY, fieldbackground=settings.COLOR_SECONDARY, foreground='white')
+		self.style.configure('dark.TLabel', background=settings.COLOR_SECONDARY_9, fieldbackground=settings.COLOR_SECONDARY_9, foreground='white',
+							 font=('Roboto', 8, 'italic'))
+
+		self.style.configure('TEntry', font=('Helvetica', 16, 'italic'),
+							 fieldbackground=settings.COLOR_SECONDARY_9, foreground='white', width=20, height=10, borderwidth=3, focusthickness=3, focuscolor='none')
 		self.style.configure("Chat.TEntry", fieldbackground=settings.COLOR_SECONDARY_9, foreground="white")
 
 		self.style.configure("vertical.TNotebook", tabposition='n',
@@ -104,4 +126,6 @@ class Window(ttk.Frame):
 		self.grid(column=0, row=0, sticky=tk.N + tk.W + tk.E + tk.S)
 
 		self.grid_columnconfigure(1, weight=2)
-		self.grid_rowconfigure(0, weight=1)
+
+		self.grid_rowconfigure(0, weight=2)
+		self.grid_rowconfigure(1, weight=0)

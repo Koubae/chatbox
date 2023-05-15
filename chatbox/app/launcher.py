@@ -7,6 +7,7 @@ from types import MappingProxyType
 from . import constants
 from . import settings
 from . import logger
+from .core.components.client.ui.gui.app import Gui
 
 
 def run(argv: tuple[str, ...] = tuple()) -> None:  # noqa:C901
@@ -38,6 +39,10 @@ def run(argv: tuple[str, ...] = tuple()) -> None:  # noqa:C901
     port: int = NetworkSocket.get_app_port(_port)
     _logger.info("Launching %s app, this may take few milliseconds ....", tcp_app_type)
 
+    _socket_app = None
+    _socket_app_args = None
+    gui = False
+
     stop = True
     while True:
         if tcp_app_type == app_supported[0]:  # TODO: improve this
@@ -46,18 +51,22 @@ def run(argv: tuple[str, ...] = tuple()) -> None:  # noqa:C901
 
             user = None
             password = None
-            _cli = True
 
             for a in argv:
                 if a.startswith('--user'):
                     user = a.replace('--user=', '')
                 elif a.startswith('--password'):
                     password = a.replace('--password=', '')
-                elif a.startswith('--cli'):
-                    _cli_arg = a.replace('--cli=', '')
-                    _cli = False if _cli_arg.lower() in (0, '0', 'false', 'none') else True
+                elif a.startswith('--gui'):
+                    _gui_arg = a.replace('--gui=', '')
+                    gui = False if _gui_arg.lower() in (0, '0', 'false', 'none') else True
 
-            app = SocketTCPClient(host, port, user, password, _cli)
+            if gui:
+                app = Gui()
+                _socket_app = SocketTCPClient
+                _socket_app_args = (host, port, user, password)
+            else:
+                app = SocketTCPClient(host, port, user, password, gui)
         else:
             _logger.error(f"Supported TCP app {app_supported}, got instead: {tcp_app_type}")  # we check this above, but double check for user errors
             sys.exit(1)
@@ -67,7 +76,10 @@ def run(argv: tuple[str, ...] = tuple()) -> None:  # noqa:C901
         exit_code: int = 0
         exception: BaseException | None = None
         try:
-            app()
+            if gui:
+                app(_socket_app, _socket_app_args)
+            else:
+                app()
         except KeyboardInterrupt:
             out_message += "[APP_EXIT_K_INTERRUPT] - Interrupted by signal 2: SIGINT"
             log_level = logging.WARNING

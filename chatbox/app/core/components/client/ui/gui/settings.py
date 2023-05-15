@@ -1,6 +1,6 @@
 # COLOR SCHEME
 DEFAULT_1 = "#0c0d0d"
-DEFAULT_2 = "#bec4c4"
+DEFAULT_2 = "#d9d9d9"
 DANGER = "#b8000f"
 DANGER_LIGHT = "#ffabb2"
 COLOR_PRIMARY = "#07e6b4"

@@ -9,13 +9,13 @@ from chatbox.app.core.components.client import ui
 
 class ChatMessages(ttk.Treeview):
 	COLUMNS: dict = {
-		'user': 50,
+		'user': 150,
 		'message': 1200
 	}
 
 	def __init__(self, window: 'ui.gui.app.Window', chat: 'ui.gui.components.Chat'):
 		super().__init__(chat, columns=list(ChatMessages.COLUMNS.keys()), show='headings')
-		self.app: 'ui.gui.app.App' = window.app
+		self.app: 'ui.gui.app.Gui' = window.app
 		self.window: 'ui.gui.app.Window' = window
 		self.chat: 'ui.gui.components.Chat' = chat
 

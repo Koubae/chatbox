@@ -9,7 +9,7 @@ from chatbox.app.core.components.client import ui
 class MenuBase(tk.Menu):
 	def __init__(self, window: 'ui.gui.app.Window', cnf=None, **kw):
 		super().__init__(window.app, cnf or {}, **kw)
-		self.app: 'ui.gui.app.App' = window.app
+		self.app: 'ui.gui.app.Gui' = window.app
 		self.window: 'ui.gui.app.Window' = window
 
 
