@@ -7,6 +7,7 @@ from tkinter import scrolledtext
 
 from chatbox.app.constants import APP_NAME_CLIENT
 from chatbox.app.core.components.client import ui
+from chatbox.app.core.components.client.ui.gui.components.chat_pane import ChatPane
 from chatbox.app.core.components.client.ui.gui.components.menu import MenuMain
 from chatbox.app.core.components.client.ui.gui import settings
 
@@ -26,76 +27,12 @@ class Window(ttk.Frame):
 		# ----------------------
 		# Components
 		# ----------------------
-		# chat
-
 		self.chatbox_multiline = tk.BooleanVar()
 		self.chatbox_multiline.set(settings.CHAT_MULTILINE_ENABLED)
 
 		# menu
 		self.menu: MenuMain = MenuMain(self)
-
-		# ----------------------
-		# CHAT TYPES
-		# ----------------------
-		# notebook = ttk.Notebook(self, style='vertical.TNotebook')
-		notebook = ttk.Notebook(self, style='TNotebook')
-		notebook.grid(row=0, column=0, sticky=tk.N + tk.S, padx=1, pady=1)
-
-		notebook.grid_columnconfigure(2, weight=2)
-		notebook.grid_rowconfigure(0, weight=1)
-
-		# self.chat_types = ttk.Frame(self, style='Secondary.TFrame', padding="15 10")
-		# self.chat_types.grid(row=0, column=0, sticky=tk.N + tk.S, padx=1, pady=1)
-		#
-		# ttk.Button(self.chat_types, text="Channels", style='Secondary.TButton', width=10).grid(row=2, column=0, pady=10, sticky=tk.W)
-		# ttk.Button(self.chat_types, text="Groups", style='Secondary.TButton', width=10).grid(row=3, column=0, pady=10, sticky=tk.W)
-		# ttk.Button(self.chat_types, text="Users", style='Secondary.TButton', width=10).grid(row=4, column=0, pady=10, sticky=tk.W)
-		#
-		# self.chat_types.grid_rowconfigure(0, weight=0)
-		# self.chat_types.grid_rowconfigure(1, weight=2)
-		#
-		# self.chat_types.grid_rowconfigure(2, weight=0)
-		# self.chat_types.grid_rowconfigure(3, weight=0)
-		# self.chat_types.grid_rowconfigure(4, weight=0)
-		#
-		# self.chat_types.grid_rowconfigure(5, weight=4)
-		data = {
-			"Users": ["user1", "user2", "user3", "user4", "user5", "user6"],
-			"Groups": ["group001", "group001", "group001"],
-			"Channels": [f"ch{i}" for i in range(10)],
-		}
-		panes = ("Users", "Groups", "Channels")
-		panes_frames = {}
-		for pane in panes:
-			_frame = ttk.Frame(self, style='Secondary2.TFrame', padding="2 10")
-			_frame.grid(row=0, column=1, sticky=tk.N + tk.S, padx=10, pady=1)
-			panes_frames[pane] = _frame
-			notebook.add(_frame, text=pane)
-
-			# ----------------------
-			# CHAT STACK
-			# ----------------------
-			# chat_stack = ttk.Frame(_frame, style='Secondary2.TFrame', padding="2 10")
-			# chat_stack.grid(row=0, column=1, sticky=tk.N + tk.S, padx=10, pady=1)
-
-			entities = data[pane]
-			for i, entity in enumerate(entities):
-				ttk.Button(_frame, text=entity).grid(row=i + 2, column=0, pady=3)
-
-			# _frame.grid_rowconfigure(0, weight=0)
-			# _frame.grid_rowconfigure(1, weight=1)
-
-		# # ----------------------
-		# # CHAT STACK
-		# # ----------------------
-		# self.chat_stack = ttk.Frame(self, style='Secondary2.TFrame', padding="2 10")
-		# self.chat_stack.grid(row=0, column=1, sticky=tk.N + tk.S, padx=10, pady=1)
-		#
-		# for i in range(2, 3+2):
-		# 	ttk.Button(self.chat_stack, text=f"Button {i}").grid(row=i+2, column=0, pady=3)
-		#
-		# self.chat_stack.grid_rowconfigure(0, weight=0)
-		# self.chat_stack.grid_rowconfigure(1, weight=1)
+		self.chat_pane = ChatPane(self)
 
 		# ----------------------
 		# CHAT
