@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
 
+
 from chatbox.app.core.components.client import ui
 
 
