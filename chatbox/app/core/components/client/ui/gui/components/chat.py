@@ -1,12 +1,12 @@
 import os
 
 import tkinter as tk
-from tkinter import messagebox
 from tkinter import ttk  # new widget ui
 from tkinter import scrolledtext
 
 from chatbox.app.core.components.client import ui
 from chatbox.app.core.components.client.ui.gui import settings
+from chatbox.app.core.components.client.ui.gui.components.chat_messages import ChatMessages
 
 
 class Chat(ttk.Frame):
@@ -19,36 +19,7 @@ class Chat(ttk.Frame):
 		self.chatbox_multiline = tk.BooleanVar()
 		self.chatbox_multiline.set(settings.CHAT_MULTILINE_ENABLED)
 
-
-		columns = ('first_name', 'last_name', 'email')
-		tree = ttk.Treeview(self, columns=columns, show='headings')
-
-		tree.heading('first_name', text='First Name')
-		tree.heading('last_name', text='Last Name')
-		tree.heading('email', text='Email')
-
-		# generate sample data
-		contacts = []
-		for n in range(1, 100):
-			contacts.append((f'first {n}', f'last {n}', f'email{n}@example.com'))
-
-		# add data to the treeview
-		for contact in contacts:
-			tree.insert('', 0, values=contact)
-
-		def item_selected(_):
-			for selected_item in tree.selection():
-				item = tree.item(selected_item)
-				record = item['values']
-				# show a message
-				messagebox.showinfo(title='Information', message=','.join(record))
-
-		tree.bind('<<TreeviewSelect>>', item_selected)
-		tree.grid(row=0, column=0, rowspan=2, columnspan=3, sticky=tk.E + tk.W + tk.N + tk.S)
-		# add a scrollbar
-		scrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL, command=tree.yview)
-		tree.configure(yscroll=scrollbar.set)  # noqa
-		scrollbar.grid(row=0, column=2, rowspan=2, sticky=tk.N + tk.S)
+		self.messages = ChatMessages(self.window, self)
 
 		self.message_container = ttk.Frame(self, style="Secondary2.TFrame", padding="2 10 50 50")
 		self.message_container.grid(row=2, column=0, columnspan=3, sticky=tk.E + tk.W + tk.N + tk.S)
