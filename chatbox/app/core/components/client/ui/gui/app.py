@@ -13,7 +13,7 @@ from chatbox.app.constants import APP_NAME_CLIENT
 from chatbox.app.core.components.client.ui.gui import settings
 
 
-class App(tk.Tk):
+class Gui(tk.Tk):
 	def __init__(self):
 		super().__init__()
 		self.__configure_app()
@@ -38,5 +38,5 @@ class App(tk.Tk):
 
 
 if __name__ == '__main__':
-	app = App()
+	app = Gui()
 	app()

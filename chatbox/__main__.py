@@ -6,8 +6,8 @@ import sys
 from chatbox import launcher
 
 
-def main(argv: tuple[str, ...] = tuple(), from_cli=True) -> None:
-    launcher.run(argv, cli=from_cli)
+def main(argv: tuple[str, ...] = tuple()) -> None:
+    launcher.run(argv)
 
 
 if __name__ == '__main__':

@@ -9,16 +9,13 @@ from . import settings
 from . import logger
 
 
-def run(argv: tuple[str, ...] = tuple(), cli: bool = True) -> None:  # noqa:C901
-    # TODO: use better cli lib
-    # TODO: make a default / fallback logger in case we fail to load the app logger!
-    if not cli:
-        tcp_app_type, _host, _port = ("tcp_server", "localIpAddr", "20020")
-    else:
-        if len(argv) < 3:
-            # print(usage) TODO Add usage
-            sys.exit(0)
+def run(argv: tuple[str, ...] = tuple()) -> None:  # noqa:C901
+
+    if len(argv) >= 3:
         tcp_app_type, _host, _port = argv[:3]
+    else:
+        print("usage") # TODO Add usage
+        sys.exit(0)
 
     env_file = f".{tcp_app_type}.env"
     conf: MappingProxyType = settings.configure(env_file)
@@ -49,12 +46,18 @@ def run(argv: tuple[str, ...] = tuple(), cli: bool = True) -> None:  # noqa:C901
 
             user = None
             password = None
+            _cli = True
+
             for a in argv:
                 if a.startswith('--user'):
                     user = a.replace('--user=', '')
                 elif a.startswith('--password'):
                     password = a.replace('--password=', '')
-            app = SocketTCPClient(host, port, user, password)
+                elif a.startswith('--cli'):
+                    _cli_arg = a.replace('--cli=', '')
+                    _cli = False if _cli_arg.lower() in (0, '0', 'false', 'none') else True
+
+            app = SocketTCPClient(host, port, user, password, _cli)
         else:
             _logger.error(f"Supported TCP app {app_supported}, got instead: {tcp_app_type}")  # we check this above, but double check for user errors
             sys.exit(1)

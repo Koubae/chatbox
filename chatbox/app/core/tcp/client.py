@@ -10,6 +10,7 @@ from chatbox.app.constants import chat_internal_codes as _c
 from .network_socket import NetworkSocket
 from . import objects
 from ..components.client.auth import AuthUser
+from ..components.client.ui.gui.app import Gui
 from ..components.client.ui.terminal import Terminal
 from ..model.message import MessageModel, MessageDestination, MessageRole, ServerMessageModel
 
@@ -19,7 +20,7 @@ _logger = logging.getLogger(__name__)
 class SocketTCPClient(NetworkSocket):   # noqa
     SOCKET_TYPE: str = "tcp_client"
 
-    def __init__(self, host: str, port: int, user_name: str | None = None, password: str | None = None):
+    def __init__(self, host: str, port: int, user_name: str | None = None, password: str | None = None, _cli: bool = True):
         super().__init__(host, port)
 
         self.id: int | None = None
@@ -34,7 +35,7 @@ class SocketTCPClient(NetworkSocket):   # noqa
 
         self.messages: queue.Queue[ServerMessageModel] = queue.Queue(maxsize=constants.SOCKET_MAX_MESSAGE_QUEUE_PER_WORKER)
 
-        self.ui: Terminal = Terminal(self)  # TODO: make GUI type too depending on how we lunch the client!
+        self.ui: Terminal | Gui = _cli and Terminal(self) or Gui()
 
     def __call__(self, *args, **kwargs):
         if not self.user_name:
