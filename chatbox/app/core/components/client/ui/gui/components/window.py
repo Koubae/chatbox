@@ -86,7 +86,7 @@ class Window(ttk.Frame):
 					   foreground=[("active", "white"), ("!active", "white")])
 
 		self.style.configure(".", font=('Helvetica', 12), foreground="white")
-		self.style.configure("Treeview", background=settings.COLOR_SECONDARY_9, foreground='white')
+		self.style.configure("Treeview", background=settings.COLOR_SECONDARY_9, fieldbackground=settings.COLOR_SECONDARY_9, foreground='white')
 		self.style.configure("Treeview.Heading", background=settings.COLOR_PRIMARY_9, foreground='white')
 
 		self.style.configure('TEntry', font=('Times New Roman', 14, 'italic'),
@@ -100,6 +100,7 @@ class Window(ttk.Frame):
 							 )
 
 		self.config(style='Main.TFrame')
+		self.app.config(background=settings.COLOR_SECONDARY_9)
 		self.grid(column=0, row=0, sticky=tk.N + tk.W + tk.E + tk.S)
 
 		self.grid_columnconfigure(1, weight=2)

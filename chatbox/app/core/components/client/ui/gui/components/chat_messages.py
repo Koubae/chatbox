@@ -25,13 +25,9 @@ class ChatMessages(ttk.Treeview):
 			self.heading(col, text=" ".join(col.split("_")).capitalize())
 			self.column(col, minwidth=0, width=ChatMessages.COLUMNS[col])
 
-		contacts = []
-		for n in range(1, 100):
-			contacts.append((f'user {n}', f'message {n}'))
-
-		# add data to the treeview
-		for contact in contacts:
-			self.insert('', 0, values=contact)
+		# TODO. insert real data!
+		contacts = [(f'user {n}', f'message {n}') for n in range(1, 100)]
+		self.add_messages(contacts)
 
 		def item_selected(_):
 			for selected_item in self.selection():
@@ -47,3 +43,14 @@ class ChatMessages(ttk.Treeview):
 		scrollbar = ttk.Scrollbar(self.window, orient=tk.VERTICAL, command=self.yview)
 		self.configure(yscroll=scrollbar.set)  # noqa
 		scrollbar.grid(row=0, column=2, rowspan=2, sticky=tk.N + tk.S)
+
+	def add_message(self, user: str, message: str) -> None:
+		self.insert('', 0, values=(user, message))
+
+	def add_messages(self, messages: list[tuple[str, str]]) -> None:
+		# add data to the treeview
+		for message in messages:
+			self.insert('', 0, values=message)
+
+	def clear(self) -> None:
+		self.delete(*self.get_children())

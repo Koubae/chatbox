@@ -50,6 +50,10 @@ class Chat(ttk.Frame):
 			message = self.message_text.get()  # noqa
 
 		message_removed_last_char = message
+
+		# TODO: add user name!
+		self.messages.add_message("me", message_removed_last_char)
+
 		self.message_clear()
 		return message_removed_last_char
 
