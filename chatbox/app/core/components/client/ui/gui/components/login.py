@@ -17,42 +17,37 @@ class Login(ttk.Frame):
 		self.logged_in = tk.BooleanVar()
 		self.logged_in.set(False)
 
-		self.form_send = tk.BooleanVar()
-		self.form_send.set(False)
 
+		self.submitted_switch = tk.BooleanVar()
+		self.submitted_switch.set(False)
 
-		email = tk.StringVar()
-		password = tk.StringVar()
+		self.username = tk.StringVar()
+		self.password = tk.StringVar()
 
-		self.email = email
-		self.password = password
-
-		def login_clicked():
-			""" callback when the login button clicked
-			"""
-			self.form_send.set(True)
+		def submit():
+			self.submitted_switch.set(not self.submitted_switch.get())
 
 		# Sign in frame
 		form = ttk.Frame(self, padding="300 50", style='Secondary2.TFrame')
 		form.pack(padx=25, pady=25, expand=True)
 
-		# email
-		email_label = ttk.Label(form, text="Username:")
-		email_label.pack()
+		# username
+		username_label = ttk.Label(form, text="Username:")
+		username_label.pack()
 
-		email_entry = ttk.Entry(form, textvariable=email)
-		email_entry.pack(fill='x', expand=True, pady=10)
-		email_entry.focus()
+		self.username_entry = ttk.Entry(form, textvariable=self.username)
+		self.username_entry.pack(fill='x', expand=True, pady=10)
+		self.username_entry.focus()
 
 		# password
 		password_label = ttk.Label(form, text="Password:")
 		password_label.pack()
 
-		password_entry = ttk.Entry(form, textvariable=password, show="*")
-		password_entry.pack(fill='x', expand=True, pady=10)
+		self.password_entry = ttk.Entry(form, textvariable=self.password, show="*")
+		self.password_entry.pack(fill='x', expand=True, pady=10)
 
 		# login button
-		login_button = ttk.Button(form, text="Login", command=login_clicked)
+		login_button = ttk.Button(form, text="Login", command=submit)
 		login_button.pack(fill='x', expand=True, pady=10)
 
 

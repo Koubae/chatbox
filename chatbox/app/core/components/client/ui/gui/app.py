@@ -93,7 +93,6 @@ class Gui(tk.Tk):
 	def message_display(self, payload: ServerMessageModel) -> None:
 		owner = payload.owner
 		sender = payload.sender
-		_logger.info("paaf fdiusplas ", payload.body)
 
 		match sender.role:
 			case MessageRole.SERVER:
@@ -104,12 +103,13 @@ class Gui(tk.Tk):
 				return self.message_add(sender.name, payload.body)
 
 	def input_password(self) -> str:
-		_password = self._request_info("Password", "Enter your password: ")
-		return _password
+		self.window.login.password_entry.wait_variable(self.window.login.submitted_switch)
+		return self.window.login.password.get()
+
 
 	def input_username(self):
-		_username = self._request_info("Username", "Enter your username: ")
-		return _username
+		self.window.login.username_entry.wait_variable(self.window.login.submitted_switch)
+		return self.window.login.username.get()
 
 	def message_prompt(self, _: str | None = None) -> str:
 		if self.chat.state == objects.Client.LOGGED:
