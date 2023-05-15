@@ -12,6 +12,7 @@ DAY: int = HOUR * 24
 # App
 # --------------------
 APP_NAME: str = "ChatBox-Master"
+APP_NAME_CLIENT: str = "ChatBox-Client"
 
 CLI_NEXT_INPUT: str = ">>> "
 
@@ -46,6 +47,7 @@ DATABASE_NAME: str = "chatbox.sqlite"
 DIR_ROOT: str = os.path.dirname(os.path.abspath(__file__)).replace('/constants','').replace('/app', '')
 DIR_APP = os.path.join(DIR_ROOT, "app")
 DIR_STORAGE = os.path.join(DIR_APP, "storage")
+DIR_CORE = os.path.join(DIR_APP, "core")
 DIR_LOGS = os.path.join(DIR_STORAGE, "logs")
 DIR_CRASHES = os.path.join(DIR_LOGS, "crashes")
 
@@ -56,3 +58,7 @@ DIR_DATABASE_DATA_MAIN =  os.path.join(DIR_APP, "database", "schema", "data.sql"
 
 DIR_CONFIG: str = os.path.join(DIR_ROOT, "../config")
 CONFIG_DIRECTORY_RELATIVE_APP: str = "../../../config"
+
+DIR_GUI = os.path.join(DIR_CORE, "components", "client", "ui", "gui")
+DIR_GUI_ASSETS = os.path.join(DIR_GUI, "assets")
+
