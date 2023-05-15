@@ -12,8 +12,7 @@ class ChatPane(ttk.Notebook):
 		self.app: 'ui.gui.app.App' = window.app
 		self.window: 'ui.gui.app.Window' = window
 
-		self.grid(row=0, column=0, sticky=tk.N + tk.S, padx=1, pady=1)
-		self.grid_rowconfigure(0, weight=1)
+		self.__configure_style()
 
 		data = {
 			"Users": ["user1", "user2", "user3", "user4", "user5", "user6"],
@@ -35,3 +34,7 @@ class ChatPane(ttk.Notebook):
 			entities = data[pane]
 			for i, entity in enumerate(entities):
 				ttk.Button(_frame, text=entity).grid(row=i + 2, column=0, pady=3)
+
+	def __configure_style(self):
+		self.grid(row=0, column=0, sticky=tk.N + tk.S, padx=1, pady=1)
+		self.grid_rowconfigure(0, weight=1)
