@@ -67,7 +67,7 @@ class Window(ttk.Frame):
 		panes = ("Users", "Groups", "Channels")
 		panes_frames = {}
 		for pane in panes:
-			_frame = ttk.Frame(self, style='Main.TFrame')
+			_frame = ttk.Frame(self, style='Secondary2.TFrame', padding="2 10")
 			_frame.grid(row=0, column=1, sticky=tk.N + tk.S, padx=10, pady=1)
 			panes_frames[pane] = _frame
 			notebook.add(_frame, text=pane)
@@ -75,15 +75,15 @@ class Window(ttk.Frame):
 			# ----------------------
 			# CHAT STACK
 			# ----------------------
-			chat_stack = ttk.Frame(_frame, style='Secondary2.TFrame', padding="2 10")
-			chat_stack.grid(row=0, column=1, sticky=tk.N + tk.S, padx=10, pady=1)
+			# chat_stack = ttk.Frame(_frame, style='Secondary2.TFrame', padding="2 10")
+			# chat_stack.grid(row=0, column=1, sticky=tk.N + tk.S, padx=10, pady=1)
 
 			entities = data[pane]
 			for i, entity in enumerate(entities):
-				ttk.Button(chat_stack, text=entity).grid(row=i + 2, column=0, pady=3)
+				ttk.Button(_frame, text=entity).grid(row=i + 2, column=0, pady=3)
 
-			chat_stack.grid_rowconfigure(0, weight=0)
-			chat_stack.grid_rowconfigure(1, weight=1)
+			# _frame.grid_rowconfigure(0, weight=0)
+			# _frame.grid_rowconfigure(1, weight=1)
 
 		# # ----------------------
 		# # CHAT STACK
@@ -143,18 +143,21 @@ class Window(ttk.Frame):
 		tree.configure(yscroll=scrollbar.set)  # noqa
 		scrollbar.grid(row=0, column=2, rowspan=2, sticky=tk.N + tk.S)
 
-		self.message_container = ttk.Frame(self.chat, style="Secondary2.TFrame")
-		self.message_container.grid(row=2, column=0, columnspan=3, pady=0, sticky=tk.E + tk.W + tk.N + tk.S)
+		self.message_container = ttk.Frame(self.chat, style="Secondary2.TFrame", padding="2 10 50 50")
+		self.message_container.grid(row=2, column=0, columnspan=3, sticky=tk.E + tk.W + tk.N + tk.S)
 		self.message_container.rowconfigure(0, weight=1)
-		self.message_container.columnconfigure(0, weight=1)
+		self.message_container.columnconfigure(0, weight=2)
+		self.message_container.columnconfigure(1, weight=2)
+		self.message_container.columnconfigure(2, weight=0)
+		self.message_container.columnconfigure(3, weight=0)
 
 		self.message_text = self.message_text_create_entity()
 
 		self.button_message_submit = ttk.Button(self.message_container, width=10, text="Send", command=lambda: self.message_submit())
-		self.button_message_submit.grid(column=1, rows=1)
+		self.button_message_submit.grid(column=2, row=0, padx=0)
 
 		self.button_message_clear = ttk.Button(self.message_container, width=10, text="Clear", style='Danger.TButton', command=lambda: self.message_clear())
-		self.button_message_clear.grid(column=1, rows=1)
+		self.button_message_clear.grid(column=3, row=0, padx=0)
 
 	# --------------------------
 	# EVENTS: Hotkeys
@@ -250,7 +253,7 @@ class Window(ttk.Frame):
 			message_text.bind("<Return>", lambda _: self.message_submit())
 
 		message_text.focus()
-		message_text.grid(row=0, column=0, sticky=tk.E + tk.W + tk.N + tk.S)
+		message_text.grid(row=0, column=0, columnspan=2, sticky=tk.E + tk.W + tk.N + tk.S, padx=10)
 
 		return message_text
 
