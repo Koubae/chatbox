@@ -47,25 +47,25 @@ class MenuEdit(MenuBase):
 	def __init__(self, window: 'ui.gui.app.Window', cnf=None, **kw):
 		super().__init__(window, cnf or {}, **kw)
 
-		self.window.chat.chatbox_multiline.trace("w", self.on_chatbox_multiline)
+		self.window.chat_ui.chatbox_multiline.trace("w", self.on_chatbox_multiline)
 		self._menu_chatbox_multiline = tk.Menu(self)
 		self._menu_chatbox_multiline.add_radiobutton(
 			label="Yes",
 			value=True,
-			variable=self.window.chat.chatbox_multiline)
+			variable=self.window.chat_ui.chatbox_multiline)
 		self._menu_chatbox_multiline.add_radiobutton(
 			label="No",
 			value=False,
-			variable=self.window.chat.chatbox_multiline)
+			variable=self.window.chat_ui.chatbox_multiline)
 
 		self.add_cascade(label="Chat multiline", menu=self._menu_chatbox_multiline)
 
 	def on_chatbox_multiline(self, *_):
-		self.window.chat.message_text.destroy()
-		if self.window.chat.chatbox_multiline.get():
-			self.window.chat.message_text = self.window.chat.message_text_create_entity()
+		self.window.chat_ui.message_text.destroy()
+		if self.window.chat_ui.chatbox_multiline.get():
+			self.window.chat_ui.message_text = self.window.chat_ui.message_text_create_entity()
 		else:
-			self.window.chat.message_text = self.window.chat.message_text_create_entity()
+			self.window.chat_ui.message_text = self.window.chat_ui.message_text_create_entity()
 
 class MenuMain(MenuBase):
 	def __init__(self, window: 'ui.gui.app.Window', cnf=None, **kw):

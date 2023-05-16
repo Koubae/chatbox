@@ -1,12 +1,19 @@
+import threading
+import logging
 import time
+import threading
+import types
 import typing as t
 
-from getpass import getpass
+import tkinter as tk
+from tkinter import messagebox
+from tkinter import simpledialog
 
-from chatbox.app.core import tcp
+from chatbox.app.core import SocketTCPClient, NetworkSocketException
+from chatbox.app.core.components.client import ui
 from chatbox.app.constants import chat_internal_codes as _c
 from chatbox.app.core.components.client.auth import AuthUser
-from chatbox.app.core.components.client.commands import Command, Commands
+from chatbox.app.core.components.client.commands import Commands, Command
 from chatbox.app.core.components.client.controller.base import ControllerClientException
 from chatbox.app.core.components.client.controller.channel import ControllerChannelClient
 from chatbox.app.core.components.client.controller.group import ControllerGroupClient
@@ -15,18 +22,39 @@ from chatbox.app.core.components.client.controller.send_message import Controlle
 from chatbox.app.core.components.client.controller.users import ControllerUsersClient
 from chatbox.app.core.components.commons.controller.base import BaseController, BaseControllerException
 from chatbox.app.core.model.message import ServerMessageModel, MessageRole
+from chatbox.app.core.tcp import objects
 
 
-class Terminal:
+_logger = logging.getLogger(__name__)
 
-	def __init__(self, chat: 'tcp.SocketTCPClient'):
-		self.chat: 'tcp.SocketTCPClient' = chat
+class ChatBoxThread(threading.Thread):
+	def __init__(self, group=None, target=None, name=None, args=(), kwargs=None, *, daemon=None, gui: 'ui.gui.app.Gui'):
+		super().__init__(group, target, name, args=args, kwargs=kwargs, daemon=daemon)
+		self.gui: 'ui.gui.app.Gui' = gui
+
+	def run(self) -> None:
+		try:
+			super().run()
+		except NetworkSocketException as error:
+			message_error = f"Chatbox could not connect to server, reason : {error}"
+			_logger.warning(message_error)
+			self.gui.chatbox_failed_connect = message_error
+			self.gui.chat_connector.message_echo(message_error)
+
+
+class ChatConnector:
+	def __init__(self, gui: 'ui.gui.app.Gui', host: str, port: int, user_name: str | None = None, password: str | None = None):
+		self.gui: 'ui.gui.app.Gui' = gui
+		self.chat: SocketTCPClient = SocketTCPClient(host, port, user_name, password, self)
 
 		self.controller_send_to: ControllerSendToClient = ControllerSendToClient(self.chat, self)
 		self.controller_user: ControllerUsersClient = ControllerUsersClient(self.chat, self)
 		self.controller_group: ControllerGroupClient = ControllerGroupClient(self.chat, self)
 		self.controller_channel: ControllerChannelClient = ControllerChannelClient(self.chat, self)
 		self.controller_message: ControllerMessageClient = ControllerMessageClient(self.chat, self)
+
+		self.chatbox_t: ChatBoxThread = ChatBoxThread(target=self.chat, daemon=True, gui=self.gui)
+		self.chatbox_t.start()
 
 	# ------------------------------
 	# API
@@ -96,25 +124,33 @@ class Terminal:
 
 		except ControllerClientException as error:
 			if str(error) == "Command target missing":
-				return self.chat.ui.message_echo(f"command {command} must contain a target value!")
-			return self.chat.ui.message_echo(str(error))
+				return self.message_echo(f"command {command} must contain a target value!")
+			return self.message_echo(str(error))
 
-	@staticmethod
-	def message_echo(message: str):
-		print(message)
+	def message_echo(self, message: str):
+		try:
+			self.gui.window.logger.log["text"] = message
+		except Exception as error:
+			_logger.error(f"Error while echoing Chatbox message, error {error}", exc_info=error)
 
-	@staticmethod
-	def message_prompt(prompt: str | None = None) -> str:
-		value = input(prompt and prompt or '')
-		print('\033[1A' + '\033[K', end='')  # erase text that user typed
-		return value
+	def message_prompt(self, _: str | None = None) -> str:
+		if self.chat.state == objects.Client.LOGGED:
+			if not self.gui.window.chat_ui:
+				self.gui.window.enter_chat()
 
-	def input_username(self) -> str:
-		return self.message_prompt(">>> Enter user name: ")
+			self.gui.window.chat_ui.message_text.wait_variable(self.gui.window.chat_ui.submitted_switch)
+			return self.gui.window.chat_ui.current_prompt
 
-	@staticmethod
-	def input_password() -> str:
-		return getpass(">>> Enter Password: ")
+		_username = self._request_info("Enter value", "Enter ")
+		return _username
+
+	def input_username(self):
+		self.gui.window.login.username_entry.wait_variable(self.gui.window.login.submitted_switch)
+		return self.gui.window.login.username.get()
+
+	def input_password(self) -> str:
+		self.gui.window.login.password_entry.wait_variable(self.gui.window.login.submitted_switch)
+		return self.gui.window.login.password.get()
 
 	def message_display(self, payload: ServerMessageModel) -> None:
 		owner = payload.owner
@@ -122,16 +158,11 @@ class Terminal:
 
 		match sender.role:
 			case MessageRole.SERVER:
-				name = f"[SERVER] -->"
-			case MessageRole.GROUP:
-				name = f"[{sender.name}] $ {owner.name} -->"
-			case MessageRole.CHANNEL:
-				name = f"[{sender.name}] $ {owner.name} -->"
+				return self.message_add("Server", payload.body)
+			case MessageRole.GROUP | MessageRole.CHANNEL:
+				return self.message_add(f"[{sender.name}] {owner.name} ", payload.body)
 			case MessageRole.ALL | _:
-				name = f"$ {sender.name} -->"
-
-		message = f'{name} {payload.body}'
-		self.message_echo(message)
+				return self.message_add(sender.name, payload.body)
 
 	def display_users(self, code: _c.Codes, payload: ServerMessageModel) -> None:
 		_c.remove_chat_code_from_payload(code, payload)  # noqa
@@ -152,18 +183,38 @@ class Terminal:
 	# ------------------------------
 	# Additional Functionalities
 	# ------------------------------
+	def message_add(self, name: str, message: str):
+		self.gui.window.chat_ui.messages.add_message(name, message)
+
+	@staticmethod
+	def _request_info(title: str, question: str) -> str:
+		window_popup = tk.Tk()
+		window_popup.withdraw()
+
+		try:
+			answer = simpledialog.askstring(title=title, prompt=question, parent=window_popup)
+		except Exception as error:
+			_logger.error(error)
+			raise error
+		finally:
+			window_popup.destroy()
+
+		if answer:
+			return answer
+		return ""
+
 	def print_table(self, data) -> None:
-		columns = list(data[0].keys() if data else [])
+			columns = list(data[0].keys() if data else [])
 
-		table = [columns] + [[str(row.get(col, '')) for col in columns] for row in data]
-		column_size = [max(map(len, col)) for col in zip(*table)]
+			table = [columns] + [[str(row.get(col, '')) for col in columns] for row in data]
+			column_size = [max(map(len, col)) for col in zip(*table)]
 
-		format_string = ' | '.join(["{{:<{}}}".format(i) for i in column_size])
+			format_string = ' | '.join(["{{:<{}}}".format(i) for i in column_size])
 
-		header_separator = ['-' * i for i in column_size]
-		table.insert(1, header_separator)  # Header Separators line
-		for item in table:
-			self.message_echo(format_string.format(*item))
+			header_separator = ['-' * i for i in column_size]
+			table.insert(1, header_separator)  # Header Separators line
+			for item in table:
+				self.message_echo(format_string.format(*item))
 
 	def print_box(self, items: list[dict]) -> None:
 		spacing = 30

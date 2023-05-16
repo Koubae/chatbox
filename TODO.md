@@ -56,8 +56,19 @@ Client
 
 ### UI
 
-- GUI - tkinter ui 
 
+### GUI
+
+- login : when fail connect, login should disable and show better message
+- fix login screen, looks awful 
+- refactor all code 
+- implement a different 'API' model which is the one that, eventually will comunicate with Chatbox 
+- more loging from Terminal and GUI of method 'next_command' in a separate Class like a 'Router'
+
+- load users
+- load groups
+- load channels
+- load message
 
 
 Projects ideas

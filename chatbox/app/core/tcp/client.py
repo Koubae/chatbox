@@ -38,9 +38,6 @@ class SocketTCPClient(NetworkSocket):   # noqa
             self.ui: Terminal = Terminal(self)
         else:
             self.ui = gui
-            # self.ui: Gui = Gui()
-            # _thread_gui = threading.Thread(target=self.ui, daemon=True)
-            # _thread_gui.start()
 
     def __call__(self, *args, **kwargs):
         if not self.user_name:

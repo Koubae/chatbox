@@ -13,7 +13,7 @@ from chatbox.app.core.components.client.ui.gui.components.logger import Logger
 from chatbox.app.core.components.client.ui.gui.components.login import Login
 from chatbox.app.core.components.client.ui.gui.components.menu import MenuMain
 from chatbox.app.core.components.client.ui.gui import settings
-from chatbox.app.core.tcp import objects
+
 
 class Window(ttk.Frame):
 	def __init__(self, master: 'ui.gui.app.Gui'):
@@ -33,7 +33,7 @@ class Window(ttk.Frame):
 		self.logger: Logger = Logger(self)
 
 		self.chat_pane: ChatPane | None = None
-		self.chat: Chat | None = None
+		self.chat_ui: Chat | None = None
 		self.menu: MenuMain | None = None
 
 		self.login = Login(self)
@@ -41,7 +41,7 @@ class Window(ttk.Frame):
 	def enter_chat(self):
 		self.style.configure('TLabel', background=settings.DEFAULT_2, fieldbackground=settings.DEFAULT_2, foreground='black')
 		self.chat_pane = ChatPane(self)
-		self.chat = Chat(self)
+		self.chat_ui = Chat(self)
 		self.menu: MenuMain = MenuMain(self)
 		self.login.destroy()
 
@@ -52,7 +52,7 @@ class Window(ttk.Frame):
 		self.menu.menu_help.on_help()
 
 	def action_chatbox_multiline_switch(self, _=None):
-		self.chat.chatbox_multiline.set(not self.chat.chatbox_multiline.get())
+		self.chat_ui.chatbox_multiline.set(not self.chat_ui.chatbox_multiline.get())
 
 	def action_full_screen(self, _=None):
 		self.window_fullscreen = not self.window_fullscreen
@@ -72,7 +72,7 @@ class Window(ttk.Frame):
 		if response == "yes":
 			if self.app.chat:
 				self.app.chat.__del__()
-				self.app.chatbox_t.join()
+				self.app.chat_connector.chatbox_t.join()
 
 			self.app.destroy()
 			sys.exit(0)
