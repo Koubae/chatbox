@@ -1,5 +1,4 @@
 import os
-import sys
 
 import tkinter as tk
 from tkinter import messagebox
@@ -8,7 +7,7 @@ from tkinter import ttk
 from chatbox.app.constants import APP_NAME_CLIENT
 from chatbox.app.core.components.client import ui
 from chatbox.app.core.components.client.ui.gui.components.chat import Chat
-from chatbox.app.core.components.client.ui.gui.components.chat_pane import ChatPane
+
 from chatbox.app.core.components.client.ui.gui.components.logger import Logger
 from chatbox.app.core.components.client.ui.gui.components.login import Login
 from chatbox.app.core.components.client.ui.gui.components.menu import MenuMain
@@ -32,7 +31,6 @@ class Window(ttk.Frame):
 		# ----------------------
 		self.logger: Logger = Logger(self)
 
-		self.chat_pane: ChatPane | None = None
 		self.chat_ui: Chat | None = None
 		self.menu: MenuMain | None = None
 
@@ -40,7 +38,6 @@ class Window(ttk.Frame):
 
 	def enter_chat(self):
 		self.style.configure('TLabel', background=settings.DEFAULT_2, fieldbackground=settings.DEFAULT_2, foreground='black')
-		self.chat_pane = ChatPane(self)
 		self.chat_ui = Chat(self)
 		self.menu: MenuMain = MenuMain(self)
 		self.login.destroy()

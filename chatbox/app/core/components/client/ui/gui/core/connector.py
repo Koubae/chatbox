@@ -99,8 +99,6 @@ class ChatConnector:
 				case Command.GROUP_LEAVE:
 					self.controller_group.leave(user_input)
 
-				case Command.CHANNEL_LIST_ALL | Command.CHANNEL_LIST_OWNED | Command.CHANNEL_LIST_JOINED | Command.CHANNEL_LIST_UN_JOINED:
-					self.controller_channel.list_(command)
 				case Command.CHANNEL_CREATE:
 					self.controller_channel.create(user_input)
 				case Command.CHANNEL_UPDATE:
@@ -179,8 +177,24 @@ class ChatConnector:
 		self._display_table_csv_type("groups", payload, add_members=True)
 
 	def display_channels(self, code: _c.Codes, payload: ServerMessageModel) -> None:
+		if not self.gui.window.chat_ui:
+			return
 		_c.remove_chat_code_from_payload(code, payload)  # noqa
-		self._display_table_box_type("channels", payload)
+		if not payload.body:
+			self.message_echo(f"No channels to display")
+			return
+
+		try:
+			items = BaseController.json_decode(payload.body)
+		except BaseControllerException as error:
+			self.message_echo(f"Error while decoding Server response, reason : {error}")
+			return
+
+		if not items:
+			self.message_echo(f"No channels to display")
+			return
+
+		self.gui.window.chat_ui.add_channels_to_pane(items)
 
 	def display_messages(self, code: _c.Codes, payload: ServerMessageModel) -> None:
 		_c.remove_chat_code_from_payload(code, payload)  # noqa
@@ -223,3 +237,18 @@ class ChatConnector:
 
 	def stop_waiting(self):
 		self.gui.window.chat_ui.message_submit()
+
+	# ------------------------------
+	# Connector ServerChatbox Integration
+	# ------------------------------
+	def channel_list_all(self):
+		self.controller_channel.list_(Command.CHANNEL_LIST_ALL)
+
+	def channel_list_owned(self):
+		self.controller_channel.list_(Command.CHANNEL_LIST_OWNED)
+
+	def channel_list_joined(self):
+		self.controller_channel.list_(Command.CHANNEL_LIST_JOINED)
+
+	def channel_list_un_joined(self):
+		self.controller_channel.list_(Command.CHANNEL_LIST_UN_JOINED)
