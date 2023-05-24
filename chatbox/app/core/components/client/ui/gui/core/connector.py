@@ -60,6 +60,8 @@ class ChatConnector:
 	# API
 	# ------------------------------
 	def next_command(self):
+		if self.gui.chatbox_closed:
+			return
 		user_input = self.message_prompt()
 		command = Commands.read_command(user_input)
 
@@ -128,12 +130,16 @@ class ChatConnector:
 			return self.message_echo(str(error))
 
 	def message_echo(self, message: str):
+		if self.gui.chatbox_closed:
+			return
 		try:
 			self.gui.window.logger.log["text"] = message
 		except Exception as error:
 			_logger.error(f"Error while echoing Chatbox message, error {error}", exc_info=error)
 
 	def message_prompt(self, _: str | None = None) -> str:
+		if self.gui.chatbox_closed:
+			return ""
 		if self.chat.state == objects.Client.LOGGED:
 			if not self.gui.window.chat_ui:
 				self.gui.window.enter_chat()
@@ -278,3 +284,6 @@ class ChatConnector:
 			self.message_echo(f"These are {_type}:\n\n")
 			self.print_box(items)
 			self.message_echo("\n")
+
+	def stop_waiting(self):
+		self.gui.window.chat_ui.message_submit()

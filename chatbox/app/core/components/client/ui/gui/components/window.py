@@ -70,12 +70,10 @@ class Window(ttk.Frame):
 			messagebox.YESNOCANCEL,
 		)
 		if response == "yes":
-			if self.app.chat:
-				self.app.chat.__del__()
-				self.app.chat_connector.chatbox_t.join()
-
+			self.app.chatbox_closed = True
+			self.app.chat.terminate()
+			self.app.chat_connector.stop_waiting()
 			self.app.destroy()
-			sys.exit(0)
 
 	def __register_events_hotkeys(self):
 		self.app.bind("<F1>", self.action_show_on_help)

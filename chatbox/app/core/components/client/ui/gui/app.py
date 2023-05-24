@@ -31,6 +31,7 @@ class Gui(tk.Tk):
 			self.chat: SocketTCPClient | None = None
 			self.chat_connector: ChatConnector | None = None
 			self.chatbox_failed_connect: str = ""
+			self.chatbox_closed: bool = False
 
 			self.__configure_app()
 			self.window: Window = Window(self)

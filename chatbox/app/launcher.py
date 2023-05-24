@@ -8,8 +8,14 @@ from . import constants
 from . import settings
 from . import logger
 
+from .find_hanging_threads import start_monitoring
+
 
 def run(argv: tuple[str, ...] = tuple()) -> None:  # noqa:C901
+
+    MONITOR_THREADS = False  # add args.variables and imporve this since is pretty pretty ugly..
+    if MONITOR_THREADS:
+        start_monitoring(seconds_frozen=5)
 
     if len(argv) >= 3:
         tcp_app_type, _host, _port = argv[:3]
